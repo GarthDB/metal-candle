@@ -1,0 +1,586 @@
+# metal-candle Cursor Rules
+
+## Project Overview
+
+`metal-candle` is a production-quality Rust crate for machine learning on Apple Silicon, built on Candle with Metal backend. Focus: LoRA training, model loading (safetensors), and text generation for transformer models.
+
+**Target Quality**: Publication-ready crate for crates.io
+**Timeline**: 12 weeks to v1.0
+**Key Goals**: Replace PyO3+MLX with pure Rust, single-binary deployment
+
+## Core Principles
+
+1. **Quality Over Speed**: Every commit meets production standards
+2. **Explicit Over Implicit**: Clear, readable code preferred over clever tricks
+3. **Fail Fast**: Use `Result` and `?` operator, not unwrap/expect
+4. **Document Everything**: Public APIs fully documented with examples
+5. **Test Everything**: Unit tests for all core functionality, integration tests for workflows
+
+## Code Quality Standards
+
+### Clippy - ZERO WARNINGS ENFORCED
+
+```toml
+[lints.clippy]
+pedantic = "deny"           # Strict pedantic linting (not nursery)
+cargo = "warn"
+all = "deny"
+correctness = "deny"
+suspicious = "deny"
+complexity = "deny"
+perf = "deny"
+```
+
+**Local Development**:
+```bash
+cargo clippy -- -D warnings  # Must pass before commit
+```
+
+**Allowed Exceptions** (add to Cargo.toml with justification):
+- `module_name_repetitions` - Only if truly unavoidable
+- `missing_errors_doc` - Never allow, always document errors
+- `missing_panics_doc` - Never allow, always document panics
+
+### Code Coverage - ≥80% ENFORCED
+
+**Measure Coverage**:
+```bash
+cargo llvm-cov --all-features --workspace --html
+open target/llvm-cov/html/index.html
+```
+
+**Target Coverage by Module**:
+- Public APIs: 100%
+- Core algorithms (LoRA, training loop, inference): 100%
+- Backend/utilities: ≥80%
+- Examples: Manual validation (not measured)
+
+**CI Enforcement**: PR fails if coverage drops below 80%
+
+## Rust Style Guidelines
+
+### Error Handling
+
+**Use `thiserror` for library errors** (not `anyhow`):
+```rust
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum ModelError {
+    #[error("model file not found: {path}")]
+    FileNotFound { path: PathBuf },
+    
+    #[error("invalid model format: {reason}")]
+    InvalidFormat { reason: String },
+    
+    #[error("incompatible model version: expected {expected}, found {found}")]
+    IncompatibleVersion { expected: String, found: String },
+    
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+}
+```
+
+**Reserve `anyhow` for**:
+- Examples only
+- Tests only
+- Never in library code
+
+**Never use**:
+- `.unwrap()` - Use `?` or explicit error handling
+- `.expect()` - Only in tests or examples with clear justification
+
+### API Design Patterns
+
+**1. Builder Pattern for Complex Configuration**:
+```rust
+pub struct ModelLoader {
+    device: Device,
+    dtype: DType,
+    // ...
+}
+
+impl ModelLoader {
+    pub fn new() -> Self {
+        Self {
+            device: Device::metal(0).unwrap(), // Default
+            dtype: DType::F16,
+        }
+    }
+    
+    pub fn with_device(mut self, device: Device) -> Self {
+        self.device = device;
+        self
+    }
+    
+    pub fn with_dtype(mut self, dtype: DType) -> Self {
+        self.dtype = dtype;
+        self
+    }
+    
+    pub fn load(self, path: impl AsRef<Path>) -> Result<Model, ModelError> {
+        // ...
+    }
+}
+```
+
+**2. Type-Safe Configuration Structs**:
+```rust
+#[derive(Debug, Clone)]
+pub struct TrainingConfig {
+    pub learning_rate: f32,
+    pub batch_size: usize,
+    pub num_epochs: usize,
+    pub warmup_steps: usize,
+}
+
+impl Default for TrainingConfig {
+    fn default() -> Self {
+        Self {
+            learning_rate: 1e-4,
+            batch_size: 4,
+            num_epochs: 3,
+            warmup_steps: 100,
+        }
+    }
+}
+```
+
+**3. Newtype Pattern for Clarity**:
+```rust
+#[derive(Debug, Clone, Copy)]
+pub struct Rank(usize);
+
+#[derive(Debug, Clone, Copy)]
+pub struct Alpha(f32);
+
+impl Rank {
+    pub fn new(rank: usize) -> Result<Self, LoRAError> {
+        if rank == 0 {
+            return Err(LoRAError::InvalidRank);
+        }
+        Ok(Self(rank))
+    }
+}
+```
+
+### Documentation Standards
+
+**Every public item MUST have**:
+1. Summary (one sentence)
+2. Description (what it does, when to use)
+3. Examples (simple, runnable)
+4. Errors section (if returns `Result`)
+5. Panics section (if can panic)
+
+**Template**:
+```rust
+/// Loads a model from the specified path.
+///
+/// Supports multiple formats (safetensors primary, GGUF in v1.1+).
+/// Format is auto-detected based on file extension. The model is loaded
+/// onto the specified device (Metal by default).
+///
+/// # Examples
+///
+/// ```no_run
+/// use metal_candle::ModelLoader;
+///
+/// let model = ModelLoader::new()
+///     .with_dtype(DType::F16)
+///     .load("qwen2.5-coder.safetensors")?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+///
+/// # Errors
+///
+/// Returns [`ModelError::FileNotFound`] if the path doesn't exist.
+/// Returns [`ModelError::InvalidFormat`] if the file is corrupted or unsupported.
+/// Returns [`ModelError::IncompatibleVersion`] if the model version is incompatible.
+///
+/// # Panics
+///
+/// This function does not panic.
+pub fn load(&self, path: impl AsRef<Path>) -> Result<Model, ModelError> {
+    // Implementation
+}
+```
+
+**Module-Level Documentation**:
+```rust
+//! Model loading and format handling.
+//!
+//! This module provides utilities for loading ML models from various formats.
+//! The primary format is safetensors, with extensibility for GGUF and others.
+//!
+//! # Examples
+//!
+//! ```no_run
+//! use metal_candle::models::ModelLoader;
+//!
+//! let model = ModelLoader::new().load("model.safetensors")?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! ```
+```
+
+## Testing Strategy
+
+### Test Organization
+
+```
+tests/
+├── integration/        # End-to-end workflows
+│   ├── training.rs
+│   └── inference.rs
+├── models/             # Model-specific tests
+│   └── loading.rs
+└── backend/            # Backend tests
+    └── metal.rs
+
+src/
+└── module/
+    └── tests.rs        # Unit tests inline with code
+```
+
+### Test Patterns
+
+**1. Unit Tests (in same file)**:
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_lora_initialization() {
+        let lora = LoRALayer::new(512, 8).unwrap();
+        assert_eq!(lora.rank(), 8);
+    }
+    
+    #[test]
+    fn test_invalid_rank_returns_error() {
+        let result = LoRALayer::new(512, 0);
+        assert!(matches!(result, Err(LoRAError::InvalidRank)));
+    }
+}
+```
+
+**2. Property-Based Tests** (for numerical code):
+```rust
+#[cfg(test)]
+mod property_tests {
+    use proptest::prelude::*;
+    
+    proptest! {
+        #[test]
+        fn test_softmax_sums_to_one(values in prop::collection::vec(-10.0f32..10.0, 1..100)) {
+            let result = softmax(&values);
+            let sum: f32 = result.iter().sum();
+            assert!((sum - 1.0).abs() < 1e-5);
+        }
+    }
+}
+```
+
+**3. Integration Tests**:
+```rust
+// tests/integration/training.rs
+use metal_candle::*;
+
+#[test]
+fn test_full_lora_training_workflow() {
+    // Load model
+    let model = ModelLoader::new().load("test_data/model.safetensors").unwrap();
+    
+    // Create LoRA adapter
+    let lora = LoRAAdapter::new(&model, Rank::new(8).unwrap()).unwrap();
+    
+    // Train
+    let config = TrainingConfig::default();
+    let trainer = Trainer::new(lora, config);
+    let trained = trainer.train(dataset).unwrap();
+    
+    // Save checkpoint
+    trained.save("test_output/checkpoint.safetensors").unwrap();
+}
+```
+
+**4. Snapshot Tests** (for model outputs):
+```rust
+#[cfg(test)]
+mod snapshot_tests {
+    use insta::assert_debug_snapshot;
+    
+    #[test]
+    fn test_model_forward_pass() {
+        let model = load_test_model();
+        let input = test_input();
+        let output = model.forward(input).unwrap();
+        
+        // Snapshot the output shape and first few values
+        assert_debug_snapshot!(output.shape());
+    }
+}
+```
+
+### Test Helpers
+
+**Create test utilities in `tests/common/`**:
+```rust
+// tests/common/mod.rs
+use metal_candle::*;
+
+pub fn load_test_model() -> Model {
+    ModelLoader::new()
+        .load("tests/fixtures/small_model.safetensors")
+        .unwrap()
+}
+
+pub fn create_test_device() -> Device {
+    Device::metal(0).unwrap_or(Device::Cpu)
+}
+```
+
+## Performance & Benchmarking
+
+### Local Benchmarking (NOT in CI)
+
+```bash
+# Run benchmarks locally on Apple Silicon
+cargo bench --bench mlx_comparison
+
+# Compare against baseline
+cargo bench --bench training -- --save-baseline main
+```
+
+### Profiling Commands
+
+```bash
+# Memory profiling
+cargo instruments -t Allocations --release --example train_lora
+
+# CPU profiling
+cargo instruments -t Time --release --example train_lora
+
+# Metal GPU profiling
+cargo instruments -t Metal --release --example train_lora
+```
+
+### Performance Targets
+
+- Training: 90-100% of MLX+PyO3 throughput
+- Inference: 95-100% of MLX+PyO3 speed
+- Memory: ≤ MLX+PyO3 peak usage
+- KV-cache: ≥2x speedup for long sequences
+
+## ML-Specific Guidelines
+
+### Tensor Operations
+
+**Always specify device explicitly**:
+```rust
+// Good
+let tensor = Tensor::zeros((batch, seq_len), DType::F32, &device)?;
+
+// Bad
+let tensor = Tensor::zeros((batch, seq_len))?;  // Implicit device
+```
+
+**Use meaningful variable names**:
+```rust
+// Good
+let attention_scores = query.matmul(&key.transpose())?;
+let attention_weights = softmax(&attention_scores)?;
+
+// Bad
+let x = q.matmul(&k.t())?;
+let y = softmax(&x)?;
+```
+
+### Numerical Stability
+
+**Always consider numerical stability**:
+```rust
+// Good: Numerically stable softmax
+pub fn softmax(x: &Tensor) -> Result<Tensor> {
+    let max = x.max_keepdim(-1)?;
+    let exp = (x.broadcast_sub(&max))?.exp()?;
+    let sum = exp.sum_keepdim(-1)?;
+    exp.broadcast_div(&sum)
+}
+
+// Bad: Naive implementation can overflow
+pub fn softmax(x: &Tensor) -> Result<Tensor> {
+    let exp = x.exp()?;  // Can overflow!
+    let sum = exp.sum_keepdim(-1)?;
+    exp.broadcast_div(&sum)
+}
+```
+
+### Memory Management
+
+**Always clean up tensors explicitly when dealing with large models**:
+```rust
+impl Model {
+    pub fn forward(&self, input: &Tensor) -> Result<Tensor> {
+        let hidden = self.embed(input)?;
+        
+        // Process through layers
+        let mut current = hidden;
+        for layer in &self.layers {
+            let next = layer.forward(&current)?;
+            drop(current);  // Explicit cleanup of intermediate tensors
+            current = next;
+        }
+        
+        Ok(current)
+    }
+}
+```
+
+## Git Workflow
+
+### Commit Messages
+
+Follow Conventional Commits:
+```
+feat: add LoRA adapter implementation
+fix: correct attention mask shape in Qwen model
+docs: add examples for model loading
+test: add integration tests for training pipeline
+perf: optimize KV-cache memory usage
+refactor: simplify tensor operation wrappers
+```
+
+### Pre-Commit Checklist
+
+Before every commit:
+- [ ] `cargo clippy -- -D warnings` passes
+- [ ] `cargo test` passes
+- [ ] `cargo fmt` applied
+- [ ] New code has tests
+- [ ] Public APIs have documentation
+- [ ] No `unwrap()` or `expect()` in library code
+
+### Branch Strategy
+
+- `main` - Always deployable, CI passing
+- `phase-N-description` - Feature branches for each phase
+- `fix/bug-description` - Bug fixes
+- `docs/topic` - Documentation improvements
+
+## Dependencies
+
+### Allowed Dependencies
+
+**Core**:
+- `candle-core`, `candle-nn` - ML framework
+- `safetensors` - Model format
+- `tokenizers` - HuggingFace tokenizers
+- `thiserror` - Error handling
+- `tracing` - Logging
+
+**Development**:
+- `criterion` - Benchmarking
+- `approx` - Float comparison
+- `tempfile` - Test fixtures
+- `proptest` - Property testing
+- `insta` - Snapshot testing
+
+### Dependency Rules
+
+1. **Minimize dependencies** - Each new dep must be justified
+2. **Pin versions** - Use exact versions for reproducibility
+3. **No unnecessary features** - Only enable needed features
+4. **Check licenses** - MIT/Apache-2.0 compatible only
+5. **Audit regularly** - `cargo audit` before each release
+
+## CI/CD
+
+### CI Pipeline Requirements
+
+```yaml
+# .github/workflows/ci.yml
+- Clippy (pedantic, zero warnings)
+- Tests (all features, Apple Silicon)
+- Code coverage (≥80% enforced)
+- Documentation build
+- Format check (cargo fmt)
+```
+
+### Release Checklist
+
+Before publishing to crates.io:
+- [ ] All tests passing
+- [ ] Coverage ≥80%
+- [ ] Documentation complete
+- [ ] CHANGELOG.md updated
+- [ ] Version bumped in Cargo.toml
+- [ ] Examples tested manually
+- [ ] Benchmarks run and documented
+- [ ] README.md up to date
+
+## File Organization
+
+### Module Structure
+
+```rust
+// src/lib.rs - Public API exports only
+pub mod error;
+pub mod models;
+pub mod training;
+pub mod inference;
+pub mod checkpoint;
+
+// Re-exports for convenience
+pub use error::{ModelError, TrainingError, InferenceError};
+pub use models::ModelLoader;
+pub use training::{LoRAAdapter, Trainer};
+pub use inference::Generator;
+```
+
+### Internal vs Public
+
+```rust
+// Public API (in src/lib.rs or pub use)
+pub struct ModelLoader { /* ... */ }
+
+// Internal implementation (not re-exported)
+mod backend {
+    pub(crate) struct MetalDevice { /* ... */ }
+}
+```
+
+## Special Considerations
+
+### Apple Silicon Specific
+
+- **Always test on real Apple Silicon** - CI is approximation
+- **Use Metal profiling tools** - Instruments.app for GPU profiling
+- **Memory pressure** - Monitor with Activity Monitor during development
+- **Thermal throttling** - Long benchmarks may throttle performance
+
+### Candle Ecosystem
+
+- **Stay up to date** - Monitor Candle releases for improvements
+- **Contribute upstream** - Fix bugs in Candle when found
+- **Community engagement** - Join Candle Discord for support
+
+## Questions to Ask Before Implementing
+
+1. **Is this the simplest solution that works?**
+2. **How will I test this?**
+3. **What can go wrong, and how do I handle it?**
+4. **Is this documented well enough for external users?**
+5. **Does this meet our performance targets?**
+
+## Resources
+
+- **Candle**: https://github.com/huggingface/candle
+- **Rust API Guidelines**: https://rust-lang.github.io/api-guidelines/
+- **LoRA Paper**: https://arxiv.org/abs/2106.09685
+- **Project Plan**: See PLAN.md for full roadmap
+
+---
+
+**Remember**: This crate will be used by others. Every API, error message, and documentation comment matters. Ship production-quality code from day one.
+
