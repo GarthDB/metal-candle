@@ -29,9 +29,11 @@
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 
+pub mod backend;
 pub mod error;
 
 // Re-export key types for convenience
+pub use backend::{Device, DeviceInfo, DeviceType, TensorExt};
 pub use error::{Error, Result};
 
 /// Current version of the crate
