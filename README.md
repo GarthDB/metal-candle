@@ -1,7 +1,7 @@
 # metal-candle
 
 [![CI](https://github.com/GarthDB/metal-candle/workflows/CI/badge.svg)](https://github.com/GarthDB/metal-candle/actions)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 > Production-quality Rust ML crate for Apple Silicon - LoRA training, inference, and text generation using Candle with Metal backend
 
@@ -186,12 +186,9 @@ Before contributing:
 
 ## 📜 License
 
-Licensed under either of:
+Licensed under the Apache License, Version 2.0 ([LICENSE](LICENSE) or http://www.apache.org/licenses/LICENSE-2.0).
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
+The Apache License provides explicit patent protection, which is important for production machine learning libraries.
 
 ## 🙏 Acknowledgments
 
