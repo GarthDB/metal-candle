@@ -1,0 +1,50 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+*.profraw
+*.profdata
+lcov.info
+/target/llvm-cov/
+/target/debug/coverage/
+
+# Benchmarks
+/target/criterion/
+
+# Examples output
+examples/output/
+test_output/
+
+# Model files (large)
+*.safetensors
+*.gguf
+*.bin
+
+# Test fixtures (commit small ones, ignore large)
+tests/fixtures/*.safetensors
+tests/fixtures/*.gguf
+tests/fixtures/*.bin
+
+# Logs
+*.log
+
+# Local development
+.env
+.env.local
+scratch/
+tmp/
+
