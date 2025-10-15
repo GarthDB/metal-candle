@@ -352,6 +352,32 @@ cargo bench --bench mlx_comparison
 cargo bench --bench training -- --save-baseline main
 ```
 
+### Local CI Testing
+
+Test GitHub Actions workflows locally before pushing:
+
+```bash
+# Install act (if not already installed)
+brew install act
+
+# Run all CI jobs
+act
+
+# Run specific jobs
+act -j clippy              # Run clippy check
+act -j test                # Run test suite
+act -j fmt                 # Run format check
+
+# Dry run to see what would execute
+act -n
+```
+
+**Note**: `act` uses Docker, so Metal-specific tests won't work. Use for:
+- ✅ Clippy checks
+- ✅ Format checks
+- ✅ Build verification
+- ❌ Not for: actual test execution, coverage, Metal operations
+
 ### Profiling Commands
 
 ```bash
@@ -460,6 +486,12 @@ Before every commit:
 - [ ] New code has tests
 - [ ] Public APIs have documentation
 - [ ] No `unwrap()` or `expect()` in library code
+
+**Optional**: Test CI locally before pushing:
+```bash
+act -j clippy  # Verify clippy will pass in CI
+act -j fmt     # Verify formatting is correct
+```
 
 ### Branch Strategy
 
