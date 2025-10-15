@@ -486,6 +486,29 @@ open target/llvm-cov/html/index.html
 - Property tests: Numerical stability, gradient checks
 - Edge cases: OOM, invalid inputs, corrupted models
 
+### Local CI Testing with `act`
+
+Test GitHub Actions workflows locally before pushing:
+
+```bash
+# Install act (if not already installed)
+brew install act
+
+# Run all CI jobs locally
+act
+
+# Run specific job
+act -j test
+act -j clippy
+act -j fmt
+
+# Dry run (see what would execute)
+act -n
+```
+
+**Note**: `act` uses Docker containers, so Metal-specific tests won't work locally.
+Use this primarily for linting, formatting, and build checks before pushing.
+
 ### Benchmarking Strategy
 
 **Local Benchmarks Only** (GitHub Actions runners don't reflect real Metal performance)
