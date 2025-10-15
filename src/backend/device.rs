@@ -397,4 +397,68 @@ mod tests {
         assert!(cpu_debug.contains("Cpu"));
         assert!(metal_debug.contains("Metal"));
     }
+
+    #[test]
+    fn test_metal_error_on_non_metal_platform() {
+        // On non-Metal platforms, this tests the error path
+        // On Metal platforms, we test error formatting with a simulated error
+        let result = Device::new_metal(0);
+
+        if !Device::is_metal_available() {
+            // On non-Metal platforms, should error
+            assert!(result.is_err());
+            let error = result.unwrap_err();
+            let error_msg = error.to_string();
+            // Error message should be informative
+            assert!(
+                error_msg.contains("Metal") || error_msg.contains("unavailable"),
+                "Error message should be descriptive: {error_msg}"
+            );
+        }
+        // On Metal platforms, index 0 succeeds (tested elsewhere)
+    }
+
+    #[test]
+    fn test_from_candle_metal_device() {
+        // Test From trait with a Metal device if available
+        if Device::is_metal_available() {
+            if let Ok(candle_metal) = CandleDevice::new_metal(0) {
+                let device: Device = candle_metal.into();
+                assert!(device.is_metal());
+
+                let info = device.info();
+                assert_eq!(info.device_type, DeviceType::Metal);
+                assert!(info.metal_available);
+            }
+        }
+    }
+
+    #[test]
+    fn test_device_info_metal_path() {
+        // Ensure Metal device info returns correct type
+        if Device::is_metal_available() {
+            let device = Device::new_with_fallback(0);
+            if device.is_metal() {
+                let info = device.info();
+                assert_eq!(info.device_type, DeviceType::Metal);
+                assert_eq!(info.index, 0);
+                assert!(info.metal_available);
+            }
+        }
+    }
+
+    // Test the error formatting by checking DeviceError construction
+    #[test]
+    fn test_device_error_formatting() {
+        // Test that our error type formats correctly
+        use crate::error::DeviceError;
+
+        let error = DeviceError::MetalUnavailable {
+            reason: "Test error message".to_string(),
+        };
+
+        let error_string = error.to_string();
+        assert!(error_string.contains("Test error message"));
+        assert!(error_string.contains("Metal"));
+    }
 }
