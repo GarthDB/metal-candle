@@ -1,0 +1,86 @@
+[package]
+name = "metal-candle"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["Garth Braithwaite <garthdb@gmail.com>"]
+description = "Production-quality Rust ML crate for Apple Silicon - LoRA training, inference, and text generation using Candle with Metal backend"
+repository = "https://github.com/GarthDB/metal-candle"
+homepage = "https://github.com/GarthDB/metal-candle"
+documentation = "https://docs.rs/metal-candle"
+license = "Apache-2.0"
+keywords = ["machine-learning", "metal", "lora", "apple-silicon", "transformer"]
+categories = ["science", "algorithms"]
+readme = "README.md"
+
+[dependencies]
+# Candle - ML framework with Metal backend
+candle-core = { version = "0.9", features = ["metal"] }
+candle-nn = "0.9"
+
+# Model formats
+safetensors = "0.4"
+tokenizers = { version = "0.20", default-features = false, features = ["onig"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+
+[dev-dependencies]
+# Benchmarking
+criterion = { version = "0.5", features = ["html_reports"] }
+
+# Testing utilities
+approx = "0.5"
+tempfile = "3.0"
+proptest = "1.0"
+insta = { version = "1.34", features = ["yaml"] }
+
+# Examples only (anyhow for examples, never in library code)
+anyhow = "1.0"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+# Strict pedantic linting (not nursery - too unstable)
+pedantic = { level = "deny", priority = -1 }
+
+# Cargo lints
+cargo = { level = "warn", priority = -1 }
+
+# Deny these specific lint groups
+all = { level = "deny", priority = -1 }
+correctness = { level = "deny", priority = -1 }
+suspicious = { level = "deny", priority = -1 }
+complexity = { level = "deny", priority = -1 }
+perf = { level = "deny", priority = -1 }
+
+# Allow specific pedantic lints where necessary
+# (Add exceptions here with justification comments)
+module_name_repetitions = "allow"  # Common in Rust for clear module organization
+multiple_crate_versions = "allow"  # Transitive dependencies from Candle
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+
+[profile.bench]
+inherits = "release"
+
+[[bench]]
+name = "training"
+harness = false
+
+[[bench]]
+name = "inference"
+harness = false
+
