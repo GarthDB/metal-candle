@@ -233,6 +233,24 @@ mod tests {
     }
 
     #[test]
+    fn test_device_with_fallback_on_metal_platform() {
+        let device = Device::new_with_fallback(0);
+        if Device::is_metal_available() {
+            // On Apple Silicon, should use Metal
+            assert!(device.is_metal());
+            let info = device.info();
+            assert_eq!(info.device_type, DeviceType::Metal);
+            assert!(info.metal_available);
+        } else {
+            // On other platforms, should fall back to CPU
+            assert!(device.is_cpu());
+            let info = device.info();
+            assert_eq!(info.device_type, DeviceType::Cpu);
+            assert!(!info.metal_available);
+        }
+    }
+
+    #[test]
     fn test_device_info() {
         let device = Device::new_cpu();
         let info = device.info();
@@ -242,9 +260,28 @@ mod tests {
     }
 
     #[test]
+    fn test_cpu_device_info_fields() {
+        let device = Device::new_cpu();
+        let info = device.info();
+
+        assert_eq!(info.device_type, DeviceType::Cpu);
+        assert_eq!(info.index, 0);
+        // metal_available depends on the platform
+        assert_eq!(info.metal_available, Device::is_metal_available());
+    }
+
+    #[test]
     fn test_metal_availability_detection() {
         // This test just ensures the function doesn't panic
         let _available = Device::is_metal_available();
+    }
+
+    #[test]
+    fn test_metal_availability_consistency() {
+        // Test that metal availability is consistent
+        let available1 = Device::is_metal_available();
+        let available2 = Device::is_metal_available();
+        assert_eq!(available1, available2);
     }
 
     #[test]
@@ -266,10 +303,39 @@ mod tests {
     }
 
     #[test]
+    fn test_as_ref_trait() {
+        let device = Device::new_cpu();
+        let candle_ref: &CandleDevice = device.as_ref();
+        assert!(matches!(candle_ref, CandleDevice::Cpu));
+    }
+
+    #[test]
     fn test_into_candle_device() {
         let device = Device::new_cpu();
         let candle_device = device.into_candle_device();
         assert!(matches!(candle_device, CandleDevice::Cpu));
+    }
+
+    #[test]
+    fn test_device_type_equality() {
+        assert_eq!(DeviceType::Cpu, DeviceType::Cpu);
+        assert_eq!(DeviceType::Metal, DeviceType::Metal);
+        assert_ne!(DeviceType::Cpu, DeviceType::Metal);
+    }
+
+    #[test]
+    fn test_device_clone() {
+        let device1 = Device::new_cpu();
+        let device2 = device1.clone();
+        assert!(device2.is_cpu());
+        assert_eq!(device1.is_cpu(), device2.is_cpu());
+    }
+
+    #[test]
+    fn test_device_debug() {
+        let device = Device::new_cpu();
+        let debug_str = format!("{:?}", device);
+        assert!(debug_str.contains("Device"));
     }
 
     // Only run this test on actual Apple Silicon
@@ -285,10 +351,50 @@ mod tests {
                 assert_eq!(info.device_type, DeviceType::Metal);
                 assert!(info.metal_available);
             }
-            Err(_) => {
+            Err(e) => {
                 // Not on Apple Silicon, which is fine
                 assert!(!Device::is_metal_available());
+                // Verify error message contains useful info
+                let error_msg = e.to_string();
+                assert!(error_msg.contains("Metal") || error_msg.contains("unavailable"));
             }
         }
+    }
+
+    #[test]
+    fn test_metal_creation_behavior() {
+        // Test that Metal creation follows expected behavior
+        let result = Device::new_metal(0);
+        let is_available = Device::is_metal_available();
+
+        if is_available {
+            // If Metal is available, creation should succeed
+            assert!(result.is_ok());
+            let device = result.unwrap();
+            assert!(device.is_metal());
+        } else {
+            // If Metal is not available, should return error
+            assert!(result.is_err());
+        }
+    }
+
+    #[test]
+    fn test_device_info_debug() {
+        let device = Device::new_cpu();
+        let info = device.info();
+        let debug_str = format!("{:?}", info);
+        assert!(debug_str.contains("DeviceInfo"));
+    }
+
+    #[test]
+    fn test_device_type_debug() {
+        let cpu_type = DeviceType::Cpu;
+        let metal_type = DeviceType::Metal;
+        
+        let cpu_debug = format!("{:?}", cpu_type);
+        let metal_debug = format!("{:?}", metal_type);
+        
+        assert!(cpu_debug.contains("Cpu"));
+        assert!(metal_debug.contains("Metal"));
     }
 }
