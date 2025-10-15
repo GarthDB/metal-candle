@@ -390,10 +390,10 @@ mod tests {
     fn test_device_type_debug() {
         let cpu_type = DeviceType::Cpu;
         let metal_type = DeviceType::Metal;
-        
+
         let cpu_debug = format!("{:?}", cpu_type);
         let metal_debug = format!("{:?}", metal_type);
-        
+
         assert!(cpu_debug.contains("Cpu"));
         assert!(metal_debug.contains("Metal"));
     }
