@@ -34,7 +34,9 @@
 //! # }
 //! ```
 
+pub mod adapter;
 pub mod lora;
 
 // Re-export main types
+pub use adapter::{LoRAAdapter, LoRAAdapterConfig, TargetModule};
 pub use lora::{LoRAConfig, LoRALayer};
