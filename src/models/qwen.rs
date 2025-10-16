@@ -43,13 +43,13 @@ impl QwenDecoderLayer {
             &vb.pp("self_attn"),
         )?;
 
-        let mlp = MLP::new(
-            config.hidden_size,
-            config.intermediate_size,
-            &vb.pp("mlp"),
-        )?;
+        let mlp = MLP::new(config.hidden_size, config.intermediate_size, &vb.pp("mlp"))?;
 
-        let input_layernorm = RMSNorm::new(config.hidden_size, config.rms_norm_eps, &vb.pp("input_layernorm"))?;
+        let input_layernorm = RMSNorm::new(
+            config.hidden_size,
+            config.rms_norm_eps,
+            &vb.pp("input_layernorm"),
+        )?;
         let post_attention_layernorm = RMSNorm::new(
             config.hidden_size,
             config.rms_norm_eps,
@@ -114,7 +114,7 @@ impl QwenDecoderLayer {
 /// let config = ModelConfig::from_file("config.json")?;
 /// let device = Device::Cpu;
 /// let vb = VarBuilder::from_tensors(std::collections::HashMap::new(), candle_core::DType::F32, &device);
-/// 
+///
 /// let model = Qwen::new(&config, vb)?;
 /// # Ok(())
 /// # }
@@ -159,11 +159,8 @@ impl Qwen {
             &vb.pp("model.norm"),
         )?;
 
-        let lm_head = candle_nn::linear_no_bias(
-            config.hidden_size,
-            config.vocab_size,
-            vb.pp("lm_head"),
-        )?;
+        let lm_head =
+            candle_nn::linear_no_bias(config.hidden_size, config.vocab_size, vb.pp("lm_head"))?;
 
         Ok(Self {
             embed_tokens,
@@ -189,11 +186,7 @@ impl Qwen {
     /// Returns an error if:
     /// - Input tensor has invalid shape
     /// - Any layer forward pass fails
-    pub fn forward(
-        &self,
-        input_ids: &Tensor,
-        attention_mask: Option<&Tensor>,
-    ) -> Result<Tensor> {
+    pub fn forward(&self, input_ids: &Tensor, attention_mask: Option<&Tensor>) -> Result<Tensor> {
         // Embed tokens
         let mut hidden_states = self.embed_tokens.forward(input_ids)?;
 
@@ -224,7 +217,7 @@ impl Qwen {
         let embed_params = self.embed_tokens.embeddings().elem_count();
         let lm_head_params = self.lm_head.weight().elem_count();
         let norm_params = self.norm.weight.elem_count();
-        
+
         // Each layer has: attention (4 projections) + MLP (3 projections) + 2 norms
         // This is approximate - actual count would require iterating through all parameters
         embed_params + (self.layers.len() * 1_000_000) + norm_params + lm_head_params
@@ -278,7 +271,7 @@ impl RMSNorm {
         let x = x.to_dtype(internal_dtype)?;
         let normed = x.rms_norm(self.eps)?;
         let normed = normed.broadcast_mul(&self.weight)?;
-        
+
         // Convert back to original dtype
         normed.to_dtype(x_dtype).map_err(Into::into)
     }
@@ -310,7 +303,7 @@ mod tests {
         let config = create_test_config();
         let device = Device::Cpu;
         let vb = VarBuilder::zeros(DType::F32, &device);
-        
+
         let layer = QwenDecoderLayer::new(&config, &vb);
         assert!(layer.is_ok(), "Failed to create decoder layer: {layer:?}");
     }
@@ -320,10 +313,10 @@ mod tests {
         let config = create_test_config();
         let device = Device::Cpu;
         let vb = VarBuilder::zeros(DType::F32, &device);
-        
+
         let model = Qwen::new(&config, vb);
         assert!(model.is_ok(), "Failed to create Qwen model: {model:?}");
-        
+
         if let Ok(model) = model {
             // Verify model has the correct number of layers
             assert_eq!(model.layers.len(), config.num_hidden_layers);
@@ -334,9 +327,8 @@ mod tests {
     fn test_rms_norm() {
         let device = Device::Cpu;
         let vb = VarBuilder::zeros(DType::F32, &device);
-        
+
         let norm = RMSNorm::new(64, 1e-6, &vb);
         assert!(norm.is_ok());
     }
 }
-

@@ -47,14 +47,14 @@ impl RotaryEmbedding {
     pub fn new(head_dim: usize, max_seq_len: usize, theta: f64, device: &Device) -> Result<Self> {
         let head_dim_f = head_dim as f32;
         let theta_f = theta as f32;
-        
+
         // Create frequency tensor: theta^(-2i/d) for i in 0..d/2
         // Use f32 for Metal compatibility
         let inv_freq: Vec<f32> = (0..head_dim)
             .step_by(2)
             .map(|i| 1.0 / theta_f.powf(i as f32 / head_dim_f))
             .collect();
-        
+
         let inv_freq_len = inv_freq.len();
         let inv_freq = Tensor::from_vec(inv_freq, (inv_freq_len,), device)?;
 
@@ -64,7 +64,7 @@ impl RotaryEmbedding {
 
         // Outer product: positions ⊗ inv_freq
         let freqs = positions.unsqueeze(1)?.matmul(&inv_freq.unsqueeze(0)?)?;
-        
+
         // Concatenate [freqs, freqs] to match head_dim
         let emb = Tensor::cat(&[&freqs, &freqs], 1)?;
 
@@ -91,20 +91,30 @@ impl RotaryEmbedding {
     pub fn apply_rotary_emb(&self, x: &Tensor, seq_len: usize) -> Result<Tensor> {
         let (_batch, _seq, _num_heads, head_dim) = x.dims4()?;
         let dtype = x.dtype();
-        
+
         // Get sin/cos for this sequence length and convert to input dtype
-        let sin = self.sin.i(..seq_len)?.unsqueeze(0)?.unsqueeze(2)?.to_dtype(dtype)?; // (1, seq, 1, head_dim)
-        let cos = self.cos.i(..seq_len)?.unsqueeze(0)?.unsqueeze(2)?.to_dtype(dtype)?; // (1, seq, 1, head_dim)
+        let sin = self
+            .sin
+            .i(..seq_len)?
+            .unsqueeze(0)?
+            .unsqueeze(2)?
+            .to_dtype(dtype)?; // (1, seq, 1, head_dim)
+        let cos = self
+            .cos
+            .i(..seq_len)?
+            .unsqueeze(0)?
+            .unsqueeze(2)?
+            .to_dtype(dtype)?; // (1, seq, 1, head_dim)
 
         // Split x into two halves
         let x1 = x.i((.., .., .., ..head_dim / 2))?;
         let x2 = x.i((.., .., .., head_dim / 2..))?;
 
         // Apply rotation: [x1, x2] -> [x1 * cos - x2 * sin, x1 * sin + x2 * cos]
-        let rotated1 = (x1.broadcast_mul(&cos.i((.., .., .., ..head_dim / 2))?)? -
-                       x2.broadcast_mul(&sin.i((.., .., .., ..head_dim / 2))?))?;
-        let rotated2 = (x1.broadcast_mul(&sin.i((.., .., .., head_dim / 2..))?)? +
-                       x2.broadcast_mul(&cos.i((.., .., .., head_dim / 2..))?))?;
+        let rotated1 = (x1.broadcast_mul(&cos.i((.., .., .., ..head_dim / 2))?)?
+            - x2.broadcast_mul(&sin.i((.., .., .., ..head_dim / 2))?))?;
+        let rotated2 = (x1.broadcast_mul(&sin.i((.., .., .., head_dim / 2..))?)?
+            + x2.broadcast_mul(&cos.i((.., .., .., head_dim / 2..))?))?;
 
         Tensor::cat(&[&rotated1, &rotated2], 3).map_err(Into::into)
     }
@@ -132,7 +142,7 @@ impl RotaryEmbedding {
 ///     Some(4),  // num_kv_heads (grouped-query attention)
 ///     2048,     // max_seq_len
 ///     10_000.0, // rope_theta
-///     vb.pp("attn")?
+///     &vb.pp("attn")
 /// )?;
 /// # Ok(())
 /// # }
@@ -288,20 +298,20 @@ impl Attention {
         }
 
         let (_batch, num_kv_heads, _seq_len, _head_dim) = x.dims4()?;
-        
+
         // Repeat each head individually
         let mut all_heads = Vec::with_capacity(num_kv_heads * n_rep);
-        
+
         for i in 0..num_kv_heads {
             // Extract this head: (batch, 1, seq_len, head_dim)
             let head = x.narrow(1, i, 1)?;
-            
+
             // Repeat this head n_rep times
             for _ in 0..n_rep {
                 all_heads.push(head.clone());
             }
         }
-        
+
         // Concatenate all repeated heads: (batch, num_kv_heads * n_rep, seq_len, head_dim)
         let result = Tensor::cat(&all_heads.iter().collect::<Vec<_>>(), 1)?;
         // Ensure contiguous memory layout for matmul operations
@@ -326,7 +336,7 @@ impl Attention {
 /// let device = Device::Cpu;
 /// let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
 /// 
-/// let mlp = MLP::new(768, 3072, vb.pp("mlp"))?;
+/// let mlp = MLP::new(768, 3072, &vb.pp("mlp"))?;
 /// # Ok(())
 /// # }
 /// ```
@@ -401,11 +411,11 @@ mod tests {
     fn test_rotary_embedding_apply() {
         let device = Device::Cpu;
         let rope = RotaryEmbedding::new(64, 128, 10_000.0, &device).unwrap();
-        
+
         // Create dummy tensor: (batch=2, seq=10, heads=8, head_dim=64)
         let x = Tensor::randn(0f32, 1f32, (2, 10, 8, 64), &device).unwrap();
         let rotated = rope.apply_rotary_emb(&x, 10);
-        
+
         if let Err(e) = &rotated {
             eprintln!("Error in apply_rotary_emb: {e}");
         }
@@ -417,4 +427,3 @@ mod tests {
     // More comprehensive tests would require actual weight loading
     // which we'll add in integration tests
 }
-
