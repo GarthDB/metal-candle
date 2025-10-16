@@ -33,6 +33,7 @@
 pub mod backend;
 pub mod error;
 pub mod models;
+pub mod training;
 
 // Re-export key types for convenience
 pub use backend::{Device, DeviceInfo, DeviceType, TensorExt};

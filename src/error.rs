@@ -113,6 +113,13 @@ pub enum TrainingError {
         /// Description of the gradient issue
         reason: String,
     },
+
+    /// Training state error
+    #[error("training state error: {reason}")]
+    StateError {
+        /// Description of the state issue
+        reason: String,
+    },
 }
 
 /// Errors related to inference operations.
@@ -231,6 +238,16 @@ mod tests {
             reason: "rank must be > 0".to_string(),
         };
         assert!(err.to_string().contains("invalid LoRA configuration"));
+
+        let err = TrainingError::InvalidConfig {
+            reason: "invalid".to_string(),
+        };
+        assert!(err.to_string().contains("invalid training configuration"));
+
+        let err = TrainingError::StateError {
+            reason: "state error".to_string(),
+        };
+        assert!(err.to_string().contains("training state error"));
     }
 
     #[test]
