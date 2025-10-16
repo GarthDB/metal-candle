@@ -334,7 +334,7 @@ mod tests {
     #[test]
     fn test_device_debug() {
         let device = Device::new_cpu();
-        let debug_str = format!("{:?}", device);
+        let debug_str = format!("{device:?}");
         assert!(debug_str.contains("Device"));
     }
 
@@ -382,7 +382,7 @@ mod tests {
     fn test_device_info_debug() {
         let device = Device::new_cpu();
         let info = device.info();
-        let debug_str = format!("{:?}", info);
+        let debug_str = format!("{info:?}");
         assert!(debug_str.contains("DeviceInfo"));
     }
 
@@ -391,8 +391,8 @@ mod tests {
         let cpu_type = DeviceType::Cpu;
         let metal_type = DeviceType::Metal;
 
-        let cpu_debug = format!("{:?}", cpu_type);
-        let metal_debug = format!("{:?}", metal_type);
+        let cpu_debug = format!("{cpu_type:?}");
+        let metal_debug = format!("{metal_type:?}");
 
         assert!(cpu_debug.contains("Cpu"));
         assert!(metal_debug.contains("Metal"));

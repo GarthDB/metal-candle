@@ -21,7 +21,6 @@ candle-nn = "0.9"
 # Model formats
 safetensors = "0.4"
 tokenizers = { version = "0.20", default-features = false, features = ["onig"] }
-memmap2 = "0.9"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }

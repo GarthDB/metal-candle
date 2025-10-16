@@ -19,7 +19,7 @@
 //!
 //! # Architecture Components
 //!
-//! Build transformer models using reusable components in [`transformer`].
+//! Build transformer models using reusable components (coming in Phase 2 part 2).
 
 pub mod config;
 pub mod loader;

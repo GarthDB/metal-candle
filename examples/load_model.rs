@@ -1,9 +1,9 @@
 //! Example: Loading a model from safetensors format
 //!
-//! This example demonstrates how to load a model using ModelLoader,
+//! This example demonstrates how to load a model using `ModelLoader`,
 //! inspect its structure, and validate tensor shapes.
 //!
-//! Run with: cargo run --example load_model
+//! Run with: `cargo run --example load_model`
 
 use anyhow::Result;
 use candle_core::DType;

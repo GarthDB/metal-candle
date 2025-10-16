@@ -321,7 +321,7 @@ mod tests {
 
         let config = ModelConfig::from_json(json).unwrap();
         assert_eq!(config.max_position_embeddings, 2048);
-        assert_eq!(config.rms_norm_eps, 1e-6);
-        assert_eq!(config.rope_theta, 10_000.0);
+        assert!((config.rms_norm_eps - 1e-6).abs() < f64::EPSILON);
+        assert!((config.rope_theta - 10_000.0).abs() < f64::EPSILON);
     }
 }
