@@ -164,13 +164,13 @@ impl KVCache {
     /// // First token (prompt)
     /// let key = Tensor::zeros((1, 14, 1, 64), DType::F32, &device)?;
     /// let value = Tensor::zeros((1, 14, 1, 64), DType::F32, &device)?;
-    /// let (full_key, full_value) = cache.update(0, key, value)?;
+    /// let (full_key, full_value) = cache.update(0, &key, &value)?;
     /// // full_key shape: (1, 14, 1, 64)
     ///
     /// // Second token (generation)
     /// let key = Tensor::zeros((1, 14, 1, 64), DType::F32, &device)?;
     /// let value = Tensor::zeros((1, 14, 1, 64), DType::F32, &device)?;
-    /// let (full_key, full_value) = cache.update(0, key, value)?;
+    /// let (full_key, full_value) = cache.update(0, &key, &value)?;
     /// // full_key shape: (1, 14, 2, 64) - includes cached token
     /// # Ok(())
     /// # }
@@ -181,20 +181,17 @@ impl KVCache {
         key: &Tensor,
         value: &Tensor,
     ) -> Result<(Tensor, Tensor)> {
-        // Check if cache is full
-        if self.position >= self.config.max_seq_len {
+        // Get current sequence length from new tensors
+        let new_seq_len = key.dims()[2];
+
+        // Check if adding these tokens would exceed max length
+        if self.position + new_seq_len > self.config.max_seq_len {
             return Err(crate::error::InferenceError::CacheFull {
                 position: self.position,
                 max_len: self.config.max_seq_len,
             }
             .into());
         }
-
-        // Get current sequence length from new tensors
-        let new_seq_len = key.dims()[2];
-
-        // Update position
-        self.position += new_seq_len;
 
         // Get or initialize cache for this layer
         let (full_key, full_value) =
@@ -211,6 +208,12 @@ impl KVCache {
         // Store updated cache
         self.cache
             .insert(layer_idx, (full_key.clone(), full_value.clone()));
+
+        // Update position based on the new sequence length
+        // Only update on first layer to avoid double-counting
+        if layer_idx == 0 || self.cache.len() == 1 {
+            self.position += new_seq_len;
+        }
 
         Ok((full_key, full_value))
     }

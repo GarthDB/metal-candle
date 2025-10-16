@@ -69,7 +69,7 @@ mod tests {
     fn test_generator_config_default() {
         let config = GeneratorConfig::default();
         assert_eq!(config.max_tokens, 100);
-        assert_eq!(config.temperature, 1.0);
+        assert!((config.temperature - 1.0).abs() < 1e-7);
         assert!(config.eos_token_id.is_none());
     }
 

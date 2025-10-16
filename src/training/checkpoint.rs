@@ -206,7 +206,7 @@ mod tests {
             global_step: 100,
             loss: 1.5,
             learning_rate: 1e-4,
-            timestamp: 1234567890,
+            timestamp: 1_234_567_890,
         };
 
         save_checkpoint(&adapter, path, Some(&save_metadata)).unwrap();

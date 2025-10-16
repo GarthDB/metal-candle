@@ -1,7 +1,7 @@
-//! Example of training a LoRA adapter.
+//! Example of training a `LoRA` adapter.
 //!
 //! This example demonstrates how to:
-//! 1. Set up a LoRA adapter for training
+//! 1. Set up a `LoRA` adapter for training
 //! 2. Configure training hyperparameters
 //! 3. Run the training loop
 //! 4. Save checkpoints
@@ -16,6 +16,7 @@ use metal_candle::training::{
     TrainingConfig,
 };
 
+#[allow(clippy::too_many_lines)] // Example code prioritizes clarity
 fn main() -> Result<()> {
     println!("🚀 LoRA Training Example");
     println!("════════════════════════════════════════════════");
@@ -67,10 +68,10 @@ fn main() -> Result<()> {
     let frozen_params = lora_adapter.num_frozen_parameters(total_params);
     println!("   Trainable parameters: {trainable_params:>10} (LoRA)");
     println!("   Frozen parameters:    {frozen_params:>10} (Base model)");
-    println!(
-        "   Trainable ratio:      {:>9.2}%",
-        100.0 * trainable_params as f64 / (trainable_params + frozen_params) as f64
-    );
+    #[allow(clippy::cast_precision_loss)] // Parameter counts are reasonable
+    let trainable_ratio =
+        100.0 * trainable_params as f64 / (trainable_params + frozen_params) as f64;
+    println!("   Trainable ratio:      {trainable_ratio:>9.2}%");
     println!();
 
     // 5. Configure training
@@ -170,11 +171,8 @@ fn main() -> Result<()> {
     let checkpoint_path = "lora_checkpoint.safetensors";
     let checkpoint_metadata = CheckpointMetadata {
         global_step: metrics.len(),
-        loss: metrics.last().map(|m| m.loss).unwrap_or(0.0),
-        learning_rate: metrics
-            .last()
-            .map(|m| m.learning_rate as f32)
-            .unwrap_or(0.0),
+        loss: metrics.last().map_or(0.0, |m| m.loss),
+        learning_rate: metrics.last().map_or(0.0, |m| m.learning_rate),
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_secs(),

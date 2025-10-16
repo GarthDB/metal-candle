@@ -263,7 +263,7 @@ mod tests {
         let loss_val = loss.to_scalar::<f32>().unwrap();
 
         // Loss should be very small since logits strongly predict class 0
-        assert!(loss_val < 0.1, "loss = {}", loss_val);
+        assert!(loss_val < 0.1, "loss = {loss_val}");
     }
 
     #[test]
@@ -280,7 +280,7 @@ mod tests {
         let loss_val = loss.to_scalar::<f32>().unwrap();
 
         // Loss should be large since prediction is wrong
-        assert!(loss_val > 5.0, "loss = {}", loss_val);
+        assert!(loss_val > 5.0, "loss = {loss_val}");
     }
 
     #[test]
@@ -342,7 +342,7 @@ mod tests {
         let val1 = loss_standard.to_scalar::<f32>().unwrap();
         let val2 = loss_smooth.to_scalar::<f32>().unwrap();
 
-        assert!((val1 - val2).abs() < 1e-6, "{} vs {}", val1, val2);
+        assert!((val1 - val2).abs() < 1e-6, "{val1} vs {val2}");
     }
 
     #[test]
@@ -359,7 +359,7 @@ mod tests {
         let val2 = loss_smooth.to_scalar::<f32>().unwrap();
 
         // Smoothed loss should be slightly higher (regularization effect)
-        assert!(val2 > val1, "{} should be > {}", val2, val1);
+        assert!(val2 > val1, "{val2} should be > {val1}");
     }
 
     #[test]
