@@ -133,23 +133,23 @@ impl Trainer {
     /// use metal_candle::training::Trainer;
     /// use candle_core::Tensor;
     ///
-/// # fn example(mut trainer: Trainer) -> Result<(), Box<dyn std::error::Error>> {
-/// # use candle_core::{Tensor, Device, DType};
-/// // Prepare dataset (batches of input/target tensors)
-/// let device = Device::Cpu;
-/// let input = Tensor::zeros((1, 8), DType::U32, &device)?;
-/// let target = Tensor::zeros((1, 8), DType::U32, &device)?;
-/// let dataset = vec![(input, target)];
-///
-/// // Define forward pass (returns metal_candle::Result)
-/// let forward_fn = |_input: &Tensor| -> metal_candle::Result<Tensor> {
-///     Ok(Tensor::zeros((1, 8, 100), DType::F32, &device)?)
-/// };
-///
-/// // Train
-/// let metrics = trainer.train(&dataset, forward_fn)?;
-/// # Ok(())
-/// # }
+    /// # fn example(mut trainer: Trainer) -> Result<(), Box<dyn std::error::Error>> {
+    /// # use candle_core::{Tensor, Device, DType};
+    /// // Prepare dataset (batches of input/target tensors)
+    /// let device = Device::Cpu;
+    /// let input = Tensor::zeros((1, 8), DType::U32, &device)?;
+    /// let target = Tensor::zeros((1, 8), DType::U32, &device)?;
+    /// let dataset = vec![(input, target)];
+    ///
+    /// // Define forward pass (returns metal_candle::Result)
+    /// let forward_fn = |_input: &Tensor| -> metal_candle::Result<Tensor> {
+    ///     Ok(Tensor::zeros((1, 8, 100), DType::F32, &device)?)
+    /// };
+    ///
+    /// // Train
+    /// let metrics = trainer.train(&dataset, forward_fn)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn train<F, E>(
         &mut self,

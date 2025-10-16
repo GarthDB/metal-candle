@@ -38,7 +38,7 @@ pub enum Error {
     /// Candle framework errors
     #[error("candle error: {0}")]
     Candle(#[from] candle_core::Error),
-    
+
     /// JSON serialization/deserialization error
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
