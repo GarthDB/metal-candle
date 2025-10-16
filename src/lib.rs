@@ -25,12 +25,14 @@
 //!
 //! This crate is under active development. APIs are subject to change before v1.0.
 
-#![forbid(unsafe_code)]
+// Deny unsafe code by default, but allow it where explicitly justified
+#![deny(unsafe_code)]
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
 
 pub mod backend;
 pub mod error;
+pub mod models;
 
 // Re-export key types for convenience
 pub use backend::{Device, DeviceInfo, DeviceType, TensorExt};
@@ -45,6 +47,7 @@ mod tests {
 
     #[test]
     fn test_version_exists() {
-        assert!(!VERSION.is_empty());
+        // VERSION is a compile-time constant from CARGO_PKG_VERSION
+        assert_eq!(VERSION, env!("CARGO_PKG_VERSION"));
     }
 }
