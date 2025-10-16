@@ -149,6 +149,29 @@ pub enum InferenceError {
         /// Description of the sampling issue
         reason: String,
     },
+    
+    /// KV-cache is full
+    #[error("KV-cache full: position {position} exceeds max length {max_len}")]
+    CacheFull {
+        /// Current cache position
+        position: usize,
+        /// Maximum cache length
+        max_len: usize,
+    },
+    
+    /// Token sampling failed
+    #[error("token sampling failed: {reason}")]
+    SamplingError {
+        /// Description of the sampling error
+        reason: String,
+    },
+    
+    /// End-of-sequence reached
+    #[error("end of sequence reached at position {position}")]
+    EndOfSequence {
+        /// Position where EOS was reached
+        position: usize,
+    },
 }
 
 /// Errors related to checkpoint operations.
