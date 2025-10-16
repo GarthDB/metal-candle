@@ -23,6 +23,7 @@
 
 pub mod config;
 pub mod loader;
+pub mod transformer;
 
 // Re-export commonly used types
 pub use config::ModelConfig;

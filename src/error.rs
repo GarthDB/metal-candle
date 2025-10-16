@@ -37,7 +37,7 @@ pub enum Error {
 
     /// Candle framework errors
     #[error("candle error: {0}")]
-    Candle(String),
+    Candle(#[from] candle_core::Error),
 }
 
 /// Errors related to model operations.
