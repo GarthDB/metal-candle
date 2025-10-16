@@ -39,5 +39,4 @@ pub mod sampling;
 // Re-export main types
 pub use cache::{KVCache, KVCacheConfig};
 pub use generator::{Generator, GeneratorConfig};
-pub use sampling::{SamplingStrategy, sample_token};
-
+pub use sampling::{sample_token, SamplingStrategy};

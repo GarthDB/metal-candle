@@ -1,20 +1,20 @@
 //! Text generation pipeline.
 
 use crate::error::Result;
-use crate::inference::{KVCache, SamplingStrategy};
+use crate::inference::{KVCache, KVCacheConfig, SamplingStrategy};
 
 /// Configuration for text generation.
 #[derive(Debug, Clone)]
 pub struct GeneratorConfig {
     /// Maximum number of tokens to generate
     pub max_tokens: usize,
-    
+
     /// Sampling strategy
     pub sampling: SamplingStrategy,
-    
+
     /// Temperature for sampling (if using temperature strategy)
     pub temperature: f64,
-    
+
     /// End-of-sequence token ID
     pub eos_token_id: Option<u32>,
 }
@@ -50,10 +50,10 @@ impl Generator {
         // Placeholder - will be implemented in Phase 4
         Ok(Self {
             config,
-            _cache: KVCache::new(Default::default(), &candle_core::Device::Cpu)?,
+            _cache: KVCache::new(KVCacheConfig::default(), &candle_core::Device::Cpu)?,
         })
     }
-    
+
     /// Returns a reference to the generator configuration.
     #[must_use]
     pub fn config(&self) -> &GeneratorConfig {
@@ -80,4 +80,3 @@ mod tests {
         assert!(generator.is_ok());
     }
 }
-

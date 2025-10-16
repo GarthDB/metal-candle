@@ -9,19 +9,19 @@ use rand::Rng;
 pub enum SamplingStrategy {
     /// Greedy sampling (argmax)
     Greedy,
-    
+
     /// Top-k sampling
     TopK {
         /// Number of top tokens to consider
         k: usize,
     },
-    
+
     /// Top-p (nucleus) sampling
     TopP {
         /// Cumulative probability threshold
         p: f64,
     },
-    
+
     /// Temperature sampling
     Temperature {
         /// Temperature value (higher = more random)
@@ -65,7 +65,7 @@ fn sample_greedy(logits: &Tensor) -> Result<u32> {
         .iter()
         .enumerate()
         .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
-        .map(|(idx, _)| idx as u32)
+        .map(|(idx, _)| u32::try_from(idx).unwrap_or(u32::MAX))
         .ok_or_else(|| crate::error::InferenceError::SamplingError {
             reason: "Empty logits".to_string(),
         })?;
@@ -75,20 +75,20 @@ fn sample_greedy(logits: &Tensor) -> Result<u32> {
 /// Top-k sampling.
 fn sample_top_k(logits: &Tensor, k: usize) -> Result<u32> {
     let logits_vec = logits.to_vec1::<f32>()?;
-    
+
     // Get top-k indices
     let mut indexed: Vec<(usize, f32)> = logits_vec.iter().copied().enumerate().collect();
     indexed.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
     indexed.truncate(k);
-    
+
     // Apply softmax to top-k
     let max_logit = indexed[0].1;
     let exp_sum: f32 = indexed.iter().map(|(_, l)| (l - max_logit).exp()).sum();
     let probs: Vec<f64> = indexed
         .iter()
-        .map(|(_, l)| ((l - max_logit).exp() / exp_sum) as f64)
+        .map(|(_, l)| f64::from((l - max_logit).exp() / exp_sum))
         .collect();
-    
+
     // Sample from top-k
     let mut rng = rand::thread_rng();
     let r: f64 = rng.gen();
@@ -96,29 +96,29 @@ fn sample_top_k(logits: &Tensor, k: usize) -> Result<u32> {
     for (i, &p) in probs.iter().enumerate() {
         cumsum += p;
         if r <= cumsum {
-            return Ok(indexed[i].0 as u32);
+            return Ok(u32::try_from(indexed[i].0).unwrap_or(u32::MAX));
         }
     }
-    
-    Ok(indexed[0].0 as u32)
+
+    Ok(u32::try_from(indexed[0].0).unwrap_or(u32::MAX))
 }
 
 /// Top-p (nucleus) sampling.
 fn sample_top_p(logits: &Tensor, p: f64) -> Result<u32> {
     let logits_vec = logits.to_vec1::<f32>()?;
-    
+
     // Sort by probability (descending)
     let mut indexed: Vec<(usize, f32)> = logits_vec.iter().copied().enumerate().collect();
     indexed.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
-    
+
     // Apply softmax
     let max_logit = indexed[0].1;
     let exp_sum: f32 = indexed.iter().map(|(_, l)| (l - max_logit).exp()).sum();
     let probs: Vec<(usize, f64)> = indexed
         .iter()
-        .map(|(idx, l)| (*idx, ((l - max_logit).exp() / exp_sum) as f64))
+        .map(|(idx, l)| (*idx, f64::from((l - max_logit).exp() / exp_sum)))
         .collect();
-    
+
     // Find nucleus (top-p)
     let mut cumsum = 0.0;
     let mut nucleus = Vec::new();
@@ -129,7 +129,7 @@ fn sample_top_p(logits: &Tensor, p: f64) -> Result<u32> {
             break;
         }
     }
-    
+
     // Sample from nucleus
     let mut rng = rand::thread_rng();
     let r: f64 = rng.gen();
@@ -138,28 +138,30 @@ fn sample_top_p(logits: &Tensor, p: f64) -> Result<u32> {
     for (idx, prob) in &nucleus {
         cumsum += prob / nucleus_sum;
         if r <= cumsum {
-            return Ok(*idx as u32);
+            return Ok(u32::try_from(*idx).unwrap_or(u32::MAX));
         }
     }
-    
-    Ok(nucleus[0].0 as u32)
+
+    Ok(u32::try_from(nucleus[0].0).unwrap_or(u32::MAX))
 }
 
 /// Temperature sampling.
 fn sample_temperature(logits: &Tensor, temperature: f64) -> Result<u32> {
     let logits_vec = logits.to_vec1::<f32>()?;
-    
+
     // Apply temperature
+    #[allow(clippy::cast_possible_truncation)]
+    // temperature is user-controlled, truncation acceptable
     let scaled: Vec<f32> = logits_vec.iter().map(|l| l / temperature as f32).collect();
-    
+
     // Apply softmax
     let max_logit = scaled.iter().copied().fold(f32::NEG_INFINITY, f32::max);
     let exp_sum: f32 = scaled.iter().map(|l| (l - max_logit).exp()).sum();
     let probs: Vec<f64> = scaled
         .iter()
-        .map(|l| ((l - max_logit).exp() / exp_sum) as f64)
+        .map(|l| f64::from((l - max_logit).exp() / exp_sum))
         .collect();
-    
+
     // Sample
     let mut rng = rand::thread_rng();
     let r: f64 = rng.gen();
@@ -167,11 +169,11 @@ fn sample_temperature(logits: &Tensor, temperature: f64) -> Result<u32> {
     for (idx, &p) in probs.iter().enumerate() {
         cumsum += p;
         if r <= cumsum {
-            return Ok(idx as u32);
+            return Ok(u32::try_from(idx).unwrap_or(u32::MAX));
         }
     }
-    
-    Ok((probs.len() - 1) as u32)
+
+    Ok(u32::try_from(probs.len() - 1).unwrap_or(u32::MAX))
 }
 
 #[cfg(test)]
@@ -183,7 +185,7 @@ mod tests {
     fn test_greedy_sampling() {
         let device = Device::Cpu;
         let logits = Tensor::new(&[1.0f32, 3.0, 2.0, 0.5], &device).unwrap();
-        
+
         let token = sample_greedy(&logits).unwrap();
         assert_eq!(token, 1); // Index of max value (3.0)
     }
@@ -192,7 +194,7 @@ mod tests {
     fn test_top_k_sampling() {
         let device = Device::Cpu;
         let logits = Tensor::new(&[1.0f32, 3.0, 2.0, 0.5], &device).unwrap();
-        
+
         // Top-2: should sample from indices 1 (3.0) or 2 (2.0)
         let token = sample_top_k(&logits, 2).unwrap();
         assert!(token == 1 || token == 2);
@@ -204,4 +206,3 @@ mod tests {
         assert!(matches!(strategy, SamplingStrategy::Greedy));
     }
 }
-
