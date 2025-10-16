@@ -35,6 +35,7 @@
 //! ```
 
 pub mod adapter;
+pub mod checkpoint;
 pub mod lora;
 pub mod loss;
 pub mod optimizer;

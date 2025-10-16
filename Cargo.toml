@@ -38,9 +38,9 @@ criterion = { version = "0.5", features = ["html_reports"] }
 
 # Testing utilities
 approx = "0.5"
-tempfile = "3.0"
 proptest = "1.0"
 insta = { version = "1.34", features = ["yaml"] }
+tempfile = "3.0"
 
 # Examples only (anyhow for examples, never in library code)
 anyhow = "1.0"
