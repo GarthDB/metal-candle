@@ -4,7 +4,7 @@
 //! model parameters during training.
 
 use crate::error::Result;
-use candle_core::Tensor;
+use candle_core::{Tensor, Var};
 use std::collections::HashMap;
 
 /// Configuration for the `AdamW` optimizer.
@@ -278,6 +278,55 @@ impl AdamW {
         Ok(param_new)
     }
 
+    /// Performs a single optimization step for a `Var` parameter (autograd-based).
+    ///
+    /// This method works with Candle's autograd `Var` type instead of requiring
+    /// parameter names. It updates the parameter in-place using its gradient.
+    ///
+    /// # Arguments
+    ///
+    /// * `var` - The trainable parameter (Var)
+    /// * `grad` - Gradient with respect to the parameter
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if tensor operations fail or if the parameter doesn't have state.
+    ///
+    /// # Panics
+    ///
+    /// This function does not panic.
+    pub fn step_var(&mut self, var: &Var, grad: &Tensor) -> Result<()> {
+        // Use the variable's ID as the key
+        let var_id = format!("{var:p}");
+
+        // Get or create parameter state
+        if !self.state.contains_key(&var_id) {
+            let param = var.as_tensor();
+            self.add_parameter(&var_id, param)?;
+        }
+
+        // Perform update using the named parameter API
+        let param = var.as_tensor();
+        let updated_param = self.step(&var_id, param, grad)?;
+
+        // Update the Var with the new value
+        var.set(&updated_param)?;
+
+        Ok(())
+    }
+
+    /// Sets the learning rate for the optimizer.
+    ///
+    /// This updates the learning rate used for parameter updates.
+    pub fn set_lr(&mut self, lr: f32) {
+        self.config.learning_rate = lr;
+    }
+
+    /// Returns the current learning rate.
+    #[must_use]
+    pub const fn learning_rate(&self) -> f32 {
+        self.config.learning_rate
+    }
     /// Returns the current step count.
     #[must_use]
     pub const fn step_count(&self) -> usize {
