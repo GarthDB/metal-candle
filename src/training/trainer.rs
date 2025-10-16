@@ -4,8 +4,256 @@
 //! including forward passes, loss computation, backward passes, and optimizer updates.
 
 use crate::error::Result;
-use crate::training::{AdamW, LoRAAdapter};
-use candle_core::{Tensor, Var};
+use crate::training::{AdamW, AdamWConfig, LRScheduler, LoRAAdapter, LoRAAdapterConfig};
+use candle_core::{Device, Tensor, Var};
+use std::time::Instant;
+
+/// Training configuration.
+///
+/// Configures all aspects of the training process including optimizer, learning rate,
+/// and training loop hyperparameters.
+#[derive(Debug, Clone)]
+pub struct TrainingConfig {
+    /// Number of training epochs
+    pub num_epochs: usize,
+
+    /// Learning rate scheduler
+    pub lr_scheduler: LRScheduler,
+
+    /// Optimizer configuration
+    pub optimizer_config: AdamWConfig,
+
+    /// Maximum gradient norm for clipping (None = no clipping)
+    pub max_grad_norm: Option<f32>,
+}
+
+impl Default for TrainingConfig {
+    fn default() -> Self {
+        Self {
+            num_epochs: 3,
+            lr_scheduler: LRScheduler::Constant { lr: 1e-4 },
+            optimizer_config: AdamWConfig::default(),
+            max_grad_norm: Some(1.0),
+        }
+    }
+}
+
+/// High-level trainer for `LoRA` fine-tuning.
+///
+/// Coordinates the full training process including epochs, batches, LR scheduling,
+/// and progress tracking.
+///
+/// # Examples
+///
+/// ```no_run
+/// use metal_candle::training::{Trainer, TrainingConfig, LoRAAdapterConfig};
+/// use metal_candle::Device;
+///
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let device = Device::Cpu;
+/// let lora_config = LoRAAdapterConfig::default();
+/// let training_config = TrainingConfig::default();
+///
+/// // Create trainer
+/// let mut trainer = Trainer::new(32, 128, 12, lora_config, training_config, &device)?;
+///
+/// // Train (with your model's forward function)
+/// // let metrics = trainer.train(dataset, forward_fn)?;
+/// # Ok(())
+/// # }
+/// ```
+pub struct Trainer {
+    lora_adapter: LoRAAdapter,
+    optimizer: AdamW,
+    config: TrainingConfig,
+    training_step: TrainingStep,
+    global_step: usize,
+}
+
+impl Trainer {
+    /// Creates a new trainer.
+    ///
+    /// # Arguments
+    ///
+    /// * `hidden_size` - Model hidden dimension
+    /// * `intermediate_size` - MLP intermediate dimension
+    /// * `num_layers` - Number of transformer layers
+    /// * `lora_config` - `LoRA` adapter configuration
+    /// * `training_config` - Training hyperparameters
+    /// * `device` - Device to place tensors on
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `LoRA` adapter or optimizer initialization fails.
+    pub fn new(
+        hidden_size: usize,
+        intermediate_size: usize,
+        num_layers: usize,
+        lora_config: &LoRAAdapterConfig,
+        training_config: TrainingConfig,
+        device: &Device,
+    ) -> Result<Self> {
+        let lora_adapter = LoRAAdapter::new(
+            hidden_size,
+            intermediate_size,
+            num_layers,
+            lora_config,
+            device,
+        )?;
+
+        let optimizer = AdamW::new(training_config.optimizer_config)?;
+
+        Ok(Self {
+            lora_adapter,
+            optimizer,
+            config: training_config,
+            training_step: TrainingStep::new(),
+            global_step: 0,
+        })
+    }
+
+    /// Trains the model for the configured number of epochs.
+    ///
+    /// # Arguments
+    ///
+    /// * `dataset` - Iterator over (`input_ids`, `target_ids`) batches
+    /// * `forward_fn` - Model forward pass function
+    ///
+    /// # Returns
+    ///
+    /// Vector of `StepMetrics` for each training step.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any training step fails.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use metal_candle::training::Trainer;
+    /// use candle_core::Tensor;
+    ///
+    /// # fn example(mut trainer: Trainer) -> Result<(), Box<dyn std::error::Error>> {
+    /// // Prepare dataset (batches of input/target tensors)
+    /// let dataset = vec![/* (input, target) pairs */];
+    ///
+    /// // Define forward pass
+    /// let forward_fn = |input: &Tensor| -> Result<Tensor, Box<dyn std::error::Error>> {
+    ///     // Your model forward pass
+    ///     # Ok(input.clone())
+    /// };
+    ///
+    /// // Train
+    /// let metrics = trainer.train(&dataset, forward_fn)?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn train<F, E>(
+        &mut self,
+        dataset: &[(Tensor, Tensor)],
+        forward_fn: F,
+    ) -> Result<Vec<StepMetrics>>
+    where
+        F: Fn(&Tensor) -> std::result::Result<Tensor, E>,
+        E: Into<crate::error::Error>,
+    {
+        let mut all_metrics = Vec::new();
+        let total_steps = self.config.num_epochs * dataset.len();
+
+        println!("\n🚀 Starting LoRA Training");
+        println!("═══════════════════════════");
+        println!("Epochs: {}", self.config.num_epochs);
+        println!("Batches per epoch: {}", dataset.len());
+        println!("Total steps: {total_steps}");
+        let trainable_params = self.lora_adapter.num_trainable_parameters();
+        println!("LoRA trainable params: {trainable_params}");
+        println!();
+
+        let training_start = Instant::now();
+
+        for epoch in 0..self.config.num_epochs {
+            let epoch_start = Instant::now();
+            let mut epoch_loss = 0.0;
+
+            println!("Epoch {}/{}", epoch + 1, self.config.num_epochs);
+            println!("─────────────────────────");
+
+            for (batch_idx, (input_ids, target_ids)) in dataset.iter().enumerate() {
+                // Get current learning rate from scheduler
+                let lr = self.config.lr_scheduler.get_lr(self.global_step);
+
+                // Wrap forward_fn to convert error type
+                let forward_wrapper =
+                    |input: &Tensor| -> Result<Tensor> { forward_fn(input).map_err(Into::into) };
+
+                // Execute training step
+                let metrics = self.training_step.execute(
+                    input_ids,
+                    target_ids,
+                    &self.lora_adapter,
+                    &mut self.optimizer,
+                    lr,
+                    forward_wrapper,
+                )?;
+
+                epoch_loss += metrics.loss;
+                all_metrics.push(metrics.clone());
+                self.global_step += 1;
+
+                // Print progress every 10 steps
+                if (batch_idx + 1) % 10 == 0 || batch_idx + 1 == dataset.len() {
+                    println!(
+                        "  Step {}/{} | Loss: {:.4} | LR: {:.6}",
+                        batch_idx + 1,
+                        dataset.len(),
+                        metrics.loss,
+                        metrics.learning_rate
+                    );
+                }
+            }
+
+            let epoch_time = epoch_start.elapsed();
+            #[allow(clippy::cast_precision_loss)]
+            let avg_epoch_loss = epoch_loss / dataset.len() as f32; // Safe: batch count is reasonable
+
+            println!(
+                "  Epoch {} complete | Avg Loss: {:.4} | Time: {:.2}s",
+                epoch + 1,
+                avg_epoch_loss,
+                epoch_time.as_secs_f32()
+            );
+            println!();
+        }
+
+        let total_time = training_start.elapsed();
+        println!("✅ Training Complete!");
+        println!("═══════════════════════");
+        println!("Total time: {:.2}s", total_time.as_secs_f32());
+        let final_loss = all_metrics.last().map_or(0.0, |m| m.loss);
+        println!("Final loss: {final_loss:.4}");
+        println!();
+
+        Ok(all_metrics)
+    }
+
+    /// Returns a reference to the `LoRA` adapter.
+    #[must_use]
+    pub const fn lora_adapter(&self) -> &LoRAAdapter {
+        &self.lora_adapter
+    }
+
+    /// Returns a mutable reference to the `LoRA` adapter.
+    #[must_use]
+    pub fn lora_adapter_mut(&mut self) -> &mut LoRAAdapter {
+        &mut self.lora_adapter
+    }
+
+    /// Returns the global step count.
+    #[must_use]
+    pub const fn global_step(&self) -> usize {
+        self.global_step
+    }
+}
 
 /// Training step result.
 ///

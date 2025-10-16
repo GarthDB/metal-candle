@@ -47,4 +47,4 @@ pub use lora::{LoRAConfig, LoRALayer};
 pub use loss::{cross_entropy_loss, cross_entropy_loss_with_smoothing};
 pub use optimizer::{AdamW, AdamWConfig};
 pub use scheduler::LRScheduler;
-pub use trainer::{StepMetrics, TrainingStep};
+pub use trainer::{StepMetrics, Trainer, TrainingConfig, TrainingStep};
