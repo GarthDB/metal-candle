@@ -23,8 +23,10 @@
 
 pub mod config;
 pub mod loader;
+pub mod qwen;
 pub mod transformer;
 
 // Re-export commonly used types
 pub use config::ModelConfig;
 pub use loader::ModelLoader;
+pub use qwen::Qwen;
