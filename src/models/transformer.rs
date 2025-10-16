@@ -135,7 +135,7 @@ impl RotaryEmbedding {
 /// # fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let device = Device::Cpu;
 /// let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
-/// 
+///
 /// let attention = Attention::new(
 ///     768,      // hidden_size
 ///     12,       // num_heads
@@ -335,7 +335,7 @@ impl Attention {
 /// # fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let device = Device::Cpu;
 /// let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
-/// 
+///
 /// let mlp = MLP::new(768, 3072, &vb.pp("mlp"))?;
 /// # Ok(())
 /// # }
