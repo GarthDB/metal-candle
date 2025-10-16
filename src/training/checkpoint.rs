@@ -91,7 +91,7 @@ pub fn save_checkpoint(
     
     // Save using safetensors crate
     safetensors::serialize_to_file(&tensors, &metadata_map, path)
-        .map_err(|e| crate::error::Error::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| crate::error::Error::Io(std::io::Error::other(e)))?;
     
     Ok(())
 }
@@ -116,6 +116,10 @@ pub fn save_checkpoint(
 /// - File doesn't exist or can't be read
 /// - Safetensors deserialization fails
 /// - Adapter structure doesn't match checkpoint
+///
+/// # Panics
+///
+/// Panics if the adapter has no layers (empty adapter).
 ///
 /// # Examples
 ///
