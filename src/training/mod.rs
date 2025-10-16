@@ -38,9 +38,11 @@ pub mod adapter;
 pub mod lora;
 pub mod loss;
 pub mod optimizer;
+pub mod scheduler;
 
 // Re-export main types
 pub use adapter::{LoRAAdapter, LoRAAdapterConfig, TargetModule};
 pub use lora::{LoRAConfig, LoRALayer};
 pub use loss::{cross_entropy_loss, cross_entropy_loss_with_smoothing};
 pub use optimizer::{AdamW, AdamWConfig};
+pub use scheduler::LRScheduler;
