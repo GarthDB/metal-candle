@@ -331,4 +331,93 @@ mod tests {
         let norm = RMSNorm::new(64, 1e-6, &vb);
         assert!(norm.is_ok());
     }
+
+    #[test]
+    fn test_rms_norm_forward() {
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(DType::F32, &device);
+
+        let norm = RMSNorm::new(128, 1e-6, &vb).unwrap();
+        let input = Tensor::randn(0f32, 1f32, (2, 16, 128), &device).unwrap();
+
+        let output = norm.forward(&input);
+        assert!(output.is_ok());
+        assert_eq!(output.unwrap().dims(), &[2, 16, 128]);
+    }
+
+    #[test]
+    fn test_decoder_layer_forward() {
+        let config = create_test_config();
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(DType::F32, &device);
+
+        let layer = QwenDecoderLayer::new(&config, &vb).unwrap();
+        let input = Tensor::zeros((1, 8, config.hidden_size), DType::F32, &device).unwrap();
+
+        let output = layer.forward(&input, None);
+        assert!(output.is_ok());
+        assert_eq!(output.unwrap().dims(), &[1, 8, config.hidden_size]);
+    }
+
+    #[test]
+    fn test_qwen_forward() {
+        let config = create_test_config();
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(DType::F32, &device);
+
+        let model = Qwen::new(&config, vb).unwrap();
+        let input_ids = Tensor::zeros((1, 8), DType::U32, &device).unwrap();
+
+        let logits = model.forward(&input_ids, None);
+        assert!(logits.is_ok());
+
+        let logits = logits.unwrap();
+        let (batch, seq, vocab) = logits.dims3().unwrap();
+        assert_eq!(batch, 1);
+        assert_eq!(seq, 8);
+        assert_eq!(vocab, config.vocab_size);
+    }
+
+    #[test]
+    fn test_qwen_num_layers() {
+        let config = create_test_config();
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(DType::F32, &device);
+
+        let model = Qwen::new(&config, vb).unwrap();
+        assert_eq!(model.num_layers(), config.num_hidden_layers);
+    }
+
+    #[test]
+    fn test_qwen_num_parameters() {
+        let config = create_test_config();
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(DType::F32, &device);
+
+        let model = Qwen::new(&config, vb).unwrap();
+        let params = model.num_parameters();
+
+        // Should have non-zero parameters
+        assert!(params > 0);
+
+        // Rough estimate: vocab embeddings + lm_head should be most of it
+        let expected_min = config.vocab_size * config.hidden_size * 2;
+        assert!(params > expected_min);
+    }
+
+    #[test]
+    fn test_qwen_different_batch_sizes() {
+        let config = create_test_config();
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(DType::F32, &device);
+
+        let model = Qwen::new(&config, vb).unwrap();
+
+        for batch_size in [1, 2, 4].iter() {
+            let input_ids = Tensor::zeros((*batch_size, 8), DType::U32, &device).unwrap();
+            let logits = model.forward(&input_ids, None);
+            assert!(logits.is_ok());
+            assert_eq!(logits.unwrap().dims()[0], *batch_size);
+        }
+    }
 }

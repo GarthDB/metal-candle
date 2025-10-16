@@ -424,6 +424,95 @@ mod tests {
         assert_eq!(rotated.dims(), &[2, 10, 8, 64]);
     }
 
-    // More comprehensive tests would require actual weight loading
-    // which we'll add in integration tests
+    #[test]
+    fn test_rotary_embedding_different_seq_lengths() {
+        let device = Device::Cpu;
+        let rope = RotaryEmbedding::new(64, 256, 10_000.0, &device).unwrap();
+
+        // Test with different sequence lengths
+        for seq_len in [1, 5, 16, 32, 64].iter() {
+            let x = Tensor::randn(0f32, 1f32, (1, *seq_len, 4, 64), &device).unwrap();
+            let rotated = rope.apply_rotary_emb(&x, *seq_len);
+            assert!(rotated.is_ok());
+            assert_eq!(rotated.unwrap().dims(), &[1, *seq_len, 4, 64]);
+        }
+    }
+
+    #[test]
+    fn test_attention_creation() {
+        use candle_nn::VarBuilder;
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
+
+        let attn = Attention::new(256, 8, Some(4), 512, 10_000.0, &vb);
+        assert!(attn.is_ok());
+
+        let attn = attn.unwrap();
+        assert_eq!(attn.head_dim(), 32); // 256 / 8
+    }
+
+    #[test]
+    fn test_attention_forward() {
+        use candle_nn::VarBuilder;
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
+
+        let attn = Attention::new(128, 4, Some(2), 256, 10_000.0, &vb).unwrap();
+        let input = Tensor::zeros((1, 8, 128), candle_core::DType::F32, &device).unwrap();
+
+        let output = attn.forward(&input, None);
+        assert!(output.is_ok());
+        assert_eq!(output.unwrap().dims(), &[1, 8, 128]);
+    }
+
+    #[test]
+    fn test_attention_with_mask() {
+        use candle_nn::VarBuilder;
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
+
+        let attn = Attention::new(128, 4, None, 256, 10_000.0, &vb).unwrap();
+        let input = Tensor::zeros((1, 8, 128), candle_core::DType::F32, &device).unwrap();
+        let mask = Tensor::zeros((1, 1, 8, 8), candle_core::DType::F32, &device).unwrap();
+
+        let output = attn.forward(&input, Some(&mask));
+        assert!(output.is_ok());
+    }
+
+    #[test]
+    fn test_mlp_creation() {
+        use candle_nn::VarBuilder;
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
+
+        let mlp = MLP::new(256, 1024, &vb);
+        assert!(mlp.is_ok());
+    }
+
+    #[test]
+    fn test_mlp_forward() {
+        use candle_nn::VarBuilder;
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
+
+        let mlp = MLP::new(128, 512, &vb).unwrap();
+        let input = Tensor::randn(0f32, 1f32, (2, 16, 128), &device).unwrap();
+
+        let output = mlp.forward(&input);
+        assert!(output.is_ok());
+        assert_eq!(output.unwrap().dims(), &[2, 16, 128]);
+    }
+
+    #[test]
+    fn test_mlp_different_sizes() {
+        use candle_nn::VarBuilder;
+        let device = Device::Cpu;
+        let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
+
+        // Test various hidden/intermediate size combinations
+        for (hidden, intermediate) in [(64, 256), (128, 512), (256, 1024)].iter() {
+            let mlp = MLP::new(*hidden, *intermediate, &vb);
+            assert!(mlp.is_ok());
+        }
+    }
 }
