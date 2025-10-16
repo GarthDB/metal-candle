@@ -322,8 +322,8 @@ impl LoRAAdapter {
 
         if let Some(lora_layer) = self.layers.get(&key) {
             // Compute ΔW = B @ A * scaling
-            let lora_a = lora_layer.lora_a();
-            let lora_b = lora_layer.lora_b();
+            let lora_a = lora_layer.lora_a_tensor();
+            let lora_b = lora_layer.lora_b_tensor();
 
             // A: (rank, in_features)
             // B: (out_features, rank)

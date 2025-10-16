@@ -24,7 +24,7 @@
 //! - <https://arxiv.org/abs/2106.09685>
 
 use crate::error::Result;
-use candle_core::{DType, Device, Tensor};
+use candle_core::{DType, Device, Tensor, Var};
 use serde::{Deserialize, Serialize};
 
 /// Configuration for `LoRA` layers.
@@ -154,12 +154,14 @@ pub struct LoRALayer {
     /// Low-rank matrix A: (rank, `in_features`)
     ///
     /// Initialized with Gaussian distribution (mean=0, std=1/√rank)
-    lora_a: Tensor,
+    /// Wrapped in `Var` for gradient tracking
+    lora_a: Var,
 
     /// Low-rank matrix B: (`out_features`, rank)
     ///
     /// Initialized with zeros
-    lora_b: Tensor,
+    /// Wrapped in `Var` for gradient tracking
+    lora_b: Var,
 
     /// `LoRA` configuration
     config: LoRAConfig,
@@ -220,10 +222,12 @@ impl LoRALayer {
         // Standard deviation: 1/√rank for stable training
         #[allow(clippy::cast_precision_loss)]
         let std = 1.0 / (config.rank as f32).sqrt(); // Safe: rank is small (4-32)
-        let lora_a = Tensor::randn(0f32, std, (config.rank, in_features), device)?;
+        let tensor_a = Tensor::randn(0f32, std, (config.rank, in_features), device)?;
+        let lora_a = Var::from_tensor(&tensor_a)?;
 
         // Initialize B with zeros
-        let lora_b = Tensor::zeros((out_features, config.rank), DType::F32, device)?;
+        let tensor_b = Tensor::zeros((out_features, config.rank), DType::F32, device)?;
+        let lora_b = Var::from_tensor(&tensor_b)?;
 
         Ok(Self {
             lora_a,
@@ -289,16 +293,44 @@ impl LoRALayer {
         self.config.rank * (self.in_features + self.out_features)
     }
 
-    /// Returns a reference to the A matrix.
+    /// Returns a reference to the A matrix as a `Var` (trainable parameter).
+    ///
+    /// Use this to access gradients during training.
     #[must_use]
-    pub const fn lora_a(&self) -> &Tensor {
+    pub const fn lora_a(&self) -> &Var {
         &self.lora_a
     }
 
-    /// Returns a reference to the B matrix.
+    /// Returns a reference to the B matrix as a `Var` (trainable parameter).
+    ///
+    /// Use this to access gradients during training.
     #[must_use]
-    pub const fn lora_b(&self) -> &Tensor {
+    pub const fn lora_b(&self) -> &Var {
         &self.lora_b
+    }
+
+    /// Returns a reference to the A matrix as a `Tensor` (for operations).
+    ///
+    /// Use this for forward passes and other tensor operations.
+    #[must_use]
+    pub fn lora_a_tensor(&self) -> &Tensor {
+        self.lora_a.as_tensor()
+    }
+
+    /// Returns a reference to the B matrix as a `Tensor` (for operations).
+    ///
+    /// Use this for forward passes and other tensor operations.
+    #[must_use]
+    pub fn lora_b_tensor(&self) -> &Tensor {
+        self.lora_b.as_tensor()
+    }
+
+    /// Returns all trainable parameters as a vector of `Var` references.
+    ///
+    /// This is useful for training loops to collect all parameters that need gradients.
+    #[must_use]
+    pub fn trainable_variables(&self) -> Vec<&Var> {
+        vec![&self.lora_a, &self.lora_b]
     }
 
     /// Returns the `LoRA` configuration.
@@ -467,5 +499,57 @@ mod tests {
             assert_eq!(lora.in_features(), *in_dim);
             assert_eq!(lora.out_features(), *out_dim);
         }
+    }
+
+    #[test]
+    fn test_lora_layer_trainable_variables() {
+        let device = Device::Cpu;
+        let config = LoRAConfig::default();
+
+        let lora = LoRALayer::new(128, 128, &config, &device).unwrap();
+
+        // Check that we can access Vars
+        let vars = lora.trainable_variables();
+        assert_eq!(vars.len(), 2);
+
+        // Check that we can access tensors from Vars
+        let a_tensor = lora.lora_a_tensor();
+        let b_tensor = lora.lora_b_tensor();
+        assert_eq!(a_tensor.dims(), &[8, 128]);
+        assert_eq!(b_tensor.dims(), &[128, 8]);
+    }
+
+    #[test]
+    fn test_lora_layer_gradients() {
+        let device = Device::Cpu;
+        let config = LoRAConfig {
+            rank: 4,
+            alpha: 8.0,
+            dropout: 0.0,
+        };
+
+        let lora = LoRALayer::new(16, 16, &config, &device).unwrap();
+
+        // Create input
+        let input = Tensor::ones((1, 16), DType::F32, &device).unwrap();
+
+        // Forward pass
+        let output = lora.forward(&input).unwrap();
+
+        // Compute a simple loss (sum of outputs)
+        let loss = output.sum_all().unwrap();
+
+        // Backward pass
+        let grads = loss.backward().unwrap();
+
+        // Check that gradients exist for both A and B
+        assert!(grads.get(lora.lora_a()).is_some(), "Gradient for A exists");
+        assert!(grads.get(lora.lora_b()).is_some(), "Gradient for B exists");
+
+        // Gradients should have the same shape as the parameters
+        let grad_a = grads.get(lora.lora_a()).unwrap();
+        let grad_b = grads.get(lora.lora_b()).unwrap();
+        assert_eq!(grad_a.dims(), lora.lora_a_tensor().dims());
+        assert_eq!(grad_b.dims(), lora.lora_b_tensor().dims());
     }
 }
