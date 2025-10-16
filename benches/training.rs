@@ -33,10 +33,17 @@ fn benchmark_lora_forward(c: &mut Criterion) {
     ];
 
     for (name, in_features, out_features, rank) in configs {
-        #[allow(clippy::cast_precision_loss)] // Rank values are reasonable sizes
+        let alpha = match rank {
+            4 => 8.0,
+            8 => 16.0,
+            16 => 32.0,
+            32 => 64.0,
+            64 => 128.0,
+            _ => 16.0, // Default fallback
+        };
         let config = LoRAConfig {
             rank,
-            alpha: rank as f32 * 2.0,
+            alpha,
             dropout: 0.0,
         };
 
@@ -220,10 +227,17 @@ fn benchmark_lora_scaling(c: &mut Criterion) {
     let out_features = 1024;
 
     for rank in [4, 8, 16, 32, 64] {
-        #[allow(clippy::cast_precision_loss)] // Rank values are reasonable sizes
+        let alpha = match rank {
+            4 => 8.0,
+            8 => 16.0,
+            16 => 32.0,
+            32 => 64.0,
+            64 => 128.0,
+            _ => 16.0, // Default fallback
+        };
         let config = LoRAConfig {
             rank,
-            alpha: rank as f32 * 2.0,
+            alpha,
             dropout: 0.0,
         };
 

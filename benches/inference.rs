@@ -145,10 +145,10 @@ fn benchmark_sampling_strategies(c: &mut Criterion) {
     }
 
     // Top-p sampling
-    for p in [0.9, 0.95] {
+    for (p, label) in [(0.9, "90"), (0.95, "95")] {
         let strategy = SamplingStrategy::TopP { p };
         group.bench_with_input(
-            BenchmarkId::new("top_p", format!("p_{}", (p * 100.0) as u32)),
+            BenchmarkId::new("top_p", format!("p_{label}")),
             &strategy,
             |b, strategy| {
                 b.iter(|| {
@@ -161,10 +161,10 @@ fn benchmark_sampling_strategies(c: &mut Criterion) {
     }
 
     // Temperature sampling
-    for temp in [0.7, 0.8, 1.0] {
+    for (temp, label) in [(0.7, "7"), (0.8, "8"), (1.0, "10")] {
         let strategy = SamplingStrategy::Temperature { temperature: temp };
         group.bench_with_input(
-            BenchmarkId::new("temperature", format!("t_{}", (temp * 10.0) as u32)),
+            BenchmarkId::new("temperature", format!("t_{label}")),
             &strategy,
             |b, strategy| {
                 b.iter(|| {
