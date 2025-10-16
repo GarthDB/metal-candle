@@ -209,6 +209,12 @@ impl Qwen {
         self.lm_head.forward(&hidden_states).map_err(Into::into)
     }
 
+    /// Returns the number of layers in the model.
+    #[must_use]
+    pub fn num_layers(&self) -> usize {
+        self.layers.len()
+    }
+
     /// Returns the number of parameters in the model.
     ///
     /// Useful for memory estimation and model analysis.

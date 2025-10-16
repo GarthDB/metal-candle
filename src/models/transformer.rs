@@ -43,20 +43,23 @@ impl RotaryEmbedding {
     ///
     /// Returns an error if tensor operations fail.
     #[allow(clippy::cast_precision_loss)] // head_dim and max_seq_len are small, precision loss acceptable
+    #[allow(clippy::cast_possible_truncation)] // theta is typically 10_000.0, well within f32 range
     pub fn new(head_dim: usize, max_seq_len: usize, theta: f64, device: &Device) -> Result<Self> {
-        let head_dim_f = head_dim as f64;
+        let head_dim_f = head_dim as f32;
+        let theta_f = theta as f32;
         
         // Create frequency tensor: theta^(-2i/d) for i in 0..d/2
-        let inv_freq: Vec<f64> = (0..head_dim)
+        // Use f32 for Metal compatibility
+        let inv_freq: Vec<f32> = (0..head_dim)
             .step_by(2)
-            .map(|i| 1.0 / theta.powf(i as f64 / head_dim_f))
+            .map(|i| 1.0 / theta_f.powf(i as f32 / head_dim_f))
             .collect();
         
         let inv_freq_len = inv_freq.len();
         let inv_freq = Tensor::from_vec(inv_freq, (inv_freq_len,), device)?;
 
         // Create position indices: [0, 1, 2, ..., max_seq_len-1]
-        let positions: Vec<f64> = (0..max_seq_len).map(|i| i as f64).collect();
+        let positions: Vec<f32> = (0..max_seq_len).map(|i| i as f32).collect();
         let positions = Tensor::from_vec(positions, (max_seq_len,), device)?;
 
         // Outer product: positions ⊗ inv_freq
@@ -238,10 +241,10 @@ impl Attention {
         let q = self.rope.apply_rotary_emb(&q, seq_len)?;
         let k = self.rope.apply_rotary_emb(&k, seq_len)?;
 
-        // Transpose to (batch, num_heads, seq_len, head_dim)
-        let q = q.transpose(1, 2)?;
-        let k = k.transpose(1, 2)?;
-        let v = v.transpose(1, 2)?;
+        // Transpose to (batch, num_heads, seq_len, head_dim) and ensure contiguous
+        let q = q.transpose(1, 2)?.contiguous()?;
+        let k = k.transpose(1, 2)?.contiguous()?;
+        let v = v.transpose(1, 2)?.contiguous()?;
 
         // Repeat K, V for grouped-query attention
         let k = Self::repeat_kv(k, self.num_heads / self.num_kv_heads)?;
@@ -273,17 +276,36 @@ impl Attention {
     }
 
     /// Repeats key/value tensors for grouped-query attention.
+    ///
+    /// For grouped-query attention, we need to repeat each K/V head `n_rep` times
+    /// to match the number of query heads.
+    ///
+    /// Example: 4 KV heads with `n_rep=3` becomes 12 heads:
+    /// [h0, h0, h0, h1, h1, h1, h2, h2, h2, h3, h3, h3]
     fn repeat_kv(x: Tensor, n_rep: usize) -> Result<Tensor> {
         if n_rep == 1 {
             return Ok(x);
         }
 
-        let (batch, num_kv_heads, seq_len, head_dim) = x.dims4()?;
+        let (_batch, num_kv_heads, _seq_len, _head_dim) = x.dims4()?;
         
-        x.unsqueeze(2)?
-            .expand((batch, num_kv_heads, n_rep, seq_len, head_dim))?
-            .reshape((batch, num_kv_heads * n_rep, seq_len, head_dim))
-            .map_err(Into::into)
+        // Repeat each head individually
+        let mut all_heads = Vec::with_capacity(num_kv_heads * n_rep);
+        
+        for i in 0..num_kv_heads {
+            // Extract this head: (batch, 1, seq_len, head_dim)
+            let head = x.narrow(1, i, 1)?;
+            
+            // Repeat this head n_rep times
+            for _ in 0..n_rep {
+                all_heads.push(head.clone());
+            }
+        }
+        
+        // Concatenate all repeated heads: (batch, num_kv_heads * n_rep, seq_len, head_dim)
+        let result = Tensor::cat(&all_heads.iter().collect::<Vec<_>>(), 1)?;
+        // Ensure contiguous memory layout for matmul operations
+        result.contiguous().map_err(Into::into)
     }
 }
 
