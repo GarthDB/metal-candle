@@ -47,7 +47,7 @@ impl Default for TrainingConfig {
 ///
 /// ```no_run
 /// use metal_candle::training::{Trainer, TrainingConfig, LoRAAdapterConfig};
-/// use metal_candle::Device;
+/// use candle_core::Device;
 ///
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let device = Device::Cpu;
@@ -55,10 +55,10 @@ impl Default for TrainingConfig {
 /// let training_config = TrainingConfig::default();
 ///
 /// // Create trainer
-/// let mut trainer = Trainer::new(32, 128, 12, lora_config, training_config, &device)?;
+/// let mut trainer = Trainer::new(32, 128, 12, &lora_config, training_config, &device)?;
 ///
 /// // Train (with your model's forward function)
-/// // let metrics = trainer.train(dataset, forward_fn)?;
+/// // let metrics = trainer.train(&dataset, forward_fn)?;
 /// # Ok(())
 /// # }
 /// ```
@@ -133,20 +133,23 @@ impl Trainer {
     /// use metal_candle::training::Trainer;
     /// use candle_core::Tensor;
     ///
-    /// # fn example(mut trainer: Trainer) -> Result<(), Box<dyn std::error::Error>> {
-    /// // Prepare dataset (batches of input/target tensors)
-    /// let dataset = vec![/* (input, target) pairs */];
-    ///
-    /// // Define forward pass
-    /// let forward_fn = |input: &Tensor| -> Result<Tensor, Box<dyn std::error::Error>> {
-    ///     // Your model forward pass
-    ///     # Ok(input.clone())
-    /// };
-    ///
-    /// // Train
-    /// let metrics = trainer.train(&dataset, forward_fn)?;
-    /// # Ok(())
-    /// # }
+/// # fn example(mut trainer: Trainer) -> Result<(), Box<dyn std::error::Error>> {
+/// # use candle_core::{Tensor, Device, DType};
+/// // Prepare dataset (batches of input/target tensors)
+/// let device = Device::Cpu;
+/// let input = Tensor::zeros((1, 8), DType::U32, &device)?;
+/// let target = Tensor::zeros((1, 8), DType::U32, &device)?;
+/// let dataset = vec![(input, target)];
+///
+/// // Define forward pass (returns metal_candle::Result)
+/// let forward_fn = |_input: &Tensor| -> metal_candle::Result<Tensor> {
+///     Ok(Tensor::zeros((1, 8, 100), DType::F32, &device)?)
+/// };
+///
+/// // Train
+/// let metrics = trainer.train(&dataset, forward_fn)?;
+/// # Ok(())
+/// # }
     /// ```
     pub fn train<F, E>(
         &mut self,
