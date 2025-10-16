@@ -38,6 +38,10 @@ pub enum Error {
     /// Candle framework errors
     #[error("candle error: {0}")]
     Candle(#[from] candle_core::Error),
+
+    /// JSON serialization/deserialization error
+    #[error("JSON error: {0}")]
+    Json(#[from] serde_json::Error),
 }
 
 /// Errors related to model operations.
@@ -111,6 +115,13 @@ pub enum TrainingError {
     #[error("gradient error: {reason}")]
     Gradient {
         /// Description of the gradient issue
+        reason: String,
+    },
+
+    /// Training state error
+    #[error("training state error: {reason}")]
+    StateError {
+        /// Description of the state issue
         reason: String,
     },
 }
@@ -231,6 +242,16 @@ mod tests {
             reason: "rank must be > 0".to_string(),
         };
         assert!(err.to_string().contains("invalid LoRA configuration"));
+
+        let err = TrainingError::InvalidConfig {
+            reason: "invalid".to_string(),
+        };
+        assert!(err.to_string().contains("invalid training configuration"));
+
+        let err = TrainingError::StateError {
+            reason: "state error".to_string(),
+        };
+        assert!(err.to_string().contains("training state error"));
     }
 
     #[test]

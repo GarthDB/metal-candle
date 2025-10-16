@@ -33,10 +33,16 @@
 pub mod backend;
 pub mod error;
 pub mod models;
+pub mod training;
 
 // Re-export key types for convenience
 pub use backend::{Device, DeviceInfo, DeviceType, TensorExt};
 pub use error::{Error, Result};
+pub use training::{
+    cross_entropy_loss, cross_entropy_loss_with_smoothing, AdamW, AdamWConfig, LRScheduler,
+    LoRAAdapter, LoRAAdapterConfig, LoRAConfig, LoRALayer, StepMetrics, TargetModule, Trainer,
+    TrainingConfig, TrainingStep,
+};
 
 /// Current version of the crate
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
