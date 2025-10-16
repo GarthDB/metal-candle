@@ -300,9 +300,12 @@ mod tests {
     fn test_constant_scheduler() {
         let scheduler = LRScheduler::constant(1e-4);
 
-        assert_eq!(scheduler.get_lr(0), 1e-4);
-        assert_eq!(scheduler.get_lr(100), 1e-4);
-        assert_eq!(scheduler.get_lr(1000), 1e-4);
+        let lr = scheduler.get_lr(0);
+        assert!((lr - 1e-4).abs() < 1e-9, "Expected 1e-4, got {lr}");
+        let lr = scheduler.get_lr(100);
+        assert!((lr - 1e-4).abs() < 1e-9, "Expected 1e-4, got {lr}");
+        let lr = scheduler.get_lr(1000);
+        assert!((lr - 1e-4).abs() < 1e-9, "Expected 1e-4, got {lr}");
     }
 
     #[test]
@@ -310,17 +313,20 @@ mod tests {
         let scheduler = LRScheduler::linear(1000, 1e-3);
 
         // At step 0, LR should be 0
-        assert_eq!(scheduler.get_lr(0), 0.0);
+        let lr = scheduler.get_lr(0);
+        assert!((lr - 0.0).abs() < 1e-9, "Expected 0.0, got {lr}");
 
         // At step 500 (halfway), LR should be max_lr / 2
         let lr = scheduler.get_lr(500);
-        assert!((lr - 5e-4).abs() < 1e-7, "lr = {}", lr);
+        assert!((lr - 5e-4).abs() < 1e-7, "lr = {lr}");
 
         // At step 1000, LR should be max_lr
-        assert_eq!(scheduler.get_lr(1000), 1e-3);
+        let lr = scheduler.get_lr(1000);
+        assert!((lr - 1e-3).abs() < 1e-9, "Expected 1e-3, got {lr}");
 
         // After warmup, LR stays constant
-        assert_eq!(scheduler.get_lr(2000), 1e-3);
+        let lr = scheduler.get_lr(2000);
+        assert!((lr - 1e-3).abs() < 1e-9, "Expected 1e-3, got {lr}");
     }
 
     #[test]
@@ -329,15 +335,15 @@ mod tests {
 
         // At step 0, LR should be max_lr
         let lr0 = scheduler.get_lr(0);
-        assert!((lr0 - 1e-3).abs() < 1e-7, "lr0 = {}", lr0);
+        assert!((lr0 - 1e-3).abs() < 1e-7, "lr0 = {lr0}");
 
         // At step 5000 (halfway), LR should be roughly halfway
         let lr_mid = scheduler.get_lr(5000);
-        assert!(lr_mid > 1e-5 && lr_mid < 1e-3, "lr_mid = {}", lr_mid);
+        assert!(lr_mid > 1e-5 && lr_mid < 1e-3, "lr_mid = {lr_mid}");
 
         // At step 10000 (end), LR should approach min_lr
         let lr_end = scheduler.get_lr(10_000);
-        assert!((lr_end - 1e-5).abs() < 1e-4, "lr_end = {}", lr_end);
+        assert!((lr_end - 1e-5).abs() < 1e-4, "lr_end = {lr_end}");
     }
 
     #[test]
@@ -345,25 +351,25 @@ mod tests {
         let scheduler = LRScheduler::warmup_cosine(1000, 10_000, 1e-3, 1e-5);
 
         // During warmup (step 0-1000)
-        assert_eq!(scheduler.get_lr(0), 0.0);
+        let lr = scheduler.get_lr(0);
+        assert!((lr - 0.0).abs() < 1e-9, "Expected 0.0, got {lr}");
 
         let lr_500 = scheduler.get_lr(500);
-        assert!((lr_500 - 5e-4).abs() < 1e-7, "lr_500 = {}", lr_500);
+        assert!((lr_500 - 5e-4).abs() < 1e-7, "lr_500 = {lr_500}");
 
         let lr_1000 = scheduler.get_lr(1000);
-        assert!((lr_1000 - 1e-3).abs() < 1e-7, "lr_1000 = {}", lr_1000);
+        assert!((lr_1000 - 1e-3).abs() < 1e-7, "lr_1000 = {lr_1000}");
 
         // After warmup, cosine decay
         let lr_5000 = scheduler.get_lr(5000);
         assert!(
             lr_5000 < 1e-3 && lr_5000 > 1e-5,
-            "lr_5000 = {} should be decaying",
-            lr_5000
+            "lr_5000 = {lr_5000} should be decaying"
         );
 
         // Near end
         let lr_9000 = scheduler.get_lr(9000);
-        assert!(lr_9000 < lr_5000, "lr_9000 = {}", lr_9000);
+        assert!(lr_9000 < lr_5000, "lr_9000 = {lr_9000}");
     }
 
     #[test]
@@ -399,7 +405,7 @@ mod tests {
         let mut prev_lr = scheduler.get_lr(0);
         for step in 1..100 {
             let lr = scheduler.get_lr(step);
-            assert!(lr >= prev_lr, "step={}, lr={}, prev={}", step, lr, prev_lr);
+            assert!(lr >= prev_lr, "step={step}, lr={lr}, prev={prev_lr}");
             prev_lr = lr;
         }
 
@@ -407,7 +413,7 @@ mod tests {
         prev_lr = scheduler.get_lr(100);
         for step in 101..1000 {
             let lr = scheduler.get_lr(step);
-            assert!(lr <= prev_lr, "step={}, lr={}, prev={}", step, lr, prev_lr);
+            assert!(lr <= prev_lr, "step={step}, lr={lr}, prev={prev_lr}");
             prev_lr = lr;
         }
     }
@@ -420,10 +426,8 @@ mod tests {
         for step in 0..=1000 {
             let lr = scheduler.get_lr(step);
             assert!(
-                lr >= 1e-5 && lr <= 1e-3,
-                "step={}, lr={} out of bounds",
-                step,
-                lr
+                (1e-5..=1e-3).contains(&lr),
+                "step={step}, lr={lr} out of bounds"
             );
         }
     }

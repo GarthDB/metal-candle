@@ -430,7 +430,7 @@ mod tests {
         let rope = RotaryEmbedding::new(64, 256, 10_000.0, &device).unwrap();
 
         // Test with different sequence lengths
-        for seq_len in [1, 5, 16, 32, 64].iter() {
+        for seq_len in &[1, 5, 16, 32, 64] {
             let x = Tensor::randn(0f32, 1f32, (1, *seq_len, 4, 64), &device).unwrap();
             let rotated = rope.apply_rotary_emb(&x, *seq_len);
             assert!(rotated.is_ok());
@@ -510,7 +510,7 @@ mod tests {
         let vb = VarBuilder::zeros(candle_core::DType::F32, &device);
 
         // Test various hidden/intermediate size combinations
-        for (hidden, intermediate) in [(64, 256), (128, 512), (256, 1024)].iter() {
+        for (hidden, intermediate) in &[(64, 256), (128, 512), (256, 1024)] {
             let mlp = MLP::new(*hidden, *intermediate, &vb);
             assert!(mlp.is_ok());
         }

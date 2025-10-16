@@ -523,7 +523,7 @@ mod tests {
         assert!(metrics.is_ok(), "Training step should succeed");
         let metrics = metrics.unwrap();
         assert_eq!(metrics.step, 1);
-        assert_eq!(metrics.learning_rate, 1e-4);
+        assert!((metrics.learning_rate - 1e-4).abs() < 1e-9);
         assert!(metrics.loss >= 0.0, "Loss should be non-negative");
     }
 }

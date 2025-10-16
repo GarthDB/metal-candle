@@ -1,10 +1,10 @@
-//! Gradient verification tests for LoRA training.
+//! Gradient verification tests for `LoRA` training.
 //!
 //! These tests verify that:
-//! 1. Gradients flow correctly through LoRA layers
+//! 1. Gradients flow correctly through `LoRA` layers
 //! 2. Parameter updates work as expected
 //! 3. Training steps produce valid gradients
-//! 4. LoRA adapter integrates properly with autograd
+//! 4. `LoRA` adapter integrates properly with autograd
 
 use candle_core::{DType, Device, Tensor};
 use metal_candle::training::{
@@ -67,7 +67,7 @@ fn test_lora_layer_gradient_flow() {
         .unwrap()
         .to_vec0::<f32>()
         .unwrap();
-    let grad_b_sum = grad_b
+    let grad_b_total = grad_b
         .abs()
         .unwrap()
         .sum_all()
@@ -77,13 +77,11 @@ fn test_lora_layer_gradient_flow() {
 
     assert!(
         grad_a_sum > 1e-6,
-        "Gradient A should be non-zero, got {}",
-        grad_a_sum
+        "Gradient A should be non-zero, got {grad_a_sum}"
     );
     assert!(
-        grad_b_sum > 1e-6,
-        "Gradient B should be non-zero, got {}",
-        grad_b_sum
+        grad_b_total > 1e-6,
+        "Gradient B should be non-zero, got {grad_b_total}"
     );
 }
 
@@ -275,8 +273,7 @@ fn test_gradient_accumulation_over_steps() {
 
     assert!(
         diff_value > 1e-6,
-        "Parameters should change significantly over multiple steps, diff: {}",
-        diff_value
+        "Parameters should change significantly over multiple steps, diff: {diff_value}"
     );
 }
 

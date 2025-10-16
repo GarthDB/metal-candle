@@ -361,8 +361,8 @@ mod tests {
     fn test_lora_config_default() {
         let config = LoRAConfig::default();
         assert_eq!(config.rank, 8);
-        assert_eq!(config.alpha, 16.0);
-        assert_eq!(config.dropout, 0.0);
+        assert!((f64::from(config.alpha) - 16.0).abs() < 1e-7);
+        assert!((f64::from(config.dropout) - 0.0).abs() < 1e-7);
     }
 
     #[test]
@@ -372,14 +372,14 @@ mod tests {
             alpha: 16.0,
             dropout: 0.0,
         };
-        assert_eq!(config.scaling(), 2.0);
+        assert!((f64::from(config.scaling()) - 2.0).abs() < 1e-7);
 
         let config2 = LoRAConfig {
             rank: 4,
             alpha: 8.0,
             dropout: 0.0,
         };
-        assert_eq!(config2.scaling(), 2.0);
+        assert!((f64::from(config2.scaling()) - 2.0).abs() < 1e-7);
     }
 
     #[test]
@@ -435,7 +435,7 @@ mod tests {
 
         // B should be initialized to zeros
         let b_sum = lora.lora_b().sum_all().unwrap().to_scalar::<f32>().unwrap();
-        assert_eq!(b_sum, 0.0);
+        assert!(b_sum.abs() < 1e-6);
     }
 
     #[test]
@@ -462,7 +462,7 @@ mod tests {
 
         let output = lora.forward(&input);
         if let Err(ref e) = output {
-            eprintln!("Forward pass failed: {:?}", e);
+            eprintln!("Forward pass failed: {e:?}");
         }
         assert!(output.is_ok());
 
@@ -491,7 +491,7 @@ mod tests {
         let config = LoRAConfig::default();
 
         // Test various dimension combinations
-        for (in_dim, out_dim) in [(512, 2048), (2048, 512), (1024, 1024)].iter() {
+        for (in_dim, out_dim) in &[(512, 2048), (2048, 512), (1024, 1024)] {
             let lora = LoRALayer::new(*in_dim, *out_dim, &config, &device);
             assert!(lora.is_ok());
 

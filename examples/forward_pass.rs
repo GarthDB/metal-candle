@@ -40,10 +40,9 @@ fn main() -> Result<()> {
     let vb = VarBuilder::zeros(DType::F16, &device);
     let model = Qwen::new(&config, vb)?;
     println!("   ✓ Model created with {} layers", model.num_layers());
-    println!(
-        "   ✓ Approximate parameters: ~{:.1}M",
-        model.num_parameters() as f64 / 1_000_000.0
-    );
+    #[allow(clippy::cast_precision_loss)] // Parameter count is reasonable size
+    let num_params_millions = model.num_parameters() as f64 / 1_000_000.0;
+    println!("   ✓ Approximate parameters: ~{num_params_millions:.1}M");
     println!();
 
     // 4. Create sample input
@@ -63,10 +62,7 @@ fn main() -> Result<()> {
     let logits = model.forward(&input_ids, None)?;
     let (b, s, v) = logits.dims3()?;
     println!("   ✓ Output logits shape: [{b}, {s}, {v}]");
-    println!(
-        "   ✓ Each position gets a probability distribution over {} tokens",
-        v
-    );
+    println!("   ✓ Each position gets a probability distribution over {v} tokens");
     println!();
 
     // 6. Show example of getting predictions

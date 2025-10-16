@@ -366,7 +366,7 @@ mod tests {
     fn test_lora_adapter_config_default() {
         let config = LoRAAdapterConfig::default();
         assert_eq!(config.rank, 8);
-        assert_eq!(config.alpha, 16.0);
+        assert!((f64::from(config.alpha) - 16.0).abs() < 1e-7);
         assert_eq!(config.target_modules.len(), 2);
         assert!(config.is_target(&TargetModule::QProj));
         assert!(config.is_target(&TargetModule::VProj));

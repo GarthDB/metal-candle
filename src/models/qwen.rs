@@ -413,7 +413,7 @@ mod tests {
 
         let model = Qwen::new(&config, vb).unwrap();
 
-        for batch_size in [1, 2, 4].iter() {
+        for batch_size in &[1, 2, 4] {
             let input_ids = Tensor::zeros((*batch_size, 8), DType::U32, &device).unwrap();
             let logits = model.forward(&input_ids, None);
             assert!(logits.is_ok());

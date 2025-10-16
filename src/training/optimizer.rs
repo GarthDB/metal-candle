@@ -366,11 +366,11 @@ mod tests {
     #[test]
     fn test_adamw_config_default() {
         let config = AdamWConfig::default();
-        assert_eq!(config.learning_rate, 1e-4);
-        assert_eq!(config.beta1, 0.9);
-        assert_eq!(config.beta2, 0.999);
-        assert_eq!(config.epsilon, 1e-8);
-        assert_eq!(config.weight_decay, 0.01);
+        assert!((f64::from(config.learning_rate) - 1e-4).abs() < 1e-7);
+        assert!((f64::from(config.beta1) - 0.9).abs() < 1e-7);
+        assert!((f64::from(config.beta2) - 0.999).abs() < 1e-7);
+        assert!((f64::from(config.epsilon) - 1e-8).abs() < 1e-7);
+        assert!((f64::from(config.weight_decay) - 0.01).abs() < 1e-7);
     }
 
     #[test]
@@ -444,7 +444,7 @@ mod tests {
         // Parameter should have changed
         let param_sum = param.sum_all().unwrap().to_scalar::<f32>().unwrap();
         let param_new_sum = param_new.sum_all().unwrap().to_scalar::<f32>().unwrap();
-        assert_ne!(param_sum, param_new_sum);
+        assert!((param_sum - param_new_sum).abs() > 1e-6);
 
         // Step count should have incremented
         assert_eq!(optimizer.step_count(), 1);
@@ -471,7 +471,7 @@ mod tests {
 
         // After 5 steps with constant gradient of 1.0, param should have decreased
         let final_sum = current_param.sum_all().unwrap().to_scalar::<f32>().unwrap();
-        assert!(final_sum < 9.0, "final_sum = {}", final_sum); // Started at 9.0 (3x3 ones)
+        assert!(final_sum < 9.0, "final_sum = {final_sum}"); // Started at 9.0 (3x3 ones)
     }
 
     #[test]

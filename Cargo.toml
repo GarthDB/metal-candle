@@ -32,6 +32,9 @@ thiserror = "1.0"
 # Logging
 tracing = "0.1"
 
+# Random number generation
+rand = "0.8"
+
 [dev-dependencies]
 # Benchmarking
 criterion = { version = "0.5", features = ["html_reports"] }
