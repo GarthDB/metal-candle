@@ -17,7 +17,7 @@ use metal_candle::inference::{sample_token, KVCache, KVCacheConfig, SamplingStra
 fn benchmark_kv_cache_update(c: &mut Criterion) {
     let mut group = c.benchmark_group("kv_cache_update");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     // Qwen 0.5B config
     let config = KVCacheConfig {
@@ -42,6 +42,7 @@ fn benchmark_kv_cache_update(c: &mut Criterion) {
 
     group.bench_function("single_layer_update", |b| {
         b.iter(|| {
+            cache.clear(); // Clear before each iteration
             let result = cache.update(0, &key, &value).expect("Cache update failed");
             black_box(result)
         });
@@ -49,6 +50,7 @@ fn benchmark_kv_cache_update(c: &mut Criterion) {
 
     group.bench_function("all_layers_update", |b| {
         b.iter(|| {
+            cache.clear(); // Clear before each iteration
             for layer_idx in 0..num_layers {
                 let result = cache
                     .update(layer_idx, &key, &value)
@@ -64,7 +66,7 @@ fn benchmark_kv_cache_update(c: &mut Criterion) {
 fn benchmark_kv_cache_retrieval(c: &mut Criterion) {
     let mut group = c.benchmark_group("kv_cache_retrieval");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     let config = KVCacheConfig {
         max_seq_len: 2048,
@@ -98,7 +100,8 @@ fn benchmark_kv_cache_retrieval(c: &mut Criterion) {
 
     group.bench_function("retrieve_from_cache", |b| {
         b.iter(|| {
-            // Simulate retrieval by updating again (cache contains previous data)
+            // Just clear and update - measures cache operation cost
+            cache.clear();
             let result = cache.update(0, &key, &value).expect("Cache access failed");
             black_box(result)
         });
@@ -110,7 +113,7 @@ fn benchmark_kv_cache_retrieval(c: &mut Criterion) {
 fn benchmark_sampling_strategies(c: &mut Criterion) {
     let mut group = c.benchmark_group("sampling_strategies");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
     let vocab_size = 32000;
 
     // Create logits (typical model output)
@@ -183,7 +186,7 @@ fn benchmark_kv_cache_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("kv_cache_scaling");
     group.sample_size(10); // Fewer samples for memory-intensive operations
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     // Test different sequence lengths
     for seq_len in [512, 1024, 2048] {
@@ -236,7 +239,7 @@ fn benchmark_kv_cache_scaling(c: &mut Criterion) {
 fn benchmark_sampling_vocab_size(c: &mut Criterion) {
     let mut group = c.benchmark_group("sampling_vocab_scaling");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     // Test different vocabulary sizes
     for vocab_size in [1000, 10_000, 32_000, 100_000] {
@@ -295,7 +298,7 @@ fn benchmark_kv_cache_memory(c: &mut Criterion) {
     let mut group = c.benchmark_group("kv_cache_memory");
     group.sample_size(10);
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     // Different model sizes
     let configs = vec![
@@ -327,7 +330,7 @@ fn benchmark_generation_simulation(c: &mut Criterion) {
     let mut group = c.benchmark_group("generation_simulation");
     group.sample_size(10);
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     let config = KVCacheConfig {
         max_seq_len: 2048,
@@ -353,6 +356,8 @@ fn benchmark_generation_simulation(c: &mut Criterion) {
 
     group.bench_function("token_generation_cycle", |b| {
         b.iter(|| {
+            cache.clear(); // Clear before each iteration
+
             // Simulate one token generation:
             // 1. Update KV-cache for all layers
             for layer_idx in 0..num_layers {

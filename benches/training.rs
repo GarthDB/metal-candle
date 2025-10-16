@@ -22,7 +22,7 @@ fn benchmark_lora_forward(c: &mut Criterion) {
     let mut group = c.benchmark_group("lora_forward");
 
     let _device = MetalDevice::new_with_fallback(0);
-    let candle_device = Device::Cpu; // Use CPU for consistent benchmarking
+    let candle_device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     // Different dimensions to benchmark
     let configs = vec![
@@ -73,7 +73,7 @@ fn benchmark_lora_forward(c: &mut Criterion) {
 fn benchmark_gradient_computation(c: &mut Criterion) {
     let mut group = c.benchmark_group("gradient_computation");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
     let config = LoRAConfig {
         rank: 8,
         alpha: 16.0,
@@ -105,7 +105,7 @@ fn benchmark_gradient_computation(c: &mut Criterion) {
 fn benchmark_optimizer_step(c: &mut Criterion) {
     let mut group = c.benchmark_group("optimizer_step");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
     let config = AdamWConfig::default();
     let mut optimizer = AdamW::new(config).expect("Failed to create optimizer");
 
@@ -131,7 +131,7 @@ fn benchmark_full_training_step(c: &mut Criterion) {
     let mut group = c.benchmark_group("full_training_step");
     group.sample_size(10); // Fewer samples for expensive operation
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
 
     // Setup LoRA layer
     let lora_config = LoRAConfig {
@@ -186,7 +186,7 @@ fn benchmark_full_training_step(c: &mut Criterion) {
 fn benchmark_layer_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("layer_operations");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
     let size = 1024;
 
     let tensor =
@@ -222,7 +222,7 @@ fn benchmark_layer_operations(c: &mut Criterion) {
 fn benchmark_lora_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("lora_rank_scaling");
 
-    let device = Device::Cpu;
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
     let in_features = 1024;
     let out_features = 1024;
 
