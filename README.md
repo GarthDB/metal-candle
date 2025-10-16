@@ -155,10 +155,16 @@ cargo instruments -t Time --release --example train_lora
 
 ## 📚 Documentation
 
+### Primary Documentation
+- **📖 [API Reference](https://docs.rs/metal-candle)** - Complete API documentation (auto-generated from source)
+- **📚 [User Guide](https://garthdb.github.io/metal-candle/)** - Tutorials, architecture, and testing strategy
+- **💡 [Examples](./examples)** - Runnable code examples
+
+### Development Documentation
 - [PLAN.md](PLAN.md) - Detailed 12-week implementation roadmap
 - [.cursorrules](.cursorrules) - Coding standards and guidelines
-- `ARCHITECTURE.md` - Coming soon
-- `BENCHMARKS.md` - Coming soon
+- [Testing Strategy](https://garthdb.github.io/metal-candle/testing/strategy.html) - How we ensure quality
+- [Platform Coverage Limits](https://garthdb.github.io/metal-candle/testing/platform-limits.html) - Understanding test coverage
 
 ## 🤝 Contributing
 

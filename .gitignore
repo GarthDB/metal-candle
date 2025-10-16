@@ -48,3 +48,7 @@ tests/fixtures/*.bin
 scratch/
 tmp/
 
+
+# Documentation build output
+docs/book/
+
