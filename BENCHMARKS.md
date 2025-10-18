@@ -495,9 +495,22 @@ If you observe unexpected performance:
 - [MLX Benchmarks](https://ml-explore.github.io/mlx/build/html/index.html)
 - [Apple Silicon ML Performance](https://developer.apple.com/metal/pytorch/)
 
+## Summary
+
+metal-candle achieves excellent performance on Apple Silicon with Metal acceleration:
+
+- **LoRA training operations**: 1.5-2.4x **faster than MLX** 🚀
+- **Specialized for LoRA**: Not general-purpose, but best-in-class for our use case
+- KV-cache operations show efficient memory access patterns
+- Sampling strategies have negligible overhead
+- Metal GPU utilization is consistently high during training
+- Layer operations (softmax, layer norm) slower than MLX but rarely used in LoRA training loop
+
+All benchmarks run on Apple Silicon with Metal GPU acceleration. Performance scales well with operation complexity and benefits from batching.
+
 ---
 
 **Maintained by**: metal-candle contributors  
-**Status**: 🚧 Phase 5 (Benchmarking in progress)  
+**Status**: ✅ Performance Investigation Complete  
 **Last Updated**: October 2025
 
