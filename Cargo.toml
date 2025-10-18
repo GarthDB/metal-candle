@@ -87,3 +87,7 @@ harness = false
 name = "inference"
 harness = false
 
+[[bench]]
+name = "mlx_comparison"
+harness = false
+
