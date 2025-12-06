@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/GarthDB/metal-candle/workflows/CI/badge.svg)](https://github.com/GarthDB/metal-candle/actions)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
 
 > Production-quality Rust ML crate for Apple Silicon - LoRA training, inference, text generation, and semantic embeddings using Candle with Metal backend
 
@@ -20,10 +20,11 @@
 ### Why metal-candle?
 
 - **🚀 Single Binary**: No Python runtime or virtual environments required
-- **⚡ Pure Rust**: Direct Rust-to-Metal calls, zero PyO3 overhead
+- **⚡ Pure Rust**: Type-safe ML with compile-time guarantees
 - **🛡️ Production Ready**: 160 tests, zero warnings, 100% API documentation
 - **🎨 Ergonomic API**: Builder patterns, sensible defaults, clear error messages
 - **📊 Well Tested**: ≥80% code coverage with comprehensive test suites
+- **🔧 Easy Integration**: Works seamlessly with any Rust project
 
 ## 📦 Installation
 
@@ -43,7 +44,7 @@ metal-candle = { git = "https://github.com/GarthDB/metal-candle", tag = "v1.0.0"
 
 ### Requirements
 
-- **Rust** 1.70+ (latest stable recommended)
+- **Rust** 1.75+ (latest stable recommended)
 - **Apple Silicon Mac** (M1/M2/M3/M4)
 - **macOS** 12.0+ (for Metal support)
 
@@ -52,18 +53,18 @@ metal-candle = { git = "https://github.com/GarthDB/metal-candle", tag = "v1.0.0"
 ### Loading a Model
 
 ```rust
-use metal_candle::{ModelConfig, ModelLoader, Device};
+use metal_candle::models::{ModelConfig, ModelLoader};
+use metal_candle::Device;
 use candle_core::DType;
 
 // Setup device (Metal with CPU fallback)
 let device = Device::new_with_fallback(0);
 
 // Load model configuration
-let config = ModelConfig::from_json("config.json")?;
+let config = ModelConfig::from_file("config.json")?;
 
 // Load model weights
-let loader = ModelLoader::new()
-    .with_device(device)
+let loader = ModelLoader::new(device)
     .with_dtype(DType::F16);
 
 let weights = loader.load("model.safetensors")?;
@@ -166,7 +167,7 @@ let similarity: f32 = vecs[0]
 **Tests**: 160 passing (144 lib + 6 gradient + 10 inference + 43 doctests)  
 **Warnings**: Zero ✅  
 **Coverage**: 84.69% (exceeds 80% requirement)  
-**Performance**: 1.5-2.4x faster than MLX for LoRA operations 🚀
+**Focus**: Type safety, ergonomic APIs, and single-binary deployment
 
 | Phase | Description | Status |
 |-------|-------------|--------|
@@ -259,7 +260,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 - **[📖 API Reference](https://docs.rs/metal-candle)** - Complete API documentation (coming soon)
 - **[🏗️ Architecture Guide](ARCHITECTURE.md)** - System design and implementation details
 - **[🤝 Contributing Guide](CONTRIBUTING.md)** - Development standards and guidelines
-- **[⚡ Benchmarks](BENCHMARKS.md)** - Performance comparisons showing 1.5-2.4x faster than MLX
+- **[⚡ Benchmarks](BENCHMARKS.md)** - Performance metrics and optimization opportunities
 - **[📋 Project Plan](PLAN.md)** - 12-week implementation roadmap
 
 ### Examples
@@ -368,21 +369,22 @@ This project maintains strict production-quality standards:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed coding standards.
 
-## 🚀 Performance
+## 🚀 Performance & Trade-offs
 
-### Training
+### Strengths
 
 - **LoRA Overhead**: Minimal (~5-10% vs base model)
-- **Gradient Computation**: Efficient via Candle autograd
-- **Memory**: Trainable params only (0.1% of model)
-
-### Inference
-
+- **Memory Efficiency**: Trainable params only (0.1% of model)
 - **KV-Cache**: ~173 MB for 2048 tokens (Qwen 0.5B, F16)
-- **Sampling**: <1% overhead vs forward pass
-- **Token Generation**: Optimized for Apple Silicon Metal
+- **Type Safety**: Compile-time error catching
+- **Zero-Cost Abstractions**: Rust's performance guarantees
 
-See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance analysis (coming soon).
+### Current Limitations
+
+- **Raw Throughput**: Currently optimized for ergonomics and correctness over raw speed
+- **Optimization Opportunities**: Performance improvements planned for v1.1+
+
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed metrics and optimization roadmap.
 
 ## 🤝 Contributing
 
@@ -405,14 +407,14 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## 📈 Roadmap
 
-### v1.0 (Target: 12 weeks)
+### v1.0 ✅ Complete
 
 - ✅ Phase 1: Foundation & Metal Backend
 - ✅ Phase 2: Model Loading & Architecture
 - ✅ Phase 3: LoRA Training Pipeline
 - ✅ Phase 4: Inference & Text Generation
-- 🚧 Phase 5: Quality & Documentation
-- ⏳ Phase 6: v1.0 Release & Integration
+- ✅ Phase 5: Quality & Documentation
+- ✅ Phase 6: v1.0 Release & Integration
 
 ### v1.1+ (Future)
 

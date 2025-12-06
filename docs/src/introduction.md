@@ -9,9 +9,10 @@ metal-candle provides:
 - **🚀 Native Apple Silicon Performance**: Full Metal GPU acceleration
 - **🦀 Pure Rust**: No Python dependencies, single-binary deployment
 - **🎯 LoRA Training**: Fine-tune transformer models efficiently
-- **📦 Model Loading**: Safetensors, GGUF, and PyTorch formats
+- **📦 Model Loading**: Safetensors format (GGUF planned for v1.1+)
 - **💬 Text Generation**: Production-ready inference with KV-cache optimization
-- **✅ Production Quality**: 90%+ coverage, zero clippy warnings, comprehensive docs
+- **🔍 Semantic Embeddings**: Sentence-transformers for RAG and search
+- **✅ Production Quality**: ≥80% coverage, zero clippy warnings, comprehensive docs
 
 ## Why metal-candle?
 
@@ -28,9 +29,10 @@ Traditional ML on Apple Silicon often requires:
 metal-candle offers:
 - **Single binary deployment** - No Python needed
 - **Type safety** - Rust's compiler catches errors early
-- **Performance** - 90-100% of MLX throughput
+- **Production quality** - Comprehensive tests, docs, zero warnings
 - **Memory safety** - No segfaults, no memory leaks
 - **Easy integration** - Works with any Rust project
+- **Ergonomic APIs** - Builder patterns, clear error messages
 
 ## Target Use Cases
 
@@ -41,9 +43,10 @@ metal-candle offers:
 
 ## Project Status
 
-**Current Phase**: Phase 1 (Metal Backend Foundation) ✅
+**Current Version**: v1.0.0 🎉  
+**All Phases Complete**: Foundation → LoRA Training → Inference → Quality ✅
 
-See [Roadmap](./development/roadmap.md) for upcoming features.
+See [Roadmap](./development/roadmap.md) for v1.1+ features.
 
 ## Getting Started
 

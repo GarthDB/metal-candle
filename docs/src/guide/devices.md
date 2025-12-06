@@ -9,7 +9,7 @@ metal-candle supports both CPU and Metal GPU devices on Apple Silicon.
 Use Apple's Metal GPU for maximum performance:
 
 ```rust
-use metal_candle::backend::Device;
+use metal_candle::Device;
 
 // Create Metal device (GPU index 0)
 let device = Device::new_metal(0)?;
@@ -40,14 +40,14 @@ println!("Device index: {}", info.index);
 ## Choosing the Right Device
 
 ### Use Metal GPU when:
-- ✅ Training models (1.5-2.4x faster for LoRA)
-- ✅ Large tensor operations
+- ✅ Training models (1.76-3.14x faster than CPU for LoRA)
+- ✅ Large tensor operations (>1000 elements)
 - ✅ Batch processing
 - ✅ Model inference
 
 ### Use CPU when:
 - ✅ Small operations (<1000 elements)
-- ✅ Sampling/token selection
+- ✅ Sampling/token selection (faster due to lower overhead)
 - ✅ Testing and debugging
 - ✅ Metal unavailable
 
@@ -111,8 +111,7 @@ use candle_core::{DType, Device};
 
 // Use Metal GPU for model forward pass
 let gpu = Device::new_metal(0)?;
-let model = ModelLoader::new()
-    .with_device(gpu.clone())
+let model = ModelLoader::new(gpu.clone())
     .with_dtype(DType::F16)
     .load("model.safetensors")?;
 
@@ -131,7 +130,7 @@ let token = sample_token(&logits_cpu, &strategy)?;
 
 Check Metal is supported:
 ```rust
-use metal_candle::backend::Device;
+use metal_candle::Device;
 
 if Device::is_metal_available() {
     println!("✅ Metal GPU available");

@@ -93,11 +93,11 @@ Error types.
 ### Loading Models
 
 ```rust
-use metal_candle::{ModelConfig, ModelLoader, Device};
+use metal_candle::models::{ModelConfig, ModelLoader};
+use metal_candle::Device;
 
 let device = Device::new_metal(0)?;
-let loader = ModelLoader::new()
-    .with_device(device)
+let loader = ModelLoader::new(device)
     .with_dtype(DType::F16);
 let weights = loader.load("model.safetensors")?;
 ```

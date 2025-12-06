@@ -12,24 +12,24 @@ metal-candle is a production-quality Rust library for machine learning on Apple 
 
 **Advantages:**
 - **Pure Rust**: No Python runtime needed, single binary deployment
-- **Performance**: 1.5-2.4x faster than MLX for LoRA operations
-- **Type Safety**: Compile-time error checking
-- **Memory Safety**: Rust's ownership system prevents many bugs
+- **Type Safety**: Compile-time error checking prevents entire classes of bugs
+- **Memory Safety**: Rust's ownership system prevents segfaults and data races
 - **Simple Deployment**: No virtual environments or Python dependencies
+- **Production Quality**: 160 tests, zero warnings, ≥80% code coverage
 
 **Trade-offs:**
-- Smaller ecosystem than PyTorch
+- Smaller ecosystem than PyTorch/MLX
 - Only supports Apple Silicon (not cross-platform)
-- Layer operations (softmax, layer norm) slower than MLX
+- Raw performance currently optimized for ergonomics over speed
 
 ### Is metal-candle production-ready?
 
 Yes! Version 1.0.0 has:
 - 160 passing tests
-- 84.69% code coverage
-- Zero clippy warnings
+- 84.69% code coverage (exceeds 80% requirement)
+- Zero clippy warnings (pedantic level)
 - 100% API documentation
-- Proven performance (1.5-2.4x faster than MLX for LoRA)
+- Metal GPU acceleration for Apple Silicon
 
 ## Installation & Setup
 
@@ -51,21 +51,24 @@ The first build compiles Candle and all dependencies, which can take 5-10 minute
 
 ## Performance
 
-### How fast is metal-candle compared to MLX?
+### How does metal-candle perform?
 
-LoRA operations are **1.5-2.4x faster than MLX**:
-- Small (512×512, r=8): 1.49x faster
-- Medium (1024×1024, r=8): 1.57x faster  
-- Large (2048×2048, r=8): 2.44x faster
+Metal GPU provides significant speedup over CPU:
+- Small (512×512, r=8): 1.76x faster
+- Medium (1024×1024, r=8): 2.29x faster  
+- Large (2048×2048, r=8): 2.67x faster
 
-See [Benchmarks](../testing/benchmarks.md) for details.
+**Value Proposition**: While raw throughput is optimized for correctness, metal-candle excels in type safety, ergonomic APIs, and single-binary deployment.
 
-### Why is it faster than MLX?
+See [Benchmarks](../testing/benchmarks.md) for complete metrics.
 
-- Pre-transposed matrix layouts reduce kernel launches
-- Zero-cost Rust abstractions
-- Specialized for LoRA (not general-purpose)
-- Direct Metal integration with minimal overhead
+### What are metal-candle's strengths?
+
+- **Type Safety**: Compile-time guarantees prevent bugs
+- **Single Binary**: No Python runtime or virtual environments
+- **Memory Safety**: No segfaults or data races
+- **Production Quality**: Comprehensive tests and documentation
+- **Ergonomic APIs**: Builder patterns and clear error messages
 
 ### Should I use GPU or CPU?
 
@@ -234,10 +237,10 @@ Use metal-candle for training, llama.cpp for highly optimized inference.
 
 ### metal-candle vs MLX
 
-- **metal-candle**: Pure Rust, faster LoRA (1.5-2.4x), single binary
-- **MLX**: Python, broader ecosystem, general-purpose
+- **metal-candle**: Pure Rust, type-safe, single binary deployment
+- **MLX**: Python, broader ecosystem, highly optimized kernels
 
-Use metal-candle for Rust projects or when you need faster LoRA training.
+Use metal-candle for Rust projects requiring type safety and simple deployment. Use MLX for maximum raw performance in Python environments.
 
 ## Still have questions?
 

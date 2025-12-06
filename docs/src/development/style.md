@@ -17,8 +17,8 @@ Follow [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/).
 
 ```rust
 // Good: Builder pattern with defaults
-let model = ModelLoader::new()
-    .with_device(Device::metal(0)?)
+let device = Device::new_metal(0)?;
+let model = ModelLoader::new(device)
     .with_dtype(DType::F16)
     .load("path/to/model")?;
 

@@ -21,8 +21,8 @@ This project follows the [Rust Code of Conduct](https://www.rust-lang.org/polici
 
 ### Prerequisites
 
-- **Rust** 1.70+ (stable toolchain)
-- **Apple Silicon Mac** (M1/M2/M3) for full testing
+- **Rust** 1.75+ (stable toolchain)
+- **Apple Silicon Mac** (M1/M2/M3/M4) for full testing
 - **Git** for version control
 - **GitHub CLI** (`gh`) recommended for PR management
 

@@ -21,9 +21,14 @@ Models supported in metal-candle.
 
 **Usage**:
 ```rust
-use metal_candle::models::Qwen;
+use metal_candle::models::{Qwen, ModelConfig, ModelLoader};
+use candle_nn::VarBuilder;
 
-let model = Qwen::from_pretrained("qwen2.5-coder-0.5b", &device)?;
+let config = ModelConfig::from_file("config.json")?;
+let loader = ModelLoader::new(device.clone());
+let tensors = loader.load("model.safetensors")?;
+let vb = VarBuilder::from_tensors(tensors, candle_core::DType::F16, &device);
+let model = Qwen::new(&config, vb)?;
 ```
 
 **Features**:
@@ -142,9 +147,9 @@ Example `config.json`:
 
 Load configuration:
 ```rust
-use metal_candle::ModelConfig;
+use metal_candle::models::ModelConfig;
 
-let config = ModelConfig::from_json("config.json")?;
+let config = ModelConfig::from_file("config.json")?;
 ```
 
 ## See Also

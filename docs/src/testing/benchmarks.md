@@ -1,18 +1,18 @@
 # Benchmarks
 
-metal-candle delivers exceptional performance on Apple Silicon, achieving **1.5-2.4x faster** LoRA operations than MLX.
+metal-candle provides production-quality ML on Apple Silicon with Metal GPU acceleration, prioritizing type safety and ergonomic APIs.
 
-## Performance Highlights 🚀
+## Performance Highlights
 
-### LoRA Operations vs MLX
+### Metal GPU vs CPU Acceleration
 
-| Operation | metal-candle | MLX | Speedup |
-|-----------|-------------|-----|---------|
-| Small (512×512, r=8) | 4.92 µs | 7.33 µs | **1.49x faster** |
-| Medium (1024×1024, r=8) | 3.61 µs | 5.68 µs | **1.57x faster** |
-| Large (2048×2048, r=8) | 3.69 µs | 9.01 µs | **2.44x faster** |
+| Operation | Metal GPU | CPU | Speedup |
+|-----------|-----------|-----|---------|
+| Small (512×512, r=8) | 37.0 µs | 65.0 µs | **1.76x faster** |
+| Medium (1024×1024, r=8) | 54.8 µs | 125.6 µs | **2.29x faster** |
+| Large (2048×2048, r=8) | 98.4 µs | 262.3 µs | **2.67x faster** |
 
-**Overall**: 110-244% of MLX performance for LoRA training! ✅
+**Metal GPU provides consistent speedup** for LoRA operations on Apple Silicon.
 
 ### Metal GPU Acceleration
 
@@ -23,18 +23,20 @@ metal-candle delivers exceptional performance on Apple Silicon, achieving **1.5-
 | Layer Norm | 45.8 µs | 116 µs | **2.53x** |
 | RMS Norm | 25.0 µs | 60.4 µs | **2.42x** |
 
-## Why metal-candle is Faster
+## metal-candle Value Proposition
 
-1. **Optimized Matrix Layout**: Pre-transposed matrices eliminate kernel launch overhead
-2. **Zero-Cost Abstractions**: Rust's compile-time optimizations  
-3. **Specialized for LoRA**: Not general-purpose, but best-in-class for our use case
-4. **Direct Metal Integration**: Minimal abstraction overhead
+1. **Type Safety**: Rust's compile-time guarantees prevent entire classes of bugs
+2. **Single Binary Deployment**: No Python runtime or dependency management
+3. **Memory Safety**: No segfaults, use-after-free, or data races
+4. **Production Quality**: 160 tests, zero warnings, ≥80% code coverage
+5. **Metal GPU Acceleration**: 1.76-3.14x speedup over CPU for LoRA operations
 
 ## Use Case Recommendations
 
-- ✅ **Best for**: LoRA training and fine-tuning (1.5-2.4x faster than MLX)
-- ✅ **Good for**: Inference with LoRA adapters
-- ⚠️ **Consider MLX for**: Full transformer inference without LoRA (layer ops slower)
+- ✅ **Best for**: Rust projects requiring type-safe ML integration
+- ✅ **Good for**: Single-binary deployments without Python dependencies
+- ✅ **Good for**: Production systems valuing compile-time safety over raw speed
+- ⚠️ **Consider MLX for**: Maximum raw performance in Python environments
 
 ## Running Benchmarks
 

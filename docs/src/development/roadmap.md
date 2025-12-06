@@ -12,7 +12,7 @@ Future plans for metal-candle.
 - KV-cache inference
 - Semantic embeddings
 - Metal GPU acceleration
-- **Performance**: 1.5-2.4x faster than MLX for LoRA
+- **Performance**: Metal GPU acceleration (1.76-3.14x faster than CPU for LoRA)
 
 ## v1.1 (Q1 2026)
 

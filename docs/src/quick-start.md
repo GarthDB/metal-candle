@@ -5,7 +5,7 @@ Get started with metal-candle in minutes!
 ## Prerequisites
 
 - macOS with Apple Silicon (M1/M2/M3/M4)
-- Rust 1.70+ (`rustup update`)
+- Rust 1.75+ (`rustup update`)
 
 ## Installation
 
@@ -13,7 +13,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-metal-candle = "0.1"
+metal-candle = "1.0"
 candle-core = "0.9"
 ```
 
@@ -21,7 +21,7 @@ candle-core = "0.9"
 
 ```rust
 use metal_candle::{Device, TensorExt};
-use candle_core::Tensor;
+use candle_core::{Tensor, DType};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create device with Metal acceleration
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Using device: {:?}", device.info());
     
     // Create a tensor
-    let tensor = Tensor::randn(0f32, 1f32, (2, 512), device.as_ref())?;
+    let tensor = Tensor::randn(0f32, 1f32, (2, 512), DType::F32, device.as_ref())?;
     
     // Apply numerically stable softmax
     let probs = tensor.softmax_stable()?;

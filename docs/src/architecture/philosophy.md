@@ -41,9 +41,10 @@ pub fn load(path: impl AsRef<Path>) -> Model {
 ## Specialized, Not General
 
 Focus on LoRA training excellence:
-- 1.5-2.4x faster than MLX for LoRA
+- Type-safe LoRA implementation with comprehensive testing
 - Not trying to be general-purpose ML framework
 - Deep rather than broad
+- Production-quality over feature breadth
 
 ## Apple Silicon First
 

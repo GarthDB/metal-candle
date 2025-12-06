@@ -218,53 +218,64 @@ adapter.load_weights(lora_weights)?;
 
 ## Performance
 
-### metal-candle vs MLX
+### metal-candle Characteristics
 
-LoRA operations are **1.5-2.4x faster than MLX**:
+LoRA operations leverage Metal GPU acceleration:
 
-| Operation | metal-candle | MLX | Speedup |
+| Operation | Metal GPU | CPU | GPU Speedup |
 |-----------|-------------|-----|---------|
-| Small (512×512, r=8) | 4.92 µs | 7.33 µs | **1.49x** |
-| Medium (1024×1024, r=8) | 3.61 µs | 5.68 µs | **1.57x** |
-| Large (2048×2048, r=8) | 3.69 µs | 9.01 µs | **2.44x** |
+| Small (512×512, r=8) | 37.0 µs | 65.0 µs | **1.76x** |
+| Medium (1024×1024, r=8) | 54.8 µs | 125.6 µs | **2.29x** |
+| Large (2048×2048, r=8) | 98.4 µs | 262.3 µs | **2.67x** |
 
-See [Benchmarks](../testing/benchmarks.md) for details.
+**Value Proposition**: While raw throughput is optimized for ergonomics, metal-candle excels in type safety, single-binary deployment, and production quality.
 
-### Tips for Fast Training
+See [Benchmarks](../testing/benchmarks.md) for complete metrics.
 
-1. **Use Metal GPU:**
+### Tips for Efficient Training
+
+1. **Use Metal GPU for acceleration:**
 ```rust
 let device = Device::new_metal(0)?;
 ```
 
-2. **Use F16 precision:**
+2. **Use F16 precision to reduce memory:**
 ```rust
-let loader = ModelLoader::new()
+let device = Device::new_metal(0)?;
+let loader = ModelLoader::new(device)
     .with_dtype(DType::F16);
 ```
 
-3. **Lower rank for iteration:**
+3. **Start with lower rank for iteration:**
 ```rust
 // Start with r=8, increase if needed
 LoRAAdapterConfig { rank: 8, ..Default::default() }
 ```
 
-4. **Batch your data:**
+4. **Leverage type safety:**
 ```rust
-// Process multiple samples together
-let batch_size = 4;
+// Rust's compiler catches errors at compile time
+// No runtime surprises from shape mismatches
 ```
 
 ## Example: Complete Training Script
 
 ```rust
 use metal_candle::*;
+use metal_candle::models::{Qwen, ModelConfig, ModelLoader};
+use candle_nn::VarBuilder;
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    // Setup
+    // Setup device
     let device = Device::new_metal(0)?;
-    let model = Qwen::from_pretrained("qwen", &device)?;
+    
+    // Load model
+    let config = ModelConfig::from_file("config.json")?;
+    let loader = ModelLoader::new(device.clone());
+    let tensors = loader.load("model.safetensors")?;
+    let vb = VarBuilder::from_tensors(tensors, candle_core::DType::F16, &device);
+    let model = Qwen::new(&config, vb)?;
     
     // Create LoRA adapter (r=8, alpha=16)
     let lora_config = LoRAAdapterConfig {

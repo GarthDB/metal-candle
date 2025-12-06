@@ -54,7 +54,8 @@ Application code can use `anyhow`:
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    let model = ModelLoader::new().load("model.safetensors")?;
+    let device = Device::new_with_fallback(0);
+    let model = ModelLoader::new(device).load("model.safetensors")?;
     Ok(())
 }
 ```

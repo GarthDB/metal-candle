@@ -9,15 +9,16 @@ Loading and configuring transformer models in metal-candle.
 Safetensors is the recommended format:
 
 ```rust
-use metal_candle::{ModelConfig, ModelLoader};
-use candle_core::{Device, DType};
+use metal_candle::models::{ModelConfig, ModelLoader};
+use metal_candle::Device;
+use candle_core::DType;
 
 // Load configuration
-let config = ModelConfig::from_json("config.json")?;
+let config = ModelConfig::from_file("config.json")?;
 
 // Create loader with options
-let loader = ModelLoader::new()
-    .with_device(Device::new_metal(0)?)
+let device = Device::new_metal(0)?;
+let loader = ModelLoader::new(device)
     .with_dtype(DType::F16);
 
 // Load weights
@@ -36,13 +37,20 @@ let weights = loader.load("model.safetensors")?;
 Full support for Qwen architecture:
 
 ```rust
-use metal_candle::models::Qwen;
+use metal_candle::models::{Qwen, ModelConfig, ModelLoader};
+use candle_nn::VarBuilder;
 
-// Load Qwen model
-let model = Qwen::from_pretrained("qwen2.5-coder-0.5b", &device)?;
+// Load configuration and weights
+let config = ModelConfig::from_file("config.json")?;
+let loader = ModelLoader::new(device.clone());
+let tensors = loader.load("model.safetensors")?;
+
+// Create model with VarBuilder
+let vb = VarBuilder::from_tensors(tensors, candle_core::DType::F16, &device);
+let model = Qwen::new(&config, vb)?;
 
 // Forward pass
-let output = model.forward(&input_ids, 0)?; // position 0
+let output = model.forward(&input_ids, None)?;
 ```
 
 **Qwen Sizes:**
@@ -72,7 +80,7 @@ Configuration from JSON:
 Load it:
 
 ```rust
-let config = ModelConfig::from_json("config.json")?;
+let config = ModelConfig::from_file("config.json")?;
 
 println!("Model: {:?}", config.architectures);
 println!("Layers: {}", config.num_hidden_layers);
@@ -84,32 +92,29 @@ println!("Hidden size: {}", config.hidden_size);
 The `ModelLoader` uses the builder pattern for configuration:
 
 ```rust
-let weights = ModelLoader::new()
-    .with_device(metal_device)      // Target device
-    .with_dtype(DType::F16)          // Weight precision  
-    .load("model.safetensors")?;     // Load weights
+let device = Device::new_metal(0)?;
+let weights = ModelLoader::new(device)  // Device set in constructor
+    .with_dtype(DType::F16)             // Weight precision  
+    .load("model.safetensors")?;        // Load weights
 ```
 
 **Options:**
-- `.with_device(device)` - Set target device (Metal/CPU)
+- Constructor takes `Device` (Metal/CPU)
 - `.with_dtype(dtype)` - Set weight precision (F16/F32)
 
 ## Model Inspection
 
-After loading, inspect the model:
+After loading, inspect the configuration:
 
 ```rust
-use metal_candle::models::Qwen;
+use metal_candle::models::ModelConfig;
 
-let model = Qwen::from_pretrained("qwen", &device)?;
+let config = ModelConfig::from_file("config.json")?;
 
-// Model info (via debug print)
-println!("Model structure: {:#?}", model);
-
-// Get configuration
-let config = model.config();
+// Configuration details
 println!("Vocabulary: {}", config.vocab_size);
 println!("Layers: {}", config.num_hidden_layers);
+println!("Hidden size: {}", config.hidden_size);
 ```
 
 ## Memory Considerations
@@ -131,9 +136,9 @@ Formula: `params * bytes_per_param`
 
 **Use F16 precision:**
 ```rust
-let loader = ModelLoader::new()
-    .with_dtype(DType::F16)  // Half memory vs F32
-    .with_device(metal_device);
+let device = Device::new_metal(0)?;
+let loader = ModelLoader::new(device)
+    .with_dtype(DType::F16);  // Half memory vs F32
 ```
 
 **Monitor memory:**
@@ -201,7 +206,9 @@ huggingface-cli download Qwen/Qwen2.5-Coder-0.5B-Instruct \
 
 Then load:
 ```rust
-let config = ModelConfig::from_json("./models/qwen/config.json")?;
+let config = ModelConfig::from_file("./models/qwen/config.json")?;
+let device = Device::new_with_fallback(0);
+let loader = ModelLoader::new(device);
 let weights = loader.load("./models/qwen/model.safetensors")?;
 ```
 

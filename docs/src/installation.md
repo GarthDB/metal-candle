@@ -83,7 +83,7 @@ anyhow = "1.0"
 
 Test with a simple program (`src/main.rs`):
 ```rust
-use metal_candle::backend::Device;
+use metal_candle::Device;
 use anyhow::Result;
 
 fn main() -> Result<()> {

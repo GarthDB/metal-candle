@@ -1,6 +1,6 @@
 # Performance Architecture
 
-How metal-candle achieves 1.5-2.4x faster LoRA than MLX.
+How metal-candle leverages Metal GPU acceleration for LoRA training on Apple Silicon.
 
 ## Key Optimizations
 
@@ -18,7 +18,7 @@ self.lora_a = lora_a.transpose(0, 1)?.contiguous()?;
 let result = input.matmul(&self.lora_a)?;  // Fast!
 ```
 
-**Impact**: 5 kernels → 2 kernels (60% reduction)
+**Impact**: Reduces kernel launch overhead
 
 ### 2. Zero-Cost Abstractions
 
@@ -44,20 +44,23 @@ Via Candle:
 ## Benchmarks
 
 See [Benchmarks](../testing/benchmarks.md) for:
-- MLX comparison (1.5-2.4x faster)
-- Metal vs CPU (2-5x faster)
-- KV-cache performance
+- Metal GPU vs CPU comparison (1.76-3.14x faster)
+- Layer operation performance
+- KV-cache efficiency
+- Complete performance metrics
 
-## Future Optimizations
+## Optimization Roadmap
 
 v1.1+:
-- [ ] Custom kernels for layer ops
-- [ ] Flash Attention integration
-- [ ] Operation fusion
+- [ ] Custom Metal kernels for layer operations (softmax, layer norm)
+- [ ] Flash Attention integration for transformer efficiency
+- [ ] Operation fusion to reduce kernel launches
+- [ ] Quantization support (4-bit, 8-bit)
 
 v2.0:
-- [ ] Full custom Metal implementation
+- [ ] Enhanced Metal kernel optimizations
 - [ ] Multi-GPU support
+- [ ] Streaming generation improvements
 
 ## See Also
 
