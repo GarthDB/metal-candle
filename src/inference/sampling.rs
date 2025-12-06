@@ -5,9 +5,10 @@ use candle_core::Tensor;
 use rand::Rng;
 
 /// Sampling strategy for token selection.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum SamplingStrategy {
     /// Greedy sampling (argmax)
+    #[default]
     Greedy,
 
     /// Top-k sampling
@@ -27,12 +28,6 @@ pub enum SamplingStrategy {
         /// Temperature value (higher = more random)
         temperature: f64,
     },
-}
-
-impl Default for SamplingStrategy {
-    fn default() -> Self {
-        Self::Greedy
-    }
 }
 
 /// Samples a token from logits using the specified strategy.

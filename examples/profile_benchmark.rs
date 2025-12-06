@@ -47,7 +47,10 @@ fn main() -> anyhow::Result<()> {
         let layer = LoRALayer::new(in_features, out_features, &config, &device)?;
         let x = Tensor::randn(0f32, 1f32, (1, in_features), &device)?;
 
-        println!("  Running: {} ({}x{}, rank={})", name, in_features, out_features, rank);
+        println!(
+            "  Running: {} ({}x{}, rank={})",
+            name, in_features, out_features, rank
+        );
 
         // Run 1000 iterations for profiling
         for _ in 0..1000 {
@@ -122,4 +125,3 @@ fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-

@@ -1,0 +1,17 @@
+# cargo-deny configuration
+# https://embarkstudios.github.io/cargo-deny/
+
+[advisories]
+# Ignore specific advisories (with justification)
+ignore = [
+    # Unmaintained crates (not security issues)
+    "RUSTSEC-2025-0119",  # number_prefix - unmaintained but functional (via hf-hub → indicatif)
+    "RUSTSEC-2024-0436",  # paste - archived but functional (via candle-core → gemm/metal)
+]
+
+# Note on ignored advisories:
+# - Both are transitive dependencies from major crates (Candle, HuggingFace)
+# - These are maintenance advisories, NOT security vulnerabilities
+# - The crates still function correctly
+# - Will be resolved when upstream dependencies update
+# - Monitored for updates in each release

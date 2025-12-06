@@ -1,11 +1,11 @@
 # metal-candle Architecture
 
 **Version**: 0.1.0  
-**Last Updated**: October 2025
+**Last Updated**: December 2024
 
 ## Overview
 
-`metal-candle` is a production-quality Rust crate for machine learning on Apple Silicon, built on top of [Candle](https://github.com/huggingface/candle) with Metal backend support. It provides high-performance LoRA training, model loading, and text generation for transformer models, with a focus on simplicity, correctness, and performance.
+`metal-candle` is a production-quality Rust crate for machine learning on Apple Silicon, built on top of [Candle](https://github.com/huggingface/candle) with Metal backend support. It provides high-performance LoRA training, model loading, text generation, and sentence embeddings for transformer models, with a focus on simplicity, correctness, and performance.
 
 ## Design Goals
 
@@ -32,7 +32,9 @@
 │  • Trainer         │  • Sampling       │  • Qwen           │
 │  • AdamW           │  • Generator      │  • Config          │
 │  • Schedulers      │                   │                    │
-│  • Checkpoint      │                   │                    │
+│  • Checkpoint      │  Embeddings       │                    │
+│                    │  • EmbeddingModel │                    │
+│                    │  • E5/MiniLM/MPNet│                    │
 └─────────────────────────────────────────────────────────────┘
                             │
 ┌─────────────────────────────────────────────────────────────┐
@@ -154,6 +156,32 @@ Efficient text generation infrastructure.
   - `GeneratorConfig` - Generation parameters
   - Future: Full end-to-end generation
 
+#### `src/embeddings/` (feature: `embeddings`)
+Sentence-transformer embeddings for semantic search and RAG.
+
+- **`config.rs`**: Model type definitions
+  - `EmbeddingModelType` - E5-small-v2, MiniLM-L6-v2, MPNet-base-v2
+  - `EmbeddingConfig` - Normalization and sequence length settings
+
+- **`pooling.rs`**: Pooling and normalization
+  - `mean_pool()` - Attention-weighted mean pooling
+  - `normalize()` - L2 normalization for cosine similarity
+
+- **`bert.rs`**: BERT encoder wrapper
+  - `BertEncoder` - Wraps `candle-transformers` BERT
+  - Sentence-transformer pipeline (BERT → pool → normalize)
+
+- **`loader.rs`**: HuggingFace model downloads
+  - `download_model()` - Auto-download from HuggingFace Hub
+  - `load_config()` - Parse BERT configuration
+  - `load_weights()` - Load safetensors weights
+  - Automatic caching in `~/.cache/hf/hub/`
+
+- **`mod.rs`**: Main embeddings API
+  - `EmbeddingModel::from_pretrained()` - Load model
+  - `EmbeddingModel::encode()` - Generate embeddings
+  - Returns normalized tensors of shape `[batch, 384]`
+
 #### `src/error.rs`
 Centralized error handling using `thiserror`.
 
@@ -162,6 +190,7 @@ Centralized error handling using `thiserror`.
 - `TrainingError` - Training-related errors
 - `InferenceError` - Inference/generation errors
 - `CheckpointError` - Checkpoint I/O errors
+- `EmbeddingError` - Embedding model download/tokenization errors
 
 ## Key Design Patterns
 
@@ -396,16 +425,20 @@ All PRs must pass:
 4. ✅ Code coverage ≥80%
 5. ✅ Documentation complete for public APIs
 
-## Future Enhancements
+## Recent Additions
 
-### Phase 5 (Current)
-- [ ] Comprehensive benchmarking vs MLX
-- [ ] Complete documentation
-- [ ] Additional examples
+### Embeddings Module (December 2024)
+- ✅ Sentence-transformer support (E5, MiniLM, MPNet)
+- ✅ HuggingFace Hub integration with auto-download
+- ✅ Mean pooling and L2 normalization
+- ✅ CPU and Metal device support
+- ✅ Production-ready with full test coverage
 
-### Phase 6
+### Next Steps
+- [ ] Publish embeddings guide to documentation
+- [ ] Integrate with Ferris RAG system
+- [ ] Performance benchmarks (CPU vs Metal)
 - [ ] Publish to crates.io (v1.0)
-- [ ] Ferris integration
 
 ### Future Considerations
 - [ ] GGUF format support
@@ -419,12 +452,15 @@ All PRs must pass:
 
 ### Core
 - `candle-core`, `candle-nn` - ML framework
+- `candle-transformers` - Transformer models (BERT for embeddings)
 - `safetensors` - Model format
 - `thiserror` - Error handling
-
-### Optional
-- `tokenizers` - HuggingFace tokenizers (future)
+- `tokenizers` - HuggingFace tokenizers
 - `rand` - Random sampling
+
+### Optional (feature-gated)
+- `hf-hub` - HuggingFace model downloads (embeddings feature)
+- `dirs` - System cache directories (embeddings feature)
 
 ### Dev Dependencies
 - `criterion` - Benchmarking
@@ -444,5 +480,4 @@ All PRs must pass:
 
 **Maintained by**: metal-candle contributors  
 **License**: Apache-2.0  
-**Last Updated**: October 2025
-
+**Last Updated**: December 2024

@@ -25,7 +25,9 @@ fn test_lora_layer_gradient_flow() {
 
     // Manually initialize B with non-zero values for testing
     // (In real training, B starts at zero but gets updated)
-    let b_init = Tensor::randn(0f32, 0.1, (16, 4), &device).unwrap();
+    // NOTE: LoRA matrices are stored in transposed form for optimization
+    // lora_b is stored as (rank, out_features) instead of (out_features, rank)
+    let b_init = Tensor::randn(0f32, 0.1, (4, 16), &device).unwrap();
     lora.lora_b().set(&b_init).unwrap();
 
     // Create input
@@ -233,7 +235,9 @@ fn test_gradient_accumulation_over_steps() {
     let lora = LoRALayer::new(16, 16, &config, &device).unwrap();
 
     // Initialize B with non-zero values for testing
-    let b_init = Tensor::randn(0f32, 0.1, (16, 4), &device).unwrap();
+    // NOTE: LoRA matrices are stored in transposed form for optimization
+    // lora_b is stored as (rank, out_features) instead of (out_features, rank)
+    let b_init = Tensor::randn(0f32, 0.1, (4, 16), &device).unwrap();
     lora.lora_b().set(&b_init).unwrap();
 
     let opt_config = AdamWConfig {
