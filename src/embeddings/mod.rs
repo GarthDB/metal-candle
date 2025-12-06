@@ -12,11 +12,11 @@
 //!
 //! ```no_run
 //! use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-//! use metal_candle::Device;
+//! use candle_core::Device;
 //!
 //! # fn example() -> Result<(), metal_candle::error::Error> {
 //! // Load model (auto-downloads from HuggingFace on first run)
-//! let device = Device::new_with_fallback(0);
+//! let device = Device::Cpu;
 //! let model = EmbeddingModel::from_pretrained(
 //!     EmbeddingModelType::E5SmallV2,
 //!     device,
@@ -68,7 +68,7 @@ use loader::{download_model, load_config, load_weights};
 ///
 /// ```no_run
 /// use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-/// use metal_candle::Device;
+/// use candle_core::Device;
 ///
 /// # fn example() -> Result<(), metal_candle::error::Error> {
 /// let device = Device::Cpu;
@@ -87,7 +87,7 @@ use loader::{download_model, load_config, load_weights};
 ///
 /// ```no_run
 /// use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-/// use metal_candle::Device;
+/// use candle_core::Device;
 ///
 /// # fn example() -> Result<(), metal_candle::error::Error> {
 /// let device = Device::Cpu;
@@ -123,7 +123,7 @@ use loader::{download_model, load_config, load_weights};
 ///
 /// ```no_run
 /// use metal_candle::embeddings::{EmbeddingConfig, EmbeddingModel, EmbeddingModelType};
-/// use metal_candle::Device;
+/// use candle_core::Device;
 ///
 /// # fn example() -> Result<(), metal_candle::error::Error> {
 /// let config = EmbeddingConfig {
@@ -163,7 +163,7 @@ impl EmbeddingModel {
     ///
     /// ```no_run
     /// use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-    /// use metal_candle::Device;
+    /// use candle_core::Device;
     ///
     /// # fn example() -> Result<(), metal_candle::error::Error> {
     /// // Use CPU
@@ -172,12 +172,15 @@ impl EmbeddingModel {
     ///     Device::Cpu,
     /// )?;
     ///
-    /// // Use Metal GPU on Apple Silicon
-    /// let device = Device::new_with_fallback(0);
-    /// let model = EmbeddingModel::from_pretrained(
-    ///     EmbeddingModelType::E5SmallV2,
-    ///     device,
-    /// )?;
+    /// // Use Metal GPU on Apple Silicon (if available, else CPU)
+    /// #[cfg(feature = "metal")]
+    /// {
+    ///     let device = Device::new_metal(0).unwrap_or(Device::Cpu);
+    ///     let model = EmbeddingModel::from_pretrained(
+    ///         EmbeddingModelType::E5SmallV2,
+    ///         device,
+    ///     )?;
+    /// }
     /// # Ok(())
     /// # }
     /// ```
@@ -210,7 +213,7 @@ impl EmbeddingModel {
     ///
     /// ```no_run
     /// use metal_candle::embeddings::{EmbeddingConfig, EmbeddingModel, EmbeddingModelType};
-    /// use metal_candle::Device;
+    /// use candle_core::Device;
     ///
     /// # fn example() -> Result<(), metal_candle::error::Error> {
     /// let config = EmbeddingConfig {
@@ -297,7 +300,7 @@ impl EmbeddingModel {
     ///
     /// ```no_run
     /// use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-    /// use metal_candle::Device;
+    /// use candle_core::Device;
     ///
     /// # fn example() -> Result<(), metal_candle::error::Error> {
     /// let model = EmbeddingModel::from_pretrained(
@@ -360,7 +363,7 @@ impl EmbeddingModel {
     ///
     /// ```no_run
     /// use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-    /// use metal_candle::Device;
+    /// use candle_core::Device;
     ///
     /// # fn example() -> Result<(), metal_candle::error::Error> {
     /// let model = EmbeddingModel::from_pretrained(
@@ -383,7 +386,7 @@ impl EmbeddingModel {
     ///
     /// ```no_run
     /// use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-    /// use metal_candle::Device;
+    /// use candle_core::Device;
     ///
     /// # fn example() -> Result<(), metal_candle::error::Error> {
     /// let model = EmbeddingModel::from_pretrained(

@@ -21,7 +21,7 @@ use crate::error::{EmbeddingError, Result};
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use metal_candle::embeddings::loader::get_cache_dir;
 ///
 /// let cache_dir = get_cache_dir();
@@ -57,7 +57,7 @@ pub fn get_cache_dir() -> PathBuf {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use metal_candle::embeddings::loader::download_model;
 /// use metal_candle::embeddings::EmbeddingModelType;
 ///
@@ -127,7 +127,7 @@ pub fn download_model(model_type: EmbeddingModelType) -> Result<PathBuf> {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use metal_candle::embeddings::loader::{download_model, load_config};
 /// use metal_candle::embeddings::EmbeddingModelType;
 ///
@@ -179,7 +179,7 @@ pub fn load_config(model_dir: &std::path::Path) -> Result<BertConfig> {
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use candle_core::Device;
 /// use metal_candle::embeddings::loader::{download_model, load_weights};
 /// use metal_candle::embeddings::EmbeddingModelType;

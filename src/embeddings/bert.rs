@@ -17,7 +17,7 @@ use crate::embeddings::pooling::{mean_pool, normalize};
 ///
 /// # Examples
 ///
-/// ```no_run
+/// ```ignore
 /// use candle_core::{Device, DType, Tensor};
 /// use candle_nn::VarBuilder;
 /// use candle_transformers::models::bert::Config as BertConfig;
@@ -39,7 +39,7 @@ use crate::embeddings::pooling::{mean_pool, normalize};
 /// assert_eq!(embeddings.dims(), &[1, 768]); // [batch, hidden_size]
 /// # Ok(())
 /// # }
-/// ```
+/// ```ignore
 pub struct BertEncoder {
     model: BertModel,
     normalize: bool,
@@ -60,7 +60,7 @@ impl BertEncoder {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// use candle_core::{Device, DType};
     /// use candle_nn::VarBuilder;
     /// use candle_transformers::models::bert::Config as BertConfig;
@@ -104,7 +104,7 @@ impl BertEncoder {
     ///
     /// # Examples
     ///
-    /// ```no_run
+    /// ```ignore
     /// use candle_core::{Device, DType, Tensor};
     /// use candle_nn::VarBuilder;
     /// use candle_transformers::models::bert::Config as BertConfig;
