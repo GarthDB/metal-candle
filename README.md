@@ -430,6 +430,14 @@ The Apache License provides explicit patent protection, which is important for p
 - Inspired by [MLX](https://github.com/ml-explore/mlx) and [llama.cpp](https://github.com/ggerganov/llama.cpp)
 - LoRA implementation based on [LoRA paper](https://arxiv.org/abs/2106.09685)
 
+## ⚠️ Known Advisories
+
+This project has two transitive dependencies flagged as unmaintained (not security issues):
+- `number_prefix` (via hf-hub → indicatif)
+- `paste` (via candle-core → gemm/metal)
+
+These are from major, trusted dependencies (Candle, HuggingFace) and pose no security risk. They will be resolved when upstream updates. See `deny.toml` for details.
+
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/GarthDB/metal-candle/issues)
