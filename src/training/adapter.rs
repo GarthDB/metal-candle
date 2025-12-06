@@ -322,13 +322,23 @@ impl LoRAAdapter {
 
         if let Some(lora_layer) = self.layers.get(&key) {
             // Compute ΔW = B @ A * scaling
+            // NOTE: LoRA matrices are stored in transposed form for optimization:
+            // - lora_a is stored as (in_features, rank) instead of (rank, in_features)
+            // - lora_b is stored as (rank, out_features) instead of (out_features, rank)
             let lora_a = lora_layer.lora_a_tensor();
             let lora_b = lora_layer.lora_b_tensor();
 
-            // A: (rank, in_features)
-            // B: (out_features, rank)
-            // B @ A = (out_features, in_features)
-            let delta_w = lora_b.matmul(lora_a)?;
+            // We need: B_std @ A_std where
+            // - A_std: (rank, in_features) = lora_a^T
+            // - B_std: (out_features, rank) = lora_b^T
+            // Therefore: B_std @ A_std = lora_b^T @ lora_a^T = (lora_a @ lora_b)^T
+
+            // Step 1: lora_a @ lora_b
+            // (in_features, rank) @ (rank, out_features) = (in_features, out_features)
+            let temp = lora_a.matmul(lora_b)?;
+
+            // Step 2: Transpose to get (out_features, in_features)
+            let delta_w = temp.t()?;
 
             // Scale by alpha/rank
             let scaling = lora_layer.config().scaling();

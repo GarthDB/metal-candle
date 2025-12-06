@@ -36,6 +36,9 @@ pub mod inference;
 pub mod models;
 pub mod training;
 
+#[cfg(feature = "embeddings")]
+pub mod embeddings;
+
 // Re-export key types for convenience
 pub use backend::{Device, DeviceInfo, DeviceType, TensorExt};
 pub use error::{Error, Result};

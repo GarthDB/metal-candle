@@ -31,6 +31,10 @@ pub enum Error {
     #[error("device error: {0}")]
     Device(#[from] DeviceError),
 
+    /// Error related to embedding operations
+    #[error("embedding error: {0}")]
+    Embedding(#[from] EmbeddingError),
+
     /// IO errors
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
@@ -231,6 +235,58 @@ pub enum DeviceError {
     },
 }
 
+/// Errors related to embedding operations.
+#[derive(Error, Debug)]
+pub enum EmbeddingError {
+    /// Failed to download model from `HuggingFace` Hub
+    #[error("model download failed: {reason}")]
+    DownloadFailed {
+        /// Description of the download failure
+        reason: String,
+    },
+
+    /// Model not found in cache or on `HuggingFace` Hub
+    #[error("model not found: {model_id}")]
+    ModelNotFound {
+        /// `HuggingFace` model ID
+        model_id: String,
+    },
+
+    /// Failed to load tokenizer
+    #[error("tokenizer loading failed: {reason}")]
+    TokenizerFailed {
+        /// Description of the tokenizer failure
+        reason: String,
+    },
+
+    /// Tokenization failed
+    #[error("tokenization failed: {reason}")]
+    TokenizationFailed {
+        /// Description of the tokenization error
+        reason: String,
+    },
+
+    /// Empty input provided to encoding
+    #[error("cannot encode empty text array")]
+    EmptyInput,
+
+    /// Invalid embedding configuration
+    #[error("invalid embedding configuration: {reason}")]
+    InvalidConfig {
+        /// Description of the configuration issue
+        reason: String,
+    },
+
+    /// Embedding dimension mismatch
+    #[error("embedding dimension mismatch: expected {expected}, got {actual}")]
+    DimensionMismatch {
+        /// Expected dimension
+        expected: usize,
+        /// Actual dimension
+        actual: usize,
+    },
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -283,5 +339,22 @@ mod tests {
             reason: "not running on Apple Silicon".to_string(),
         };
         assert!(err.to_string().contains("Metal device not available"));
+    }
+
+    #[test]
+    fn test_embedding_error_types() {
+        let err = EmbeddingError::ModelNotFound {
+            model_id: "intfloat/e5-small-v2".to_string(),
+        };
+        assert!(err.to_string().contains("model not found"));
+
+        let err = EmbeddingError::EmptyInput;
+        assert!(err.to_string().contains("cannot encode empty text"));
+
+        let err = EmbeddingError::DimensionMismatch {
+            expected: 384,
+            actual: 768,
+        };
+        assert!(err.to_string().contains("dimension mismatch"));
     }
 }
