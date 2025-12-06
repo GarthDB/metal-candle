@@ -11,18 +11,29 @@
 //! cargo run --example embeddings_demo --features embeddings
 //! ```
 
-#![cfg(feature = "embeddings")]
-
 use anyhow::Result;
-use candle_core::Device;
-use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
-
-/// Compute cosine similarity between two normalized vectors
-fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
-    a.iter().zip(b).map(|(x, y)| x * y).sum()
-}
 
 fn main() -> Result<()> {
+    #[cfg(not(feature = "embeddings"))]
+    {
+        eprintln!("This example requires the 'embeddings' feature.");
+        eprintln!("Run with: cargo run --example embeddings_demo --features embeddings");
+        std::process::exit(1);
+    }
+
+    #[cfg(feature = "embeddings")]
+    run_demo()
+}
+
+#[cfg(feature = "embeddings")]
+fn run_demo() -> Result<()> {
+    use candle_core::Device;
+    use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
+
+    /// Compute cosine similarity between two normalized vectors
+    fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+        a.iter().zip(b).map(|(x, y)| x * y).sum()
+    }
     println!("🚀 Metal-Candle Embeddings Demo\n");
 
     // 1. Initialize device (CPU for portability, Metal GPU available on Apple Silicon)
