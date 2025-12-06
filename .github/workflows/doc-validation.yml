@@ -1,0 +1,50 @@
+name: Documentation Validation
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - 'Cargo.toml'
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check Version Consistency
+        run: |
+          # Extract version from Cargo.toml
+          CARGO_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          
+          # Check CHANGELOG has entry for this version
+          if ! grep -q "## \[$CARGO_VERSION\]" CHANGELOG.md; then
+            echo "❌ CHANGELOG.md missing entry for version $CARGO_VERSION"
+            exit 1
+          fi
+          
+          echo "✅ Version $CARGO_VERSION is consistent across docs"
+      
+      - name: Check for Placeholder Text
+        run: |
+          # Warn about common placeholders in main docs
+          if grep -i "coming soon\|TBD\|TODO\|FIXME" README.md CHANGELOG.md 2>/dev/null; then
+            echo "⚠️  Warning: Found placeholder text in main documentation"
+            echo "This is just a warning - consider updating before release"
+          else
+            echo "✅ No placeholder text found in main docs"
+          fi
+      
+      - name: Validate Links
+        run: |
+          # Check that referenced files exist
+          FILES="ARCHITECTURE.md CONTRIBUTING.md BENCHMARKS.md LICENSE"
+          for file in $FILES; do
+            if [ ! -f "$file" ]; then
+              echo "❌ README.md references $file but it doesn't exist"
+              exit 1
+            fi
+          done
+          echo "✅ All referenced files exist"
+

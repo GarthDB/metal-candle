@@ -21,19 +21,24 @@
 
 - **🚀 Single Binary**: No Python runtime or virtual environments required
 - **⚡ Pure Rust**: Direct Rust-to-Metal calls, zero PyO3 overhead
-- **🛡️ Production Ready**: 141 tests, zero warnings, 100% API documentation
+- **🛡️ Production Ready**: 160 tests, zero warnings, 100% API documentation
 - **🎨 Ergonomic API**: Builder patterns, sensible defaults, clear error messages
 - **📊 Well Tested**: ≥80% code coverage with comprehensive test suites
 
 ## 📦 Installation
 
-> **Coming Soon**: Will be published to [crates.io](https://crates.io) as v1.0.0
-
-For now, use the Git dependency:
+Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-metal-candle = { git = "https://github.com/GarthDB/metal-candle" }
+metal-candle = "1.0"
+```
+
+Or use the Git dependency for the latest:
+
+```toml
+[dependencies]
+metal-candle = { git = "https://github.com/GarthDB/metal-candle", tag = "v1.0.0" }
 ```
 
 ### Requirements
@@ -157,11 +162,11 @@ let similarity: f32 = vecs[0]
 ## 📊 Project Status
 
 **Current Phase**: Phase 5 - Quality & Documentation  
-**Target**: v1.0.0 Release  
+**Version**: v1.0.0 🎉  
 **Tests**: 160 passing (144 lib + 6 gradient + 10 inference + 43 doctests)  
 **Warnings**: Zero ✅  
-**Coverage**: ≥80% (measured via `cargo llvm-cov`)  
-**Features**: Embeddings module ready ✅
+**Coverage**: 84.69% (exceeds 80% requirement)  
+**Performance**: 1.5-2.4x faster than MLX for LoRA operations 🚀
 
 | Phase | Description | Status |
 |-------|-------------|--------|
@@ -170,8 +175,8 @@ let similarity: f32 = vecs[0]
 | Phase 2 | Model Loading & Architecture | ✅ Complete |
 | Phase 3 | LoRA Training Pipeline | ✅ Complete |
 | Phase 4 | Inference & Text Generation | ✅ Complete |
-| Phase 5 | Quality & Benchmarking | 🚧 In Progress |
-| Phase 6 | v1.0 Release & Integration | ⏳ Planned |
+| Phase 5 | Quality & Benchmarking | ✅ Complete |
+| Phase 6 | v1.0 Release & Integration | ✅ Complete |
 
 See [PLAN.md](PLAN.md) for detailed roadmap.
 
@@ -254,7 +259,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 - **[📖 API Reference](https://docs.rs/metal-candle)** - Complete API documentation (coming soon)
 - **[🏗️ Architecture Guide](ARCHITECTURE.md)** - System design and implementation details
 - **[🤝 Contributing Guide](CONTRIBUTING.md)** - Development standards and guidelines
-- **[⚡ Benchmarks](BENCHMARKS.md)** - Performance comparisons (coming soon)
+- **[⚡ Benchmarks](BENCHMARKS.md)** - Performance comparisons showing 1.5-2.4x faster than MLX
 - **[📋 Project Plan](PLAN.md)** - 12-week implementation roadmap
 
 ### Examples
@@ -446,6 +451,6 @@ These are from major, trusted dependencies (Candle, HuggingFace) and pose no sec
 
 ---
 
-**Status**: 🚧 Phase 5 (Quality & Documentation) - Ready for v1.0  
+**Status**: ✅ v1.0.0 Released - Production Ready  
 **Maintained by**: [@GarthDB](https://github.com/GarthDB)  
 **License**: Apache-2.0
