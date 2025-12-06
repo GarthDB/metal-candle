@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
 
-> Production-quality Rust ML crate for Apple Silicon - LoRA training, inference, and text generation using Candle with Metal backend
+> Production-quality Rust ML crate for Apple Silicon - LoRA training, inference, text generation, and semantic embeddings using Candle with Metal backend
 
 ## 🎯 Overview
 
@@ -13,6 +13,7 @@
 - **🎓 LoRA Training**: Fine-tune transformer models efficiently using Low-Rank Adaptation
 - **📦 Model Loading**: Safetensors format with comprehensive validation
 - **⚡ Text Generation**: Fast inference with KV-cache and multiple sampling strategies
+- **🔍 Semantic Embeddings**: Sentence-transformers (E5, MiniLM, MPNet) for RAG and search
 - **🔧 Metal Acceleration**: Native Metal backend for optimal M-series chip performance
 - **🏗️ Qwen Support**: Full Qwen2.5-Coder architecture implementation
 
@@ -124,13 +125,43 @@ let strategy = SamplingStrategy::Greedy;
 let token = sample_token(&logits, &strategy)?;
 ```
 
+### Semantic Embeddings (RAG & Search)
+
+```rust
+use candle_core::Device;
+use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
+
+// Load embedding model (auto-downloads from HuggingFace)
+let device = Device::Cpu;
+let model = EmbeddingModel::from_pretrained(
+    EmbeddingModelType::E5SmallV2,
+    device,
+)?;
+
+// Generate embeddings for semantic search
+let texts = vec![
+    "Rust is a systems programming language",
+    "Python is a high-level language",
+];
+let embeddings = model.encode(&texts)?;  // [batch, 384]
+
+// Embeddings are L2-normalized for cosine similarity
+let vecs = embeddings.to_vec2::<f32>()?;
+let similarity: f32 = vecs[0]
+    .iter()
+    .zip(&vecs[1])
+    .map(|(a, b)| a * b)
+    .sum();
+```
+
 ## 📊 Project Status
 
 **Current Phase**: Phase 5 - Quality & Documentation  
 **Target**: v1.0.0 Release  
-**Tests**: 141 passing (125 lib + 6 gradient + 10 inference + 43 doctests)  
+**Tests**: 160 passing (144 lib + 6 gradient + 10 inference + 43 doctests)  
 **Warnings**: Zero ✅  
-**Coverage**: ≥80% (measured via `cargo llvm-cov`)
+**Coverage**: ≥80% (measured via `cargo llvm-cov`)  
+**Features**: Embeddings module ready ✅
 
 | Phase | Description | Status |
 |-------|-------------|--------|
@@ -156,8 +187,10 @@ Built on [Candle](https://github.com/huggingface/candle) with Metal backend:
 │  • LoRAAdapter     │  • KVCache        │  • ModelLoader     │
 │  • Trainer         │  • Sampling       │  • Qwen           │
 │  • AdamW           │  • Generator      │  • Config          │
-│  • Schedulers      │                   │  • Transformer     │
-│  • Checkpoint      │                   │                    │
+│  • Schedulers      │                   │                    │
+│  • Checkpoint      │  Embeddings       │                    │
+│                    │  • EmbeddingModel │                    │
+│                    │  • E5/MiniLM/MPNet│                    │
 └─────────────────────────────────────────────────────────────┘
                             │
 ┌─────────────────────────────────────────────────────────────┐
@@ -198,9 +231,17 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 - ✅ **Transformer Components**: RoPE, Multi-head Attention (GQA), MLP
 - ✅ **Model Loading**: Builder pattern with dtype conversion
 
+### Embeddings (feature: `embeddings`)
+
+- ✅ **Sentence Transformers**: E5-small-v2, MiniLM-L6-v2, MPNet-base-v2
+- ✅ **HuggingFace Hub**: Auto-download and caching
+- ✅ **Mean Pooling**: Attention-weighted token averaging
+- ✅ **L2 Normalization**: Ready for cosine similarity
+- ✅ **CPU & Metal**: Works on both devices
+
 ### Quality
 
-- ✅ **141 Tests**: Comprehensive test coverage
+- ✅ **160 Tests**: Comprehensive test coverage
 - ✅ **Zero Warnings**: Strict clippy (pedantic level)
 - ✅ **100% API Docs**: All public APIs documented with examples
 - ✅ **CI/CD**: GitHub Actions on Apple Silicon runners
@@ -224,11 +265,13 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 | [`forward_pass.rs`](examples/forward_pass.rs) | Qwen model forward pass |
 | [`train_lora.rs`](examples/train_lora.rs) | End-to-end LoRA training |
 | [`inference_demo.rs`](examples/inference_demo.rs) | KV-cache and sampling demo |
+| [`embeddings_demo.rs`](examples/embeddings_demo.rs) | Semantic search with embeddings |
 
 Run examples:
 ```bash
 cargo run --example inference_demo
 cargo run --example train_lora
+cargo run --example embeddings_demo --features embeddings
 ```
 
 ## 🧪 Development
@@ -313,7 +356,7 @@ This project maintains strict production-quality standards:
 | Standard | Requirement | Status |
 |----------|-------------|--------|
 | **Clippy** | Zero warnings (pedantic) | ✅ Passing |
-| **Tests** | All passing | ✅ 141/141 |
+| **Tests** | All passing | ✅ 160/160 |
 | **Coverage** | ≥80% enforced | ✅ Met |
 | **Documentation** | 100% public APIs | ✅ Complete |
 | **Format** | `rustfmt` compliant | ✅ Passing |
