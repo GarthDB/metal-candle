@@ -1,8 +1,72 @@
-# philosophy
+# Design Philosophy
 
-Coming soon! This section is under development.
+Core principles guiding metal-candle.
 
-For now, check out:
-- [API Documentation](https://docs.rs/metal-candle)
-- [GitHub Repository](https://github.com/GarthDB/metal-candle)
+## Quality Over Speed
 
+Production-quality code from day one:
+- Zero warnings (pedantic clippy)
+- ≥80% test coverage
+- 100% API documentation
+- Proper error handling (no `.unwrap()`)
+
+## Explicit Over Implicit
+
+Clear, readable code preferred:
+
+```rust
+// Good: Explicit
+let tensor = Tensor::zeros((batch, seq), DType::F32, &device)?;
+
+// Bad: Implicit device
+let tensor = Tensor::zeros((batch, seq))?;
+```
+
+## Fail Fast
+
+Use `Result` and `?` operator:
+
+```rust
+// Good: Explicit error handling
+pub fn load(path: impl AsRef<Path>) -> Result<Model, ModelError> {
+    // ...
+}
+
+// Bad: Hidden failures
+pub fn load(path: impl AsRef<Path>) -> Model {
+    // .unwrap() or .expect()
+}
+```
+
+## Specialized, Not General
+
+Focus on LoRA training excellence:
+- 1.5-2.4x faster than MLX for LoRA
+- Not trying to be general-purpose ML framework
+- Deep rather than broad
+
+## Apple Silicon First
+
+Designed specifically for Metal GPU:
+- Not cross-platform compromise
+- Leverage unified memory architecture
+- Direct Metal integration
+
+## Zero-Cost Abstractions
+
+Rust's strengths:
+- Compile-time optimization
+- No runtime overhead
+- Memory safety without GC
+
+## Single Binary Deployment
+
+No Python, no virtual environments:
+- Pure Rust
+- Static linking
+- Simple deployment
+
+## See Also
+
+- [Performance](./performance.md)
+- [Backend](./backend.md)
