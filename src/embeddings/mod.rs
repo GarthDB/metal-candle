@@ -46,7 +46,9 @@
 mod bert;
 mod config;
 mod loader;
+mod metal_bert;
 pub mod pooling;
+mod vendored_bert;
 
 pub use config::{EmbeddingConfig, EmbeddingModelType};
 

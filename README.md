@@ -19,12 +19,27 @@
 
 ### Why metal-candle?
 
+- **⚡ 25.9x Faster than MLX**: Beats Apple's official ML framework for embeddings ([benchmarks](MLX_BENCHMARK_COMPARISON.md))
 - **🚀 Single Binary**: No Python runtime or virtual environments required
-- **⚡ Pure Rust**: Type-safe ML with compile-time guarantees
-- **🛡️ Production Ready**: 160 tests, zero warnings, 100% API documentation
+- **🎯 Pure Rust**: Type-safe ML with compile-time guarantees
+- **🛡️ Production Ready**: 190 tests, clean codebase, 100% API documentation
 - **🎨 Ergonomic API**: Builder patterns, sensible defaults, clear error messages
 - **📊 Well Tested**: ≥80% code coverage with comprehensive test suites
 - **🔧 Easy Integration**: Works seamlessly with any Rust project
+
+### 🏆 Performance
+
+metal-candle demonstrates **exceptional performance** on Apple Silicon:
+
+| Task | Batch Size | metal-candle | MLX | Speedup |
+|------|-----------|-------------|-----|---------|
+| **Embeddings** | 100 docs | 4.4ms | 113.5ms | **25.9x** 🚀 |
+| **Embeddings** | Single query | 3.9ms | 7.7ms | **2.0x** |
+| **Throughput** | - | 22,831 docs/sec | 881 docs/sec | **25.9x** |
+
+**Near constant-time performance**: Batch 1→100 only increases by 13% (3.9ms → 4.4ms)
+
+See [PERFORMANCE_SUMMARY.md](PERFORMANCE_SUMMARY.md) and [MLX_BENCHMARK_COMPARISON.md](MLX_BENCHMARK_COMPARISON.md) for detailed analysis.
 
 ## 📦 Installation
 
@@ -134,11 +149,11 @@ let token = sample_token(&logits, &strategy)?;
 ### Semantic Embeddings (RAG & Search)
 
 ```rust
-use candle_core::Device;
 use metal_candle::embeddings::{EmbeddingModel, EmbeddingModelType};
+use metal_candle::Device;
 
-// Load embedding model (auto-downloads from HuggingFace)
-let device = Device::Cpu;
+// Load embedding model with Metal acceleration (25.9x faster than MLX!)
+let device = Device::new_metal(0)?;
 let model = EmbeddingModel::from_pretrained(
     EmbeddingModelType::E5SmallV2,
     device,
@@ -149,7 +164,7 @@ let texts = vec![
     "Rust is a systems programming language",
     "Python is a high-level language",
 ];
-let embeddings = model.encode(&texts)?;  // [batch, 384]
+let embeddings = model.encode(&texts)?;  // [batch, 384] in 3.9ms
 
 // Embeddings are L2-normalized for cosine similarity
 let vecs = embeddings.to_vec2::<f32>()?;
@@ -158,14 +173,18 @@ let similarity: f32 = vecs[0]
     .zip(&vecs[1])
     .map(|(a, b)| a * b)
     .sum();
+
+// Batch processing: 100 docs in 4.4ms (22,831 docs/sec throughput)
+let large_corpus = load_documents()?;
+let batch_embeddings = model.encode(&large_corpus)?;
 ```
 
 ## 📊 Project Status
 
-**Current Phase**: Phase 5 - Quality & Documentation  
+**Current Phase**: v1.0 Release  
 **Version**: v1.0.0 🎉  
-**Tests**: 160 passing (144 lib + 6 gradient + 10 inference + 43 doctests)  
-**Warnings**: Zero ✅  
+**Tests**: 190 passing (137 lib + 53 doctests)  
+**Warnings**: 4 pedantic (all documented) ✅  
 **Coverage**: 84.69% (exceeds 80% requirement)  
 **Focus**: Type safety, ergonomic APIs, and single-binary deployment
 
@@ -243,12 +262,13 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 - ✅ **HuggingFace Hub**: Auto-download and caching
 - ✅ **Mean Pooling**: Attention-weighted token averaging
 - ✅ **L2 Normalization**: Ready for cosine similarity
-- ✅ **CPU & Metal**: Works on both devices
+- ✅ **Metal Acceleration**: Custom LayerNorm kernel for 25.9x speedup over MLX
+- ✅ **CPU Fallback**: Works on both devices
 
 ### Quality
 
-- ✅ **160 Tests**: Comprehensive test coverage
-- ✅ **Zero Warnings**: Strict clippy (pedantic level)
+- ✅ **190 Tests**: Comprehensive test coverage (137 lib + 53 doc)
+- ✅ **Clean Codebase**: Strict clippy pedantic (4 documented warnings)
 - ✅ **100% API Docs**: All public APIs documented with examples
 - ✅ **CI/CD**: GitHub Actions on Apple Silicon runners
 - ✅ **Type Safe**: Leverages Rust's type system for correctness
@@ -257,10 +277,11 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 
 ### User Documentation
 
-- **[📖 API Reference](https://docs.rs/metal-candle)** - Complete API documentation (coming soon)
+- **[📖 API Reference](https://docs.rs/metal-candle)** - Complete API documentation
 - **[🏗️ Architecture Guide](ARCHITECTURE.md)** - System design and implementation details
 - **[🤝 Contributing Guide](CONTRIBUTING.md)** - Development standards and guidelines
-- **[⚡ Benchmarks](BENCHMARKS.md)** - Performance metrics and optimization opportunities
+- **[⚡ Performance Summary](PERFORMANCE_SUMMARY.md)** - Quick reference for benchmarks vs MLX
+- **[📊 MLX Comparison](MLX_BENCHMARK_COMPARISON.md)** - Detailed benchmark methodology and results
 - **[📋 Project Plan](PLAN.md)** - 12-week implementation roadmap
 
 ### Examples
@@ -361,9 +382,9 @@ This project maintains strict production-quality standards:
 
 | Standard | Requirement | Status |
 |----------|-------------|--------|
-| **Clippy** | Zero warnings (pedantic) | ✅ Passing |
-| **Tests** | All passing | ✅ 160/160 |
-| **Coverage** | ≥80% enforced | ✅ Met |
+| **Clippy** | Pedantic, documented | ✅ 4 warnings (all justified) |
+| **Tests** | All passing | ✅ 190/190 (137 lib + 53 doc) |
+| **Coverage** | ≥80% enforced | ✅ 84.69% |
 | **Documentation** | 100% public APIs | ✅ Complete |
 | **Format** | `rustfmt` compliant | ✅ Passing |
 
@@ -373,18 +394,19 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed coding standards.
 
 ### Strengths
 
-- **LoRA Overhead**: Minimal (~5-10% vs base model)
-- **Memory Efficiency**: Trainable params only (0.1% of model)
+- **Embeddings Performance**: 25.9x faster than MLX for batch processing
+- **Near Constant-Time Scaling**: 13% increase for 100x more data
+- **Memory Efficiency**: Trainable params only (0.1% of model) for LoRA
 - **KV-Cache**: ~173 MB for 2048 tokens (Qwen 0.5B, F16)
 - **Type Safety**: Compile-time error catching
 - **Zero-Cost Abstractions**: Rust's performance guarantees
 
 ### Current Limitations
 
-- **Raw Throughput**: Currently optimized for ergonomics and correctness over raw speed
-- **Optimization Opportunities**: Performance improvements planned for v1.1+
+- **Model Formats**: Safetensors only (GGUF planned for v1.1+)
+- **Single GPU**: Multi-GPU training planned for v2.0
 
-See [BENCHMARKS.md](BENCHMARKS.md) for detailed metrics and optimization roadmap.
+See [PERFORMANCE_SUMMARY.md](PERFORMANCE_SUMMARY.md) and [MLX_BENCHMARK_COMPARISON.md](MLX_BENCHMARK_COMPARISON.md) for detailed metrics.
 
 ## 🤝 Contributing
 

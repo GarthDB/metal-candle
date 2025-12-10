@@ -18,6 +18,7 @@ readme = "README.md"
 candle-core = { version = "0.9", features = ["metal"] }
 candle-nn = "0.9"
 candle-transformers = "0.9"
+candle-metal-kernels = "0.9"
 
 # Model formats
 safetensors = "0.4"
@@ -42,6 +43,18 @@ tracing = "0.1"
 # Random number generation
 rand = "0.8"
 
+# Async runtime (for Phase 5)
+tokio = { version = "1.0", features = ["rt", "sync", "macros"], optional = true }
+async-trait = { version = "0.1", optional = true }
+
+# Lock-free data structures (for Phase 5)
+dashmap = { version = "5.5", optional = true }
+
+# Custom Metal kernels (for performance optimization)
+# Must match candle-core's metal version (0.27)
+metal = { version = "0.27", optional = true }
+objc = { version = "0.2", optional = true }
+
 [dev-dependencies]
 # Benchmarking
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -56,12 +69,14 @@ tempfile = "3.0"
 anyhow = "1.0"
 
 [features]
-default = ["metal"]
-metal = []
+default = ["custom-metal", "graph"]
+custom-metal = ["dep:metal", "dep:objc"]
 embeddings = []
+graph = []  # Lazy evaluation framework (v2.0+)
+async-exec = ["graph", "dep:tokio", "dep:async-trait", "dep:dashmap"]  # Async execution (Phase 5)
 
 [lints.rust]
-unsafe_code = "forbid"
+unsafe_code = "deny"  # Deny by default, but allow MPS module to opt-in with #![allow]
 missing_docs = "warn"
 
 [lints.clippy]
@@ -78,10 +93,18 @@ suspicious = { level = "deny", priority = -1 }
 complexity = { level = "deny", priority = -1 }
 perf = { level = "deny", priority = -1 }
 
-# Allow specific pedantic lints where necessary
-# (Add exceptions here with justification comments)
-module_name_repetitions = "allow"  # Common in Rust for clear module organization
-multiple_crate_versions = "allow"  # Transitive dependencies from Candle
+# Allow specific pedantic lints where necessary (priority 0 overrides deny at -1)
+module_name_repetitions = { level = "allow", priority = 0 }  # Common in Rust for clear module organization
+multiple_crate_versions = { level = "allow", priority = 0 }  # Transitive dependencies from Candle
+doc_markdown = { level = "allow", priority = 0 }  # Backtick requirements are overly strict for technical terms
+missing_panics_doc = { level = "allow", priority = 0 }  # Documented where critical; internal panics are intentional
+uninlined_format_args = { level = "allow", priority = 0 }  # Format string style preference
+redundant_closure = { level = "allow", priority = 0 }  # Sometimes more readable
+too_many_lines = { level = "allow", priority = 0 }  # Complex functions sometimes necessary in ML code
+items_after_statements = { level = "allow", priority = 0 }  # Rust style preference, not correctness issue
+cast_precision_loss = { level = "allow", priority = 0 }  # Common and justified in ML code (dims, batch sizes)
+manual_debug_impl = { level = "allow", priority = 0 }  # Intentional for custom debug formatting
+doc_link_with_quotes = { level = "allow", priority = 0 }  # Documentation style preference
 
 [profile.release]
 opt-level = 3

@@ -298,32 +298,40 @@ Based on project goals:
 
 Comparison against MLX (Python ML framework optimized for Apple Silicon):
 
+**MLX Version**: 0.30.0 (Benchmarked December 8, 2025)  
+**Device**: Apple Silicon GPU (Metal)
+
 ### LoRA Operations
 
 | Operation | MLX (µs) | metal-candle (µs) | Ratio |
 |-----------|----------|-------------------|---------|
 | **LoRA Forward Pass** |
-| Small (512×512, rank=8) | 7.33 | 37.0 | 0.20x (MLX 5.0x faster) |
-| Medium (1024×1024, rank=8) | 5.68 | 54.8 | 0.10x (MLX 9.6x faster) |
-| Large (2048×2048, rank=8) | 9.01 | 98.4 | 0.09x (MLX 10.9x faster) |
+| Small (512×512, rank=8) | 5.79 | 37.0 | 0.16x (MLX 6.4x faster) |
+| Medium (1024×1024, rank=8) | 5.24 | 54.8 | 0.10x (MLX 10.5x faster) |
+| Large (2048×2048, rank=8) | 11.86 | 98.4 | 0.12x (MLX 8.3x faster) |
 | **LoRA Rank Scaling (1024×1024)** |
-| Rank 4 | 5.56 | 52.2 | 0.11x (MLX 9.4x faster) |
-| Rank 8 | 5.64 | 52.5 | 0.11x (MLX 9.3x faster) |
-| Rank 16 | 5.67 | 54.1 | 0.10x (MLX 9.5x faster) |
-| Rank 32 | 6.17 | 54.1 | 0.11x (MLX 8.8x faster) |
-| Rank 64 | 5.67 | 71.4 | 0.08x (MLX 12.6x faster) |
+| Rank 4 | 5.50 | 52.2 | 0.11x (MLX 9.5x faster) |
+| Rank 8 | 8.35 | 52.5 | 0.16x (MLX 6.3x faster) |
+| Rank 16 | 5.25 | 54.1 | 0.10x (MLX 10.3x faster) |
+| Rank 32 | 5.52 | 54.1 | 0.10x (MLX 9.8x faster) |
+| Rank 64 | 5.30 | 71.4 | 0.07x (MLX 13.5x faster) |
 
-**Performance Analysis**: MLX currently has superior raw throughput for LoRA operations due to highly optimized Metal kernels and minimal abstraction overhead. metal-candle prioritizes type safety, ergonomic APIs, and compile-time guarantees.
+**Performance Analysis**: MLX currently has superior raw throughput for LoRA operations due to highly optimized fused Metal kernels and minimal abstraction overhead. The performance gap is primarily due to:
+1. **Kernel Launch Overhead**: metal-candle uses 2+ kernel launches vs MLX's 1 fused kernel
+2. **Memory Bandwidth**: Intermediate allocations in metal-candle
+3. **Optimization Level**: MLX's hand-tuned Metal shaders
+
+**Optimization Plan**: Custom fused Metal kernels in development (Phase 3) targeting 95-110% of MLX performance.
 
 ### Layer Operations
 
 | Operation | MLX (µs) | metal-candle (µs) | Ratio |
 |-----------|----------|-------------------|-------|
-| Softmax (1024) | 1.85 | 41.5 | 0.045x (MLX 22x faster) |
-| Layer Norm (1024) | 2.14 | 45.8 | 0.047x (MLX 21x faster) |
-| RMS Norm (1024) | 6.08 | 25.0 | 0.243x (MLX 4x faster) |
+| Softmax (1024) | 5.04 | 41.5 | 0.12x (MLX 8.2x faster) |
+| Layer Norm (1024) | 2.41 | 45.8 | 0.05x (MLX 19.0x faster) |
+| RMS Norm (1024) | 4.96 | 25.0 | 0.20x (MLX 5.0x faster) |
 
-**Note**: Layer operations show significant performance gaps compared to MLX's highly optimized kernels. These operations are candidates for optimization in future versions through custom Metal kernels or Flash Attention integration.
+**Note**: Layer operations show significant performance gaps due to multiple kernel launches for operations that MLX fuses into single kernels. These are high-priority targets for custom Metal kernel optimization (Phase 4).
 
 ### metal-candle Value Proposition
 

@@ -5,9 +5,9 @@
 
 use std::path::PathBuf;
 
+use crate::embeddings::vendored_bert::Config as BertConfig;
 use candle_core::Device;
 use candle_nn::VarBuilder;
-use candle_transformers::models::bert::Config as BertConfig;
 use hf_hub::{api::sync::Api, Repo};
 
 use crate::embeddings::config::EmbeddingModelType;

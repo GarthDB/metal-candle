@@ -117,6 +117,25 @@ impl Device {
         self.inner
     }
 
+    /// Create a Device from a Candle device.
+    ///
+    /// This is useful for interoperability with Candle APIs and the async executor.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use metal_candle::Device;
+    /// use candle_core::Device as CandleDevice;
+    ///
+    /// let candle_device = CandleDevice::Cpu;
+    /// let device = Device::from_candle_device(candle_device);
+    /// assert!(device.is_cpu());
+    /// ```
+    #[must_use]
+    pub const fn from_candle_device(device: CandleDevice) -> Self {
+        Self { inner: device }
+    }
+
     /// Returns whether this device is using Metal.
     ///
     /// # Examples
@@ -192,6 +211,22 @@ impl Device {
     #[must_use]
     pub fn is_metal_available() -> bool {
         CandleDevice::new_metal(0).is_ok()
+    }
+
+    /// Get the underlying Metal device for MPS operations.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if device is not a Metal device.
+    #[cfg(feature = "custom-metal")]
+    pub fn metal_device(&self) -> Result<&candle_core::MetalDevice> {
+        match &self.inner {
+            CandleDevice::Metal(metal_dev) => Ok(metal_dev),
+            _ => Err(DeviceError::MetalUnavailable {
+                reason: "Device is not a Metal device".to_string(),
+            }
+            .into()),
+        }
     }
 }
 
