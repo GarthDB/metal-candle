@@ -84,15 +84,16 @@ def compare_with_metal_candle():
     print("🔬 MLX vs metal-candle Comparison")
     print("="*70 + "\n")
     
-    # metal-candle results (from previous benchmark)
+    # metal-candle results (Metal GPU, from benchmarks/RESULTS.md)
+    # These are the actual Metal GPU times, not CPU times
     metal_candle_results = {
-        1: 36979,
-        2: 56680,
-        5: 112283,
-        10: 203491,
-        20: 381685,
-        50: 927681,
-        100: 1854715,
+        1: 3900,      # 3.9ms
+        2: 3100,      # 3.1ms
+        5: 3500,      # 3.5ms
+        10: 3400,     # 3.4ms
+        20: 3500,     # 3.5ms
+        50: 4000,     # 4.0ms
+        100: 4400,    # 4.4ms
     }
     
     # Run MLX benchmark
