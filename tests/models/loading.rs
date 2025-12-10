@@ -113,8 +113,7 @@ fn test_model_loader_with_custom_dtype() {
     use candle_core::DType;
 
     let device = Device::new_cpu();
-    let loader = ModelLoader::new(device)
-        .with_dtype(DType::F32);
+    let loader = ModelLoader::new(device).with_dtype(DType::F32);
 
     assert_eq!(loader.dtype(), Some(DType::F32));
 }
@@ -151,10 +150,8 @@ fn test_load_with_validation_checks_tensor_presence() {
     expected_shapes.insert("required_tensor".to_string(), vec![128, 256]);
 
     // Should fail because file doesn't exist
-    let result = loader.load_with_validation(
-        "tests/fixtures/nonexistent.safetensors",
-        &expected_shapes,
-    );
+    let result =
+        loader.load_with_validation("tests/fixtures/nonexistent.safetensors", &expected_shapes);
     assert!(result.is_err());
 }
 
@@ -169,7 +166,7 @@ fn test_config_with_zero_layers_fails_validation() {
     }"#;
 
     let config = ModelConfig::from_json(json).expect("Failed to parse config");
-    
+
     // Validation should fail for zero layers
     assert!(config.validate().is_err());
 }
@@ -185,7 +182,7 @@ fn test_config_with_zero_vocab_fails_validation() {
     }"#;
 
     let config = ModelConfig::from_json(json).expect("Failed to parse config");
-    
+
     // Validation should fail for zero vocab
     assert!(config.validate().is_err());
 }
@@ -201,7 +198,7 @@ fn test_config_with_mismatched_head_count() {
     }"#;
 
     let config = ModelConfig::from_json(json).expect("Failed to parse config");
-    
+
     // Validation should fail when hidden_size not divisible by num_attention_heads
     assert!(config.validate().is_err());
 }
@@ -260,7 +257,10 @@ fn test_loader_device_accessor() {
     let loader = ModelLoader::new(device.clone());
 
     assert!(loader.device().is_cpu());
-    assert_eq!(loader.device().info().device_type, metal_candle::backend::DeviceType::Cpu);
+    assert_eq!(
+        loader.device().info().device_type,
+        metal_candle::backend::DeviceType::Cpu
+    );
 }
 
 #[test]
@@ -327,4 +327,3 @@ fn test_config_num_kv_heads_specified() {
 // Note: Tests for actual file loading would require test fixtures
 // These would be added in tests/fixtures/ with small safetensors files
 // for testing purposes.
-

@@ -422,7 +422,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     fn test_tensor_ext_on_metal_device() -> CandleResult<()> {
         use crate::backend::Device as MetalCandleDevice;
-        
+
         if let Ok(device) = MetalCandleDevice::new_metal(0) {
             let candle_device = device.as_candle_device();
             let tensor = Tensor::randn(0f32, 1f32, (2, 4), candle_device)?;

@@ -3,10 +3,8 @@
 //! Tests cover configuration validation, training execution, error handling,
 //! and gradient accumulation.
 
-use candle_core::{Device, DType, Tensor};
-use metal_candle::training::{
-    LRScheduler, LoRAAdapterConfig, Trainer, TrainingConfig,
-};
+use candle_core::{DType, Device, Tensor};
+use metal_candle::training::{LRScheduler, LoRAAdapterConfig, Trainer, TrainingConfig};
 use metal_candle::Result;
 
 /// Helper function to create a simple forward function for testing.
@@ -325,7 +323,7 @@ fn test_training_with_warmup_cosine_scheduler() -> anyhow::Result<()> {
 #[cfg(target_os = "macos")]
 fn test_training_on_metal_device() -> anyhow::Result<()> {
     use metal_candle::backend::Device as MetalCandleDevice;
-    
+
     if let Ok(device) = MetalCandleDevice::new_metal(0) {
         let candle_device = device.as_candle_device();
         let lora_config = LoRAAdapterConfig {
@@ -337,8 +335,7 @@ fn test_training_on_metal_device() -> anyhow::Result<()> {
             ..Default::default()
         };
 
-        let mut trainer =
-            Trainer::new(64, 128, 2, &lora_config, training_config, candle_device)?;
+        let mut trainer = Trainer::new(64, 128, 2, &lora_config, training_config, candle_device)?;
 
         let input = Tensor::zeros((1, 4), DType::U32, candle_device)?;
         let target = Tensor::zeros((1, 4), DType::U32, candle_device)?;
@@ -369,7 +366,7 @@ fn test_default_training_config() {
 fn test_training_config_validation() -> anyhow::Result<()> {
     let device = Device::Cpu;
     let lora_config = LoRAAdapterConfig::default();
-    
+
     // Valid config with no gradient clipping
     let training_config = TrainingConfig {
         num_epochs: 1,
@@ -382,4 +379,3 @@ fn test_training_config_validation() -> anyhow::Result<()> {
 
     Ok(())
 }
-

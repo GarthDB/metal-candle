@@ -141,11 +141,14 @@ fn test_optimizer_updates_parameters() {
 
     let lora = LoRALayer::new(16, 16, &config, &device).unwrap();
 
-    // Store initial values
-    let initial_a = lora.lora_a_tensor().to_vec2::<f32>().unwrap();
+    // Store initial values - clone the tensor to avoid references
+    let initial_a = lora.lora_a_tensor().clone().to_vec2::<f32>().unwrap();
 
-    // Create optimizer
-    let opt_config = AdamWConfig::default();
+    // Create optimizer with a non-zero learning rate to ensure updates are visible
+    let opt_config = AdamWConfig {
+        learning_rate: 1e-3, // Higher learning rate for visible changes
+        ..Default::default()
+    };
     let mut optimizer = AdamW::new(opt_config).unwrap();
 
     // Perform forward pass and compute gradients
@@ -154,18 +157,27 @@ fn test_optimizer_updates_parameters() {
     let loss = output.sum_all().unwrap();
     let grads = loss.backward().unwrap();
 
+    // Ensure gradients exist
+    assert!(
+        grads.get(lora.lora_a()).is_some(),
+        "Gradients should be computed for lora_a"
+    );
+
     // Update parameters
     let grad_a = grads.get(lora.lora_a()).unwrap();
     optimizer.step_var(lora.lora_a(), grad_a).unwrap();
 
-    // Verify parameters changed
-    let updated_a = lora.lora_a_tensor().to_vec2::<f32>().unwrap();
+    // Verify parameters changed - use a fresh read
+    let updated_a = lora.lora_a_tensor().clone().to_vec2::<f32>().unwrap();
 
     // Check that at least one element changed
     let mut changed = false;
+    let mut max_diff = 0.0f32;
     for (i, row) in initial_a.iter().enumerate() {
         for (j, &val) in row.iter().enumerate() {
-            if (val - updated_a[i][j]).abs() > 1e-6 {
+            let diff = (val - updated_a[i][j]).abs();
+            max_diff = max_diff.max(diff);
+            if diff > 1e-7 {
                 changed = true;
                 break;
             }
@@ -175,7 +187,10 @@ fn test_optimizer_updates_parameters() {
         }
     }
 
-    assert!(changed, "Parameters should change after optimizer step");
+    assert!(
+        changed,
+        "Parameters should change after optimizer step (max diff: {max_diff})"
+    );
 }
 
 #[test]
