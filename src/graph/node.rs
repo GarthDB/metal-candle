@@ -540,4 +540,26 @@ mod tests {
         // Should have 5 nodes: 1 original + 4 merged (b, c, d, e)
         assert_eq!(graph1.len(), 5);
     }
+
+    #[test]
+    fn test_graph_get_node_error() {
+        let device = Device::Cpu;
+        let graph = ComputationGraph::new(device);
+
+        // Try to get a non-existent node
+        let result = graph.get_node(NodeId(999));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
+
+    #[test]
+    fn test_graph_get_node_mut_error() {
+        let device = Device::Cpu;
+        let mut graph = ComputationGraph::new(device);
+
+        // Try to get a non-existent mutable node
+        let result = graph.get_node_mut(NodeId(999));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not found"));
+    }
 }
