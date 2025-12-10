@@ -456,4 +456,88 @@ mod tests {
         let result = graph.add_node(Operation::Add, vec![a_id, b_id]);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_graph_merge_simple() {
+        let device = Device::Cpu;
+
+        // Create first graph with node A
+        let mut graph1 = ComputationGraph::new(device.clone());
+        let tensor_a = Tensor::from_slice(&[1.0_f32, 2.0], &[2], &device).unwrap();
+        let node_a = graph1.add_input(tensor_a);
+
+        // Create second graph with node B
+        let mut graph2 = ComputationGraph::new(device.clone());
+        let tensor_b = Tensor::from_slice(&[3.0_f32, 4.0], &[2], &device).unwrap();
+        let node_b = graph2.add_input(tensor_b);
+
+        // Merge graph2 into graph1
+        let new_node_b = graph1.merge_from(&graph2, node_b);
+
+        // Verify graph1 now has 2 nodes
+        assert_eq!(graph1.len(), 2);
+
+        // Verify the merged node exists
+        assert!(graph1.get_node(new_node_b).is_ok());
+    }
+
+    #[test]
+    fn test_graph_merge_with_dependencies() {
+        let device = Device::Cpu;
+
+        // Create first graph
+        let mut graph1 = ComputationGraph::new(device.clone());
+        let tensor_a = Tensor::from_slice(&[1.0_f32, 2.0], &[2], &device).unwrap();
+        let _node_a = graph1.add_input(tensor_a);
+
+        // Create second graph with a computation
+        let mut graph2 = ComputationGraph::new(device.clone());
+        let tensor_b = Tensor::from_slice(&[3.0_f32, 4.0], &[2], &device).unwrap();
+        let node_b = graph2.add_input(tensor_b);
+        let tensor_c = Tensor::from_slice(&[5.0_f32, 6.0], &[2], &device).unwrap();
+        let node_c = graph2.add_input(tensor_c);
+        let node_d = graph2
+            .add_node(Operation::Add, vec![node_b, node_c])
+            .unwrap();
+
+        // Merge graph2's computation into graph1
+        let new_node_d = graph1.merge_from(&graph2, node_d);
+
+        // Verify graph1 now has 4 nodes (1 original + 3 merged)
+        assert_eq!(graph1.len(), 4);
+
+        // Verify the merged node and its dependencies exist
+        assert!(graph1.get_node(new_node_d).is_ok());
+        let merged_node = graph1.get_node(new_node_d).unwrap();
+        assert_eq!(merged_node.inputs.len(), 2);
+    }
+
+    #[test]
+    fn test_graph_merge_deep_recursion() {
+        let device = Device::Cpu;
+
+        let mut graph1 = ComputationGraph::new(device.clone());
+        let tensor_a = Tensor::from_slice(&[1.0_f32, 2.0], &[2], &device).unwrap();
+        let _node_a = graph1.add_input(tensor_a);
+
+        // Create a chain in graph2: b -> c -> d -> e
+        let mut graph2 = ComputationGraph::new(device.clone());
+        let tensor_b = Tensor::from_slice(&[1.0_f32, 2.0], &[2], &device).unwrap();
+        let node_b = graph2.add_input(tensor_b);
+        let node_c = graph2
+            .add_node(Operation::MulScalar { value: 2.0 }, vec![node_b])
+            .unwrap();
+        let node_d = graph2
+            .add_node(Operation::MulScalar { value: 3.0 }, vec![node_c])
+            .unwrap();
+        let node_e = graph2
+            .add_node(Operation::MulScalar { value: 4.0 }, vec![node_d])
+            .unwrap();
+
+        // Merge only the final node - should recursively merge all dependencies
+        graph1.merge_from(&graph2, node_e);
+
+        // Should have 5 nodes: 1 original + 4 merged (b, c, d, e)
+        assert_eq!(graph1.len(), 5);
+    }
 }
