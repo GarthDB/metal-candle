@@ -25,6 +25,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      docs_exist: ${{ steps.check_docs.outputs.exists }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,19 +35,29 @@ jobs:
         with:
           mdbook-version: 'latest'
 
+      - name: Check if docs exist
+        id: check_docs
+        run: |
+          if [ -f "docs/book.toml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build book
+        if: steps.check_docs.outputs.exists == 'true'
         run: |
           cd docs
           mdbook build
 
       - name: Upload artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.check_docs.outputs.exists == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs/book
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.outputs.docs_exist == 'true'
     needs: build
     runs-on: ubuntu-latest
     environment:

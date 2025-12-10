@@ -252,6 +252,45 @@ fn benchmark_lora_scaling(c: &mut Criterion) {
     group.finish();
 }
 
+/// Benchmark lazy evaluation vs eager execution for LoRA operations
+#[cfg(feature = "graph")]
+fn benchmark_lazy_vs_eager_lora(c: &mut Criterion) {
+    use metal_candle::graph::LazyTensor;
+
+    let mut group = c.benchmark_group("lazy_vs_eager_lora");
+
+    let device = Device::new_metal(0).expect("Metal required for benchmarks");
+    let config = LoRAConfig {
+        rank: 8,
+        alpha: 16.0,
+        dropout: 0.0,
+    };
+
+    let lora = LoRALayer::new(512, 512, &config, &device).expect("Failed to create LoRA layer");
+    let input = Tensor::randn(0f32, 1f32, (4, 16, 512), &device).expect("Failed to create input");
+
+    // Eager: Direct forward pass
+    group.bench_function("eager_forward", |b| {
+        b.iter(|| {
+            let output = lora.forward(black_box(&input)).expect("Forward failed");
+            black_box(output)
+        });
+    });
+
+    // Lazy: forward_lazy + eval
+    group.bench_function("lazy_forward_sync", |b| {
+        b.iter(|| {
+            let input_lazy = LazyTensor::from_tensor(black_box(input.clone()))
+                .expect("Failed to create lazy tensor");
+            let output_lazy = lora.forward_lazy(&input_lazy).expect("Forward lazy failed");
+            let output = output_lazy.eval().expect("Eval failed");
+            black_box(output)
+        });
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     training_benches,
     benchmark_lora_forward,
@@ -261,4 +300,12 @@ criterion_group!(
     benchmark_layer_operations,
     benchmark_lora_scaling,
 );
+
+#[cfg(feature = "graph")]
+criterion_group!(lazy_benches, benchmark_lazy_vs_eager_lora);
+
+#[cfg(feature = "graph")]
+criterion_main!(training_benches, lazy_benches);
+
+#[cfg(not(feature = "graph"))]
 criterion_main!(training_benches);

@@ -234,4 +234,205 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_softmax_with_negative_values() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::new(&[[-1.0f32, -2.0, -3.0]], &device)?;
+
+        let result = tensor.softmax_stable()?;
+
+        // Check sum to 1
+        let sum = result.sum_keepdim(1)?;
+        let sum_val = sum.to_vec2::<f32>()?[0][0];
+        assert!((sum_val - 1.0).abs() < 1e-5);
+
+        // All values should be positive
+        let values = result.to_vec2::<f32>()?;
+        for row in values {
+            for &val in &row {
+                assert!(val > 0.0 && val < 1.0);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_softmax_with_zero_values() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::new(&[[0.0f32, 0.0, 0.0]], &device)?;
+
+        let result = tensor.softmax_stable()?;
+
+        // Should produce uniform distribution
+        let values = result.to_vec2::<f32>()?;
+        for &val in &values[0] {
+            assert!((val - 1.0 / 3.0).abs() < 1e-5);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_layer_norm_preserves_shape() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::randn(0f32, 1f32, (3, 5, 7), &device)?;
+
+        let result = tensor.layer_norm(1e-5)?;
+
+        assert_eq!(result.shape(), tensor.shape());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_layer_norm_with_zeros() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::new(&[[0.0f32, 0.0, 0.0]], &device)?;
+
+        // Should handle all-zero input gracefully
+        let result = tensor.layer_norm(1e-5)?;
+
+        // Result should be all zeros (or very small values due to eps)
+        let values = result.to_vec2::<f32>()?;
+        for row in values {
+            for &val in &row {
+                assert!(val.abs() < 1e-3);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_rms_norm_preserves_shape() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::randn(0f32, 1f32, (4, 6), &device)?;
+
+        let result = tensor.rms_norm(1e-6)?;
+
+        assert_eq!(result.shape(), tensor.shape());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_rms_norm_with_known_values() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::new(&[[1.0f32, 1.0, 1.0, 1.0]], &device)?;
+
+        let result = tensor.rms_norm(1e-6)?;
+
+        // RMS of [1,1,1,1] is 1, so result should be [1,1,1,1]
+        let values = result.to_vec2::<f32>()?;
+        for row in values {
+            for &val in &row {
+                assert!((val - 1.0).abs() < 1e-5);
+            }
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_softmax_3d_tensor() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::randn(0f32, 1f32, (2, 3, 4), &device)?;
+
+        let result = tensor.softmax_stable()?;
+
+        // Check shape preservation
+        assert_eq!(result.shape(), tensor.shape());
+
+        // Check that last dimension sums to 1
+        let sums = result.sum_keepdim(2)?;
+        let sums_vec = sums.to_vec3::<f32>()?;
+
+        for batch in sums_vec {
+            for row in batch {
+                for &val in &row {
+                    assert!((val - 1.0).abs() < 1e-5);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_layer_norm_variance_close_to_one() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::new(&[[1.0f32, 2.0, 3.0, 4.0, 5.0]], &device)?;
+
+        let result = tensor.layer_norm(1e-5)?;
+
+        // Calculate variance of result
+        let mean = result.mean_keepdim(1)?;
+        let centered = result.broadcast_sub(&mean)?;
+        let variance = centered.sqr()?.mean_keepdim(1)?;
+
+        let var_val = variance.to_vec2::<f32>()?[0][0];
+        assert!((var_val - 1.0).abs() < 1e-3);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_rms_norm_scales_proportionally() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::new(&[[2.0f32, 4.0, 6.0]], &device)?;
+
+        let result = tensor.rms_norm(1e-6)?;
+
+        // Values should maintain their ratios: 2:4:6 = 1:2:3
+        let values = result.to_vec2::<f32>()?[0].to_vec();
+        let ratio1 = values[1] / values[0];
+        let ratio2 = values[2] / values[0];
+
+        assert!((ratio1 - 2.0).abs() < 1e-4);
+        assert!((ratio2 - 3.0).abs() < 1e-4);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_all_operations_on_single_value() -> CandleResult<()> {
+        let device = Device::Cpu;
+        let tensor = Tensor::new(&[[5.0f32]], &device)?;
+
+        // All operations should handle single-element tensors
+        let softmax_result = tensor.softmax_stable()?;
+        let layer_norm_result = tensor.layer_norm(1e-5)?;
+        let rms_norm_result = tensor.rms_norm(1e-6)?;
+
+        // Softmax of single value should be 1.0
+        assert!((softmax_result.to_vec2::<f32>()?[0][0] - 1.0).abs() < 1e-5);
+
+        // Layer norm of single value should be 0 (mean=value, so centered=0)
+        assert!(layer_norm_result.to_vec2::<f32>()?[0][0].abs() < 1e-3);
+
+        // RMS norm should normalize to 1
+        assert!((rms_norm_result.to_vec2::<f32>()?[0][0] - 1.0).abs() < 1e-5);
+
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(target_os = "macos")]
+    fn test_tensor_ext_on_metal_device() -> CandleResult<()> {
+        use crate::backend::Device as MetalCandleDevice;
+
+        if let Ok(device) = MetalCandleDevice::new_metal(0) {
+            let candle_device = device.as_candle_device();
+            let tensor = Tensor::randn(0f32, 1f32, (2, 4), candle_device)?;
+
+            // All operations should work on Metal
+            let _softmax = tensor.softmax_stable()?;
+            let _layer_norm = tensor.layer_norm(1e-5)?;
+            let _rms_norm = tensor.rms_norm(1e-6)?;
+        }
+
+        Ok(())
+    }
 }

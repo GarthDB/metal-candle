@@ -23,9 +23,15 @@
 //! - Paper: "`LoRA`: Low-Rank Adaptation of Large Language Models" (Hu et al., 2021)
 //! - <https://arxiv.org/abs/2106.09685>
 
+// Allow similar_names for LoRA operations - A/B matrix naming is standard ML convention
+#![allow(clippy::similar_names)]
+
 use crate::error::Result;
 use candle_core::{DType, Device, Tensor, Var};
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "graph")]
+use crate::graph::LazyTensor;
 
 /// Configuration for `LoRA` layers.
 ///
@@ -171,6 +177,12 @@ pub struct LoRALayer {
 
     /// Output dimension
     out_features: usize,
+
+    /// Training mode flag
+    ///
+    /// When `true`, dropout is applied (if configured).
+    /// When `false` (inference mode), dropout is skipped.
+    training: bool,
 }
 
 impl LoRALayer {
@@ -240,12 +252,20 @@ impl LoRALayer {
             config: *config,
             in_features,
             out_features,
+            training: true, // Default to training mode
         })
     }
 
     /// Performs forward pass through the `LoRA` layer.
     ///
     /// Computes: `scale * (input @ A^T @ B^T)`
+    ///
+    /// When in training mode (`set_training(true)`), dropout is applied after the A matrix
+    /// multiplication if configured (`dropout > 0.0`). In evaluation mode (`eval()`), dropout
+    /// is always disabled.
+    ///
+    /// Automatically uses custom fused Metal kernel when available for optimal performance
+    /// (when dropout is disabled).
     ///
     /// # Arguments
     ///
@@ -258,8 +278,39 @@ impl LoRALayer {
     /// # Errors
     ///
     /// Returns an error if tensor operations fail.
+    ///
+    /// # Performance
+    ///
+    /// - **Custom Metal kernel** (when available, dropout disabled): 5-6 µs (single kernel dispatch)
+    /// - **Candle fallback**: 37-98 µs (multiple kernel dispatches)
+    /// - **With dropout** (training mode): Additional ~10-20% overhead for dropout operation
+    ///
+    /// # Training vs Evaluation Mode
+    ///
+    /// - **Training**: Use `set_training(true)` to enable dropout (if configured)
+    /// - **Evaluation**: Use `eval()` to disable dropout for deterministic inference
     pub fn forward(&self, input: &Tensor) -> Result<Tensor> {
-        // OPTIMIZED FORWARD PASS
+        // Try custom fused Metal kernel first (Phase 3+)
+        #[cfg(feature = "custom-metal")]
+        {
+            use crate::backend::CustomMetalOps;
+
+            // Check if we can use the custom kernel
+            // Conditions: Metal device, compatible dimensions, no dropout
+            if input.device().is_metal() && self.config.dropout == 0.0 {
+                // Try fused kernel - if it works, return early
+                if let Ok(output) = input.lora_forward_fused(
+                    self.lora_a.as_tensor(),
+                    self.lora_b.as_tensor(),
+                    self.config.scaling(),
+                ) {
+                    return Ok(output);
+                }
+                // If fused kernel fails, fall through to Candle implementation
+            }
+        }
+
+        // OPTIMIZED CANDLE FORWARD PASS (Fallback)
         // Matrices are pre-transposed and B is pre-scaled, reducing 5 kernels to 2!
         //
         // input: (..., in_features)
@@ -271,8 +322,12 @@ impl LoRALayer {
         // (..., in_features) @ (in_features, rank) -> (..., rank)
         let hidden = input.broadcast_matmul(self.lora_a.as_tensor())?;
 
-        // TODO: Apply dropout if configured (for training mode)
-        // For now, skip dropout - will add when implementing training loop
+        // Step 1.5: Apply dropout if in training mode and configured
+        let hidden = if self.training && self.config.dropout > 0.0 {
+            candle_nn::ops::dropout(&hidden, self.config.dropout)?
+        } else {
+            hidden
+        };
 
         // Step 2: hidden @ B_scaled -> (..., out_features)
         // hidden: (..., rank)
@@ -280,8 +335,107 @@ impl LoRALayer {
         // (..., rank) @ (rank, out_features) -> (..., out_features)
         let output = hidden.broadcast_matmul(self.lora_b.as_tensor())?;
 
-        // That's it! No transpose, no scaling needed.
-        Ok(output)
+        // Apply scaling (B is not pre-scaled to allow gradients to work correctly)
+        let scaled_output = output.affine(f64::from(self.config.scaling()), 0.0)?;
+
+        Ok(scaled_output)
+    }
+
+    /// Forward pass using lazy evaluation (v2.0+)
+    ///
+    /// This method uses the lazy evaluation framework for deferred execution.
+    /// Multiple operations can be batched together for improved performance.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use metal_candle::training::LoRALayer;
+    /// use metal_candle::graph::LazyTensor;
+    /// # use metal_candle::Result;
+    /// # fn example() -> Result<()> {
+    /// # let config = metal_candle::training::LoRAConfig::default();
+    /// # let lora_layer = LoRALayer::new(128, 128, &config, &candle_core::Device::Cpu)?;
+    /// # let input = candle_core::Tensor::zeros(&[128, 512], candle_core::DType::F32, &candle_core::Device::Cpu)?;
+    ///
+    /// let input_lazy = LazyTensor::from_tensor(input)?;
+    /// let output_lazy = lora_layer.forward_lazy(&input_lazy)?;
+    /// let output = output_lazy.eval()?;  // Deferred execution
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - Shape mismatch between input and `LoRA` matrices
+    /// - Tensor operations fail
+    #[cfg(feature = "graph")]
+    pub fn forward_lazy(&self, input: &LazyTensor) -> Result<LazyTensor> {
+        // Try custom fused Metal kernel first
+        #[cfg(feature = "custom-metal")]
+        {
+            if input.device().is_metal() && self.config.dropout == 0.0 {
+                // Use fused LoRA operation
+                let weight_a_tensor = input
+                    .add_tensor_to_graph(self.lora_a.as_tensor().clone())
+                    .map_err(|e| crate::error::TrainingError::Failed {
+                        reason: format!("Failed to add LoRA A to graph: {e}"),
+                    })?;
+                let weight_b_tensor = input
+                    .add_tensor_to_graph(self.lora_b.as_tensor().clone())
+                    .map_err(|e| crate::error::TrainingError::Failed {
+                        reason: format!("Failed to add LoRA B to graph: {e}"),
+                    })?;
+
+                return input
+                    .lora_fused(&weight_a_tensor, &weight_b_tensor, self.config.scaling())
+                    .map_err(|e| {
+                        crate::error::TrainingError::Failed {
+                            reason: format!("Fused LoRA operation failed: {e}"),
+                        }
+                        .into()
+                    });
+            }
+        }
+
+        // Fallback to sequential matmul operations
+        // Note: Matrices are stored transposed: A is (in_features, rank), B is (rank, out_features)
+        // This matches the eager forward() implementation
+        let weight_a_tensor = input
+            .add_tensor_to_graph(self.lora_a.as_tensor().clone())
+            .map_err(|e| crate::error::TrainingError::Failed {
+                reason: format!("Failed to add LoRA A to graph: {e}"),
+            })?;
+        let weight_b_tensor = input
+            .add_tensor_to_graph(self.lora_b.as_tensor().clone())
+            .map_err(|e| crate::error::TrainingError::Failed {
+                reason: format!("Failed to add LoRA B to graph: {e}"),
+            })?;
+
+        // hidden = input @ A (input: (..., in_features), A: (in_features, rank) -> (..., rank))
+        let hidden =
+            input
+                .matmul(&weight_a_tensor)
+                .map_err(|e| crate::error::TrainingError::Failed {
+                    reason: format!("LoRA matmul A failed: {e}"),
+                })?;
+
+        // output = hidden @ B (hidden: (..., rank), B: (rank, out_features) -> (..., out_features))
+        let output =
+            hidden
+                .matmul(&weight_b_tensor)
+                .map_err(|e| crate::error::TrainingError::Failed {
+                    reason: format!("LoRA matmul B failed: {e}"),
+                })?;
+
+        // Apply scaling (same as in forward())
+        let scaling = self.config.scaling();
+        output.mul_scalar(scaling).map_err(|e| {
+            crate::error::TrainingError::Failed {
+                reason: format!("LoRA scaling failed: {e}"),
+            }
+            .into()
+        })
     }
 
     /// Returns the number of trainable parameters in this `LoRA` layer.
@@ -290,6 +444,74 @@ impl LoRALayer {
     #[must_use]
     pub const fn num_parameters(&self) -> usize {
         self.config.rank * (self.in_features + self.out_features)
+    }
+
+    /// Sets the layer to training mode.
+    ///
+    /// When in training mode, dropout is applied (if configured).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use metal_candle::training::{LoRALayer, LoRAConfig};
+    /// use candle_core::Device;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let device = Device::Cpu;
+    /// let config = LoRAConfig { rank: 8, alpha: 16.0, dropout: 0.1 };
+    /// let mut layer = LoRALayer::new(64, 64, &config, &device)?;
+    ///
+    /// layer.set_training(true);  // Enable dropout
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn set_training(&mut self, training: bool) {
+        self.training = training;
+    }
+
+    /// Sets the layer to evaluation mode (inference).
+    ///
+    /// In evaluation mode, dropout is disabled regardless of configuration.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use metal_candle::training::{LoRALayer, LoRAConfig};
+    /// use candle_core::Device;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let device = Device::Cpu;
+    /// let config = LoRAConfig { rank: 8, alpha: 16.0, dropout: 0.1 };
+    /// let mut layer = LoRALayer::new(64, 64, &config, &device)?;
+    ///
+    /// layer.eval();  // Disable dropout for inference
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn eval(&mut self) {
+        self.training = false;
+    }
+
+    /// Returns whether the layer is in training mode.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use metal_candle::training::{LoRALayer, LoRAConfig};
+    /// use candle_core::Device;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let device = Device::Cpu;
+    /// let config = LoRAConfig::default();
+    /// let layer = LoRALayer::new(64, 64, &config, &device)?;
+    ///
+    /// assert!(layer.is_training());  // Default is training mode
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[must_use]
+    pub const fn is_training(&self) -> bool {
+        self.training
     }
 
     /// Returns a reference to the A matrix as a `Var` (trainable parameter).

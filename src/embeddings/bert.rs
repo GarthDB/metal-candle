@@ -3,11 +3,10 @@
 //! This module wraps Candle's BERT model and adds sentence-transformer
 //! specific functionality like mean pooling and normalization.
 
+use crate::embeddings::pooling::{mean_pool, normalize};
+use crate::embeddings::vendored_bert::{BertModel, Config as BertConfig};
 use candle_core::{Result, Tensor};
 use candle_nn::VarBuilder;
-use candle_transformers::models::bert::{BertModel, Config as BertConfig};
-
-use crate::embeddings::pooling::{mean_pool, normalize};
 
 /// BERT model for generating sentence embeddings.
 ///
@@ -162,7 +161,7 @@ mod tests {
             num_hidden_layers: 2,
             num_attention_heads: 4,
             intermediate_size: 512,
-            hidden_act: candle_transformers::models::bert::HiddenAct::Gelu,
+            hidden_act: crate::embeddings::vendored_bert::HiddenAct::Gelu,
             hidden_dropout_prob: 0.0,
             max_position_embeddings: 512,
             type_vocab_size: 2,
@@ -170,7 +169,7 @@ mod tests {
             layer_norm_eps: 1e-12,
             pad_token_id: 0,
             position_embedding_type:
-                candle_transformers::models::bert::PositionEmbeddingType::Absolute,
+                crate::embeddings::vendored_bert::PositionEmbeddingType::Absolute,
             use_cache: false,
             classifier_dropout: None,
             model_type: None,

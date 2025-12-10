@@ -289,3 +289,5 @@ fn test_deterministic_embeddings() -> anyhow::Result<()> {
 // Note: Metal GPU tests would go here if we want to test device-specific behavior
 // For now, we focus on CPU tests for broad compatibility
 
+
+

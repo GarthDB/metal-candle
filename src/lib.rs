@@ -32,6 +32,8 @@
 
 pub mod backend;
 pub mod error;
+#[cfg(feature = "graph")]
+pub mod graph;
 pub mod inference;
 pub mod models;
 pub mod training;
