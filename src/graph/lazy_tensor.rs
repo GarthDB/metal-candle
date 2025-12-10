@@ -478,3 +478,57 @@ impl std::fmt::Debug for LazyTensor {
             .finish_non_exhaustive()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_merge_graph_from_same_graph() {
+        let device = Device::Cpu;
+
+        // Create a tensor
+        let a = LazyTensor::from_slice(&[1.0, 2.0], &[2], &device).unwrap();
+
+        // Create another tensor from the same graph
+        let b = a.mul_scalar(2.0).unwrap();
+
+        // They share the same graph
+        assert!(Arc::ptr_eq(&a.graph, &b.graph));
+
+        // merge_graph_from should return the original node_id (fast path)
+        let merged_id = a.merge_graph_from(&b);
+        assert_eq!(merged_id, b.node_id);
+
+        // Graph size should remain unchanged (no actual merge)
+        assert_eq!(a.graph_size(), 2); // a and b nodes
+    }
+
+    #[test]
+    fn test_merge_graph_from_different_graphs() {
+        let device = Device::Cpu;
+
+        // Create two separate tensors with different graphs
+        let a = LazyTensor::from_slice(&[1.0, 2.0], &[2], &device).unwrap();
+        let b = LazyTensor::from_slice(&[3.0, 4.0], &[2], &device).unwrap();
+
+        // They have different graphs
+        assert!(!Arc::ptr_eq(&a.graph, &b.graph));
+
+        // Initial sizes
+        assert_eq!(a.graph_size(), 1);
+        assert_eq!(b.graph_size(), 1);
+
+        // Merge b's graph into a's
+        let merged_id = a.merge_graph_from(&b);
+
+        // a's graph should now have both nodes
+        assert_eq!(a.graph_size(), 2);
+
+        // b's graph is unchanged
+        assert_eq!(b.graph_size(), 1);
+
+        // merged_id should be valid in a's graph
+        assert!(a.graph.read().unwrap().get_node(merged_id).is_ok());
+    }
+}
