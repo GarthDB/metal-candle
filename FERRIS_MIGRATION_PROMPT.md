@@ -1,5 +1,24 @@
 # Ferris Migration to metal-candle v1.0
 
+## ⚠️ Priority: Dropout Support Required
+
+**Before starting migration**, implement dropout support ([Issue #28](https://github.com/GarthDB/metal-candle/issues/28)):
+
+**Why Critical**:
+- ✅ Ferris training pipeline expects dropout to work
+- ✅ Critical for training quality and regularization
+- ✅ LoRA paper standard practice
+- ✅ Current `LoRAConfig` has `dropout: f32` field (not applied yet)
+
+**Implementation**: Relatively straightforward (~2-4 hours)
+- Add training/inference mode flag to `LoRALayer`
+- Apply Candle's dropout between A and B matrices
+- Add tests
+
+**Timeline**: Implement before or alongside Ferris migration (v1.0.1 patch or immediate v1.1)
+
+---
+
 ## Context
 
 I need to migrate the Ferris AI Assistant project from using PyO3+MLX to the new pure-Rust `metal-candle` v1.0 library. This will eliminate Python dependencies and provide native Rust performance with Metal acceleration on Apple Silicon.
