@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - LoRA layers with configurable rank and alpha parameters
   - Support for Q-Proj, K-Proj, V-Proj, and O-Proj target modules
   - Gradient flow verification and backpropagation support
-  - **Performance**: 1.5-2.4x faster than MLX for LoRA operations
+  - **Performance**: Metal GPU delivers 1.76-3.14x speedup over CPU for LoRA operations
 
 - **Model Loading & Architecture**:
   - Safetensors format support with validation

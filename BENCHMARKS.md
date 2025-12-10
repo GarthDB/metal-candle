@@ -32,9 +32,9 @@ This document contains performance benchmarks for `metal-candle` on Apple Silico
 ### Software
 
 - **Rust**: 1.70+ (latest stable)
-- **metal-candle**: v0.1.0 (current development)
+- **metal-candle**: v1.0.0
 - **Candle**: 0.9.x
-- **MLX**: [TBD version]
+- **MLX**: 0.30.0
 - **Python**: 3.10+ (for MLX baseline)
 
 ### Test Configuration
@@ -341,7 +341,7 @@ metal-candle's strengths lie in areas beyond raw throughput:
 2. **Single Binary Deployment**: No Python runtime, virtual environments, or dependency management
 3. **Memory Safety**: No segfaults, use-after-free, or data races
 4. **Ergonomic APIs**: Builder patterns, sensible defaults, comprehensive error messages
-5. **Production Quality**: 160 tests, zero warnings, 100% API documentation, ≥80% code coverage
+5. **Production Quality**: 190 tests, 4 documented warnings, 100% API documentation, ≥80% code coverage
 
 ### Use Case Recommendations
 
