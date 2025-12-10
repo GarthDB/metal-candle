@@ -13,7 +13,7 @@
 
 - **🎓 LoRA Training**: Fine-tune transformer models efficiently using Low-Rank Adaptation
 - **📦 Model Loading**: Safetensors format with comprehensive validation
-- **⚡ Text Generation**: Fast inference with KV-cache and multiple sampling strategies
+- **⚡ Text Generation**: High-level Generator API with streaming, repetition penalty, and stop conditions
 - **🔍 Semantic Embeddings**: Sentence-transformers (E5, MiniLM, MPNet) for RAG and search
 - **🔧 Metal Acceleration**: Native Metal backend for optimal M-series chip performance
 - **🏗️ Qwen Support**: Full Qwen2.5-Coder architecture implementation
@@ -120,27 +120,39 @@ let metrics = trainer.train(&dataset)?;
 save_checkpoint(&trainer.lora_adapter(), "checkpoint.safetensors", None)?;
 ```
 
-### Text Generation
+### Text Generation (New in v1.1.0!)
 
 ```rust
-use metal_candle::inference::{
-    KVCache, KVCacheConfig, SamplingStrategy, sample_token
+use metal_candle::inference::{Generator, GeneratorConfig, SamplingStrategy};
+use metal_candle::models::Qwen;
+
+// Load model (Qwen example)
+let model = Qwen::new(&config, vb)?;
+
+// Configure generation
+let gen_config = GeneratorConfig {
+    max_tokens: 128,
+    sampling: SamplingStrategy::TopP { p: 0.95 },
+    temperature: 0.7,
+    top_p: Some(0.95),
+    repetition_penalty: 1.1,  // Reduce repetition
+    stop_on_eos: true,
+    eos_token_id: Some(151643),  // Qwen EOS token
+    ..Default::default()
 };
 
-// Setup KV-cache for efficient generation
-let cache_config = KVCacheConfig {
-    max_seq_len: 2048,
-    num_layers: 24,
-    num_heads: 14,
-    head_dim: 64,
-    batch_size: 1,
-};
+// Create generator
+let mut generator = Generator::new(Box::new(model), gen_config)?;
 
-let mut cache = KVCache::new(cache_config, &device)?;
+// Generate tokens
+let input_ids = vec![1, 2, 3]; // Your tokenized input
+let output_ids = generator.generate(&input_ids)?;
 
-// Generate with different sampling strategies
-let strategy = SamplingStrategy::TopP { p: 0.9 };
-let token = sample_token(&logits, &strategy)?;
+// Or use streaming for real-time generation
+generator.generate_stream(&input_ids, |token| {
+    print!("{} ", token);
+    true // Continue generation
+})?;
 
 // Or use greedy decoding
 let strategy = SamplingStrategy::Greedy;

@@ -8,22 +8,33 @@
 //!
 //! - **`LoRA` Training**: Fine-tune transformer models efficiently using Low-Rank Adaptation
 //! - **Model Loading**: Support for safetensors format with extensibility for others
-//! - **Text Generation**: Fast inference with multiple sampling strategies and KV-cache
+//! - **Text Generation**: High-level [`Generator`](inference::Generator) API with streaming, repetition penalty, and stop conditions
+//! - **Sampling Strategies**: Greedy, Top-k, Top-p (nucleus), and Temperature sampling
 //! - **Metal Acceleration**: Native Metal backend for optimal Apple Silicon performance
 //!
 //! # Examples
 //!
-//! ```no_run
-//! # use metal_candle::Result;
-//! # fn main() -> Result<()> {
-//! // Example will be added as APIs are implemented
-//! # Ok(())
-//! # }
+//! ## Text Generation
+//!
+//! ```
+//! use metal_candle::inference::{GeneratorConfig, SamplingStrategy};
+//!
+//! // Configure generation
+//! let gen_config = GeneratorConfig {
+//!     max_tokens: 128,
+//!     sampling: SamplingStrategy::TopP { p: 0.95 },
+//!     repetition_penalty: 1.1,
+//!     ..Default::default()
+//! };
+//!
+//! // With a loaded model, you would use:
+//! // let mut generator = Generator::new(Box::new(model), gen_config)?;
+//! // let output = generator.generate(&input_ids)?;
 //! ```
 //!
 //! # Project Status
 //!
-//! This crate is under active development. APIs are subject to change before v1.0.
+//! v1.1.0: Production-ready text generation API with comprehensive testing and documentation.
 
 // Deny unsafe code by default, but allow it where explicitly justified
 #![deny(unsafe_code)]
@@ -44,6 +55,10 @@ pub mod embeddings;
 // Re-export key types for convenience
 pub use backend::{Device, DeviceInfo, DeviceType, TensorExt};
 pub use error::{Error, Result};
+pub use inference::{
+    apply_repetition_penalty, sample_token, Generator, GeneratorConfig, KVCache, KVCacheConfig,
+    SamplingStrategy,
+};
 pub use training::{
     cross_entropy_loss, cross_entropy_loss_with_smoothing, AdamW, AdamWConfig, LRScheduler,
     LoRAAdapter, LoRAAdapterConfig, LoRAConfig, LoRALayer, StepMetrics, TargetModule, Trainer,
