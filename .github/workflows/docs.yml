@@ -25,6 +25,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      docs_exist: ${{ steps.check_docs.outputs.exists }}
     steps:
       - uses: actions/checkout@v4
 
@@ -55,7 +57,7 @@ jobs:
           path: docs/book
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build.outputs.docs_exist == 'true'
     needs: build
     runs-on: ubuntu-latest
     environment:
