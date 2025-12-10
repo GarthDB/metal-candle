@@ -23,7 +23,7 @@
 - **⚡ 25.9x Faster than MLX**: Beats Apple's official ML framework for embeddings
 - **🚀 Single Binary**: No Python runtime or virtual environments required
 - **🎯 Pure Rust**: Type-safe ML with compile-time guarantees
-- **🛡️ Production Ready**: 190 tests, clean codebase, 100% API documentation
+- **🛡️ Production Ready**: 254 tests, clean codebase, 100% API documentation
 - **🎨 Ergonomic API**: Builder patterns, sensible defaults, clear error messages
 - **📊 Well Tested**: ≥80% code coverage with comprehensive test suites
 - **🔧 Easy Integration**: Works seamlessly with any Rust project
@@ -184,7 +184,7 @@ let batch_embeddings = model.encode(&large_corpus)?;
 
 **Current Phase**: v1.0 Release  
 **Version**: v1.0.0 🎉  
-**Tests**: 243 passing (187 lib + 56 doctests)  
+**Tests**: 254 passing (179 lib + 75 doctests)  
 **Warnings**: 4 pedantic (all documented) ✅  
 **Coverage**: Exceeds 80% requirement  
 **Focus**: Type safety, ergonomic APIs, and single-binary deployment
@@ -269,7 +269,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 
 ### Quality
 
-- ✅ **190 Tests**: Comprehensive test coverage (137 lib + 53 doc)
+- ✅ **254 Tests**: Comprehensive test coverage (179 lib + 75 doc)
 - ✅ **Clean Codebase**: Strict clippy pedantic (4 documented warnings)
 - ✅ **100% API Docs**: All public APIs documented with examples
 - ✅ **CI/CD**: GitHub Actions on Apple Silicon runners
@@ -384,7 +384,7 @@ This project maintains strict production-quality standards:
 | Standard | Requirement | Status |
 |----------|-------------|--------|
 | **Clippy** | Pedantic, documented | ✅ 4 warnings (all justified) |
-| **Tests** | All passing | ✅ 190/190 (137 lib + 53 doc) |
+| **Tests** | All passing | ✅ 254/254 (179 lib + 75 doc) |
 | **Coverage** | ≥80% enforced | ✅ 84.69% |
 | **Documentation** | 100% public APIs | ✅ Complete |
 | **Format** | `rustfmt` compliant | ✅ Passing |
