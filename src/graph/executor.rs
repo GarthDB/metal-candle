@@ -157,8 +157,8 @@ impl AsyncExecutor {
             });
         }
 
-        // Use Candle's softmax for now
-        // TODO: Use custom fused softmax kernel
+        // Use Candle's softmax implementation
+        // See issue #27 for custom Metal kernel optimization
         softmax(&inputs[0], dim).map_err(|e| TrainingError::Failed {
             reason: format!("Softmax failed: {e}"),
         })

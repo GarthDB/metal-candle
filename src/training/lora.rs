@@ -304,8 +304,7 @@ impl LoRALayer {
         // (..., in_features) @ (in_features, rank) -> (..., rank)
         let hidden = input.broadcast_matmul(self.lora_a.as_tensor())?;
 
-        // TODO: Apply dropout if configured (for training mode)
-        // For now, skip dropout - will add when implementing training loop
+        // Dropout support tracked in issue #28
 
         // Step 2: hidden @ B_scaled -> (..., out_features)
         // hidden: (..., rank)
