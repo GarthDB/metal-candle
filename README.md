@@ -19,7 +19,7 @@
 
 ### Why metal-candle?
 
-- **⚡ 25.9x Faster than MLX**: Beats Apple's official ML framework for embeddings ([benchmarks](MLX_BENCHMARK_COMPARISON.md))
+- **⚡ 25.9x Faster than MLX**: Beats Apple's official ML framework for embeddings
 - **🚀 Single Binary**: No Python runtime or virtual environments required
 - **🎯 Pure Rust**: Type-safe ML with compile-time guarantees
 - **🛡️ Production Ready**: 190 tests, clean codebase, 100% API documentation
@@ -39,7 +39,7 @@ metal-candle demonstrates **exceptional performance** on Apple Silicon:
 
 **Near constant-time performance**: Batch 1→100 only increases by 13% (3.9ms → 4.4ms)
 
-See [PERFORMANCE_SUMMARY.md](PERFORMANCE_SUMMARY.md) and [MLX_BENCHMARK_COMPARISON.md](MLX_BENCHMARK_COMPARISON.md) for detailed analysis.
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance analysis and methodology.
 
 ## 📦 Installation
 
@@ -280,9 +280,8 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 - **[📖 API Reference](https://docs.rs/metal-candle)** - Complete API documentation
 - **[🏗️ Architecture Guide](ARCHITECTURE.md)** - System design and implementation details
 - **[🤝 Contributing Guide](CONTRIBUTING.md)** - Development standards and guidelines
-- **[⚡ Performance Summary](PERFORMANCE_SUMMARY.md)** - Quick reference for benchmarks vs MLX
-- **[📊 MLX Comparison](MLX_BENCHMARK_COMPARISON.md)** - Detailed benchmark methodology and results
-- **[📋 Project Plan](PLAN.md)** - 12-week implementation roadmap
+- **[⚡ Benchmarks](BENCHMARKS.md)** - Performance analysis and methodology
+- **[📋 Project Plan](PLAN.md)** - Development roadmap and future plans
 
 ### Examples
 
@@ -406,7 +405,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed coding standards.
 - **Model Formats**: Safetensors only (GGUF planned for v1.1+)
 - **Single GPU**: Multi-GPU training planned for v2.0
 
-See [PERFORMANCE_SUMMARY.md](PERFORMANCE_SUMMARY.md) and [MLX_BENCHMARK_COMPARISON.md](MLX_BENCHMARK_COMPARISON.md) for detailed metrics.
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance metrics and methodology.
 
 ## 🤝 Contributing
 
