@@ -115,3 +115,48 @@ fn test_zeros_and_ones() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+fn test_shared_graph_operations() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+
+    // Create a tensor
+    let a = LazyTensor::from_slice(&[1.0, 2.0, 3.0], &[3], &device)?;
+
+    // Operations on the same base tensor share the same graph
+    let b = a.mul_scalar(2.0)?;
+    let c = a.mul_scalar(3.0)?;
+
+    // b and c should be in the same graph as a
+    assert_eq!(a.graph_size(), 3); // a, b, c nodes
+
+    // Adding them together should work without merge
+    let d = b.add(&c)?;
+    let result = d.eval()?;
+
+    // (1*2 + 1*3), (2*2 + 2*3), (3*2 + 3*3) = (5, 10, 15)
+    let expected = vec![5.0, 10.0, 15.0];
+    assert_eq!(result.to_vec1::<f32>()?, expected);
+
+    Ok(())
+}
+
+#[test]
+fn test_multiple_graph_merges() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+
+    // Create three separate tensors (each with own graph)
+    let a = LazyTensor::from_slice(&[1.0, 2.0], &[2], &device)?;
+    let b = LazyTensor::from_slice(&[3.0, 4.0], &[2], &device)?;
+    let c = LazyTensor::from_slice(&[5.0, 6.0], &[2], &device)?;
+
+    // Combine all three (requires multiple merges)
+    let ab = a.add(&b)?; // Merges b's graph into a's
+    let abc = ab.add(&c)?; // Merges c's graph into ab's
+
+    let result = abc.eval()?;
+    let expected = vec![9.0, 12.0]; // 1+3+5, 2+4+6
+    assert_eq!(result.to_vec1::<f32>()?, expected);
+
+    Ok(())
+}

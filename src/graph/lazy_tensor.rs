@@ -224,6 +224,8 @@ impl LazyTensor {
 
     /// Merge another tensor's graph into this one (for cross-graph operations)
     ///
+    /// Returns the remapped node ID in this tensor's graph.
+    ///
     /// # Panics
     ///
     /// Panics if either graph lock is poisoned
