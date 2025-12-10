@@ -452,6 +452,6 @@ impl std::fmt::Debug for LazyTensor {
             .field("dtype", &self.dtype)
             .field("device", &self.device)
             .field("graph_size", &self.graph_size())
-            .finish()
+            .finish_non_exhaustive()
     }
 }

@@ -112,10 +112,7 @@ impl AsyncExecutor {
     fn execute_lora(inputs: &[Tensor], scale: f32) -> Result<Tensor, TrainingError> {
         if inputs.len() != 3 {
             return Err(TrainingError::Failed {
-                reason: format!(
-                    "LoRA requires 3 inputs (input, a, b), got {}",
-                    inputs.len()
-                ),
+                reason: format!("LoRA requires 3 inputs (input, a, b), got {}", inputs.len()),
             });
         }
 
@@ -151,12 +148,9 @@ impl AsyncExecutor {
     }
 
     #[cfg(feature = "custom-metal")]
-    fn execute_softmax(
-        inputs: &[Tensor],
-        dim: usize,
-    ) -> Result<Tensor, TrainingError> {
+    fn execute_softmax(inputs: &[Tensor], dim: usize) -> Result<Tensor, TrainingError> {
         use candle_nn::ops::softmax;
-        
+
         if inputs.len() != 1 {
             return Err(TrainingError::Failed {
                 reason: format!("Softmax requires 1 input, got {}", inputs.len()),
@@ -188,15 +182,15 @@ impl AsyncExecutor {
         // Fallback: Use candle_nn's rms_norm (expects alpha of shape [last_dim])
         let input_dims = inputs[0].dims();
         let last_dim = *input_dims.last().unwrap_or(&1);
-        let alpha = Tensor::ones(&[last_dim], inputs[0].dtype(), inputs[0].device())
-            .map_err(|e| TrainingError::Failed {
-                reason: format!("Failed to create alpha tensor for RMSNorm: {e}"),
+        let alpha =
+            Tensor::ones(&[last_dim], inputs[0].dtype(), inputs[0].device()).map_err(|e| {
+                TrainingError::Failed {
+                    reason: format!("Failed to create alpha tensor for RMSNorm: {e}"),
+                }
             })?;
 
-        candle_nn::ops::rms_norm(&inputs[0], &alpha, eps).map_err(|e| {
-            TrainingError::Failed {
-                reason: format!("RMSNorm operation failed: {e}"),
-            }
+        candle_nn::ops::rms_norm(&inputs[0], &alpha, eps).map_err(|e| TrainingError::Failed {
+            reason: format!("RMSNorm operation failed: {e}"),
         })
     }
 

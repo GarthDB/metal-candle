@@ -249,9 +249,7 @@ impl ComputationGraph {
         }
 
         if visiting.contains(&node_id) {
-            return Err(format!(
-                "Circular dependency detected at node {node_id:?}"
-            ));
+            return Err(format!("Circular dependency detected at node {node_id:?}"));
         }
 
         visiting.insert(node_id);
@@ -288,7 +286,7 @@ impl std::fmt::Debug for ComputationGraph {
         f.debug_struct("ComputationGraph")
             .field("num_nodes", &self.nodes.len())
             .field("device", &self.device)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 

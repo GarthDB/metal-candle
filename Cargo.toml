@@ -103,7 +103,7 @@ redundant_closure = { level = "allow", priority = 0 }  # Sometimes more readable
 too_many_lines = { level = "allow", priority = 0 }  # Complex functions sometimes necessary in ML code
 items_after_statements = { level = "allow", priority = 0 }  # Rust style preference, not correctness issue
 cast_precision_loss = { level = "allow", priority = 0 }  # Common and justified in ML code (dims, batch sizes)
-manual_debug_impl = { level = "allow", priority = 0 }  # Intentional for custom debug formatting
+missing_fields_in_debug = { level = "allow", priority = 0 }  # Intentional for custom debug formatting
 doc_link_with_quotes = { level = "allow", priority = 0 }  # Documentation style preference
 
 [profile.release]

@@ -250,15 +250,8 @@ impl CustomOp1 for FusedLoRAOp {
 }
 
 impl FusedLoRAOp {
-    fn metal_fwd_impl(&self, storage: &MetalStorage, layout: &Layout) -> Result<(MetalStorage, Shape)> {
-        // Get Metal device from storage
-        use candle_core::backend::BackendStorage;
-        let device = storage.device();
-
-        // Compute output shape
-        let output_shape = self.compute_output_shape(layout.shape())?;
-
-        // Get input dimensions
+    /// Extract dimensions from input layout for `LoRA` computation
+    fn extract_dimensions(&self, layout: &Layout) -> Result<(usize, usize, usize, usize, usize)> {
         let input_dims = layout.shape().dims();
         let batch_size = if input_dims.len() == 3 {
             input_dims[0]
@@ -273,9 +266,20 @@ impl FusedLoRAOp {
         let in_features = input_dims[input_dims.len() - 1];
         let rank = self.lora_a.dim(1)?;
         let out_features = self.lora_b.dim(1)?;
+        Ok((batch_size, seq_len, in_features, rank, out_features))
+    }
 
-        // Create parameters
-        let params = LoRAParams {
+    /// Create `LoRA` parameters structure with dimension validation
+    fn create_lora_params(
+        &self,
+        batch_size: usize,
+        seq_len: usize,
+        in_features: usize,
+        rank: usize,
+        out_features: usize,
+        output_shape: &Shape,
+    ) -> Result<LoRAParams> {
+        Ok(LoRAParams {
             batch_size: u32::try_from(batch_size).map_err(|_| {
                 candle_core::Error::DimOutOfRange {
                     shape: output_shape.clone(),
@@ -308,12 +312,74 @@ impl FusedLoRAOp {
                 }
             })?,
             scaling: self.scaling,
+        })
+    }
+
+    /// Dispatch Metal kernel with configured encoder
+    #[allow(clippy::too_many_arguments)]
+    fn dispatch_kernel(
+        encoder: &metal::ComputeCommandEncoderRef,
+        pipeline: &metal::ComputePipelineState,
+        input_buffer: &metal::Buffer,
+        lora_a_buffer: &metal::Buffer,
+        lora_b_buffer: &metal::Buffer,
+        output_buffer: &metal::Buffer,
+        params: &LoRAParams,
+        batch_size: usize,
+        seq_len: usize,
+        out_features: usize,
+    ) {
+        encoder.set_compute_pipeline_state(pipeline);
+        encoder.set_buffer(0, Some(input_buffer), 0);
+        encoder.set_buffer(1, Some(lora_a_buffer), 0);
+        encoder.set_buffer(2, Some(lora_b_buffer), 0);
+        encoder.set_buffer(3, Some(output_buffer), 0);
+
+        encoder.set_bytes(
+            4,
+            std::mem::size_of::<LoRAParams>() as u64,
+            std::ptr::addr_of!(*params).cast::<std::ffi::c_void>(),
+        );
+
+        let grid_size = metal::MTLSize {
+            width: batch_size as u64,
+            height: seq_len as u64,
+            depth: out_features as u64,
         };
+
+        let threadgroup_size = metal::MTLSize {
+            width: 16,
+            height: 16,
+            depth: 1,
+        };
+
+        encoder.dispatch_threads(grid_size, threadgroup_size);
+    }
+
+    fn metal_fwd_impl(
+        &self,
+        storage: &MetalStorage,
+        layout: &Layout,
+    ) -> Result<(MetalStorage, Shape)> {
+        use candle_core::backend::BackendStorage;
+        let device = storage.device();
+        let output_shape = self.compute_output_shape(layout.shape())?;
+
+        let (batch_size, seq_len, in_features, rank, out_features) =
+            self.extract_dimensions(layout)?;
+
+        let params = self.create_lora_params(
+            batch_size,
+            seq_len,
+            in_features,
+            rank,
+            out_features,
+            &output_shape,
+        )?;
 
         // Get Metal buffers
         let input_buffer = storage.buffer();
 
-        // Extract Metal buffers from LoRA tensors
         let weight_a_guard = self.lora_a.storage_and_layout();
         let candle_core::Storage::Metal(weight_a_storage) = &*weight_a_guard.0 else {
             candle_core::bail!("LoRA_A must be on Metal device")
@@ -326,64 +392,33 @@ impl FusedLoRAOp {
         };
         let lora_b_buffer = lora_b_storage.buffer();
 
-        // Create output buffer
         let output_elem_count = output_shape.elem_count();
         let output_buffer =
             device.new_buffer(output_elem_count, storage.dtype(), "fused_lora_output")?;
 
-        // Get or compile pipeline (device implements Deref to metal::DeviceRef)
         let pipeline = self.get_or_compile_pipeline(device)?;
-
-        // Create command buffer and dispatch kernel
         let command_buffer = device.command_buffer()?;
 
-        // Scope the encoder to ensure it's dropped before commit
         {
             use candle_metal_kernels::utils::EncoderProvider;
             let command_buffer_ref = &command_buffer;
             let encoder_wrapper = command_buffer_ref.encoder();
             let encoder = encoder_wrapper.as_ref();
 
-            // Set pipeline and buffers
-            encoder.set_compute_pipeline_state(&pipeline);
-            encoder.set_buffer(0, Some(input_buffer), 0);
-            encoder.set_buffer(1, Some(lora_a_buffer), 0);
-            encoder.set_buffer(2, Some(lora_b_buffer), 0);
-            encoder.set_buffer(3, Some(&output_buffer), 0);
-
-            // Set parameters as bytes
-            encoder.set_bytes(
-                4,
-                std::mem::size_of::<LoRAParams>() as u64,
-                std::ptr::addr_of!(params).cast::<std::ffi::c_void>(),
+            Self::dispatch_kernel(
+                encoder,
+                &pipeline,
+                input_buffer,
+                lora_a_buffer,
+                lora_b_buffer,
+                &output_buffer,
+                &params,
+                batch_size,
+                seq_len,
+                out_features,
             );
-
-            // Calculate grid dimensions
-            // Each thread computes one output element: output[batch, seq, out_feature]
-            let grid_size = metal::MTLSize {
-                width: batch_size as u64,
-                height: seq_len as u64,
-                depth: out_features as u64,
-            };
-
-            // Threadgroup size optimized for Apple Silicon
-            // 256 threads per group is optimal for M1/M2/M3
-            let threadgroup_size = metal::MTLSize {
-                width: 16,
-                height: 16,
-                depth: 1,
-            };
-
-            // Dispatch kernel
-            encoder.dispatch_threads(grid_size, threadgroup_size);
-
-            // encoder_wrapper drops here, ending encoding
         }
 
-        // Don't commit - Candle manages the command buffer lifecycle
-        // The kernel has been dispatched and will execute when Candle commits
-
-        // Create output storage
         let output_storage = candle_core::MetalStorage::new(
             output_buffer,
             device.clone(),
@@ -928,7 +963,7 @@ impl CustomOp1 for LayerNormOp {
 
     fn metal_fwd(&self, storage: &MetalStorage, layout: &Layout) -> Result<(MetalStorage, Shape)> {
         use crate::backend::metal_kernels::LayerNormParams;
-        
+
         let shape = layout.shape();
         if shape.rank() != 2 {
             candle_core::bail!("LayerNorm expects 2D tensors, got shape {:?}", shape.dims());
