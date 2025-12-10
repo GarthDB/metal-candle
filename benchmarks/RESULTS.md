@@ -96,3 +96,4 @@ python benchmarks/mlx_embeddings_bench.py
 **metal-candle**: v0.1.0 (vendored BERT + custom LayerNorm)  
 **MLX**: v0.30.0
 
+
