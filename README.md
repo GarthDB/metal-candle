@@ -1,6 +1,7 @@
 # metal-candle
 
 [![CI](https://github.com/GarthDB/metal-candle/workflows/CI/badge.svg)](https://github.com/GarthDB/metal-candle/actions)
+[![codecov](https://codecov.io/gh/GarthDB/metal-candle/branch/main/graph/badge.svg)](https://codecov.io/gh/GarthDB/metal-candle)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
 
