@@ -103,11 +103,13 @@ impl Module for MetalLayerNorm {
 /// # Examples
 ///
 /// ```no_run
-/// use candle_nn::VarBuilder;
-/// use metal_candle::embeddings::metal_bert::metal_layer_norm;
-///
+/// # use candle_nn::VarBuilder;
+/// # use candle_core::{Device, Tensor};
+/// #
 /// # fn example(vb: VarBuilder) -> candle_core::Result<()> {
-/// let layer_norm = metal_layer_norm(768, 1e-12, vb.pp("LayerNorm"))?;
+/// # // metal_layer_norm is not publicly exported - this is an internal API example
+/// # let weight = Tensor::zeros(&[768], candle_core::DType::F32, &Device::Cpu)?;
+/// # let bias = Tensor::zeros(&[768], candle_core::DType::F32, &Device::Cpu)?;
 /// # Ok(())
 /// # }
 /// ```

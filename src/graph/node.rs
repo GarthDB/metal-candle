@@ -9,7 +9,7 @@ use std::collections::HashSet;
 pub struct NodeId(pub usize);
 
 /// Data associated with a graph node.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum NodeData {
     /// Input data (owned, immediately available)
     Concrete(Tensor),
@@ -54,7 +54,7 @@ impl NodeData {
 }
 
 /// A node in the computation graph.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GraphNode {
     /// Node ID
     pub id: NodeId,
@@ -277,6 +277,71 @@ impl ComputationGraph {
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
+    }
+
+    /// Merge nodes from another graph into this one
+    ///
+    /// This method copies all nodes needed to compute `target_node` from
+    /// the `other` graph into this graph, remapping node IDs as necessary.
+    ///
+    /// Returns the new node ID in this graph corresponding to `target_node`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the target node doesn't exist in the other graph
+    pub fn merge_from(&mut self, other: &Self, target_node: NodeId) -> NodeId {
+        use std::collections::HashMap;
+
+        // Map from old node IDs to new node IDs
+        let mut id_map: HashMap<NodeId, NodeId> = HashMap::new();
+
+        // Recursively copy nodes, starting from target
+        self.copy_node_recursive(other, target_node, &mut id_map);
+
+        // Return the remapped target node ID
+        *id_map
+            .get(&target_node)
+            .expect("Target node should have been copied")
+    }
+
+    /// Recursively copy a node and its dependencies from another graph
+    fn copy_node_recursive(
+        &mut self,
+        other: &Self,
+        node_id: NodeId,
+        id_map: &mut std::collections::HashMap<NodeId, NodeId>,
+    ) -> NodeId {
+        // If already copied, return the existing mapping
+        if let Some(&new_id) = id_map.get(&node_id) {
+            return new_id;
+        }
+
+        // Get the node from the other graph
+        let other_node = other.get_node(node_id).expect("Node should exist");
+
+        // Recursively copy dependencies first
+        let new_inputs: Vec<NodeId> = other_node
+            .inputs
+            .iter()
+            .map(|&input_id| self.copy_node_recursive(other, input_id, id_map))
+            .collect();
+
+        // Create new node ID in this graph
+        let new_id = NodeId(self.next_id);
+        self.next_id += 1;
+
+        // Clone the node with remapped inputs
+        let mut new_node = other_node.clone();
+        new_node.id = new_id;
+        new_node.inputs = new_inputs;
+
+        // Add to this graph
+        self.nodes.push(new_node);
+
+        // Record the mapping
+        id_map.insert(node_id, new_id);
+
+        new_id
     }
 }
 

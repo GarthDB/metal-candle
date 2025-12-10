@@ -222,13 +222,32 @@ impl LazyTensor {
         ))
     }
 
+    /// Merge another tensor's graph into this one (for cross-graph operations)
+    ///
+    /// # Panics
+    ///
+    /// Panics if either graph lock is poisoned
+    fn merge_graph_from(&self, other: &Self) -> NodeId {
+        // If they share the same graph, no merge needed
+        if Arc::ptr_eq(&self.graph, &other.graph) {
+            return other.node_id;
+        }
+
+        let mut self_graph = self.graph.write().unwrap();
+        let other_graph = other.graph.read().unwrap();
+
+        // Merge other's graph into self's graph
+        self_graph.merge_from(&other_graph, other.node_id)
+    }
+
     /// Matrix multiplication: self @ other
     ///
     /// # Errors
     ///
     /// Returns error if shapes are incompatible
     pub fn matmul(&self, other: &Self) -> CandleResult<Self> {
-        self.add_operation(Operation::Matmul, vec![self.node_id, other.node_id])
+        let other_node_id = self.merge_graph_from(other);
+        self.add_operation(Operation::Matmul, vec![self.node_id, other_node_id])
     }
 
     /// Element-wise addition: self + other
@@ -237,7 +256,8 @@ impl LazyTensor {
     ///
     /// Returns error if shapes are incompatible
     pub fn add(&self, other: &Self) -> CandleResult<Self> {
-        self.add_operation(Operation::Add, vec![self.node_id, other.node_id])
+        let other_node_id = self.merge_graph_from(other);
+        self.add_operation(Operation::Add, vec![self.node_id, other_node_id])
     }
 
     /// Element-wise multiplication: self * other
@@ -246,7 +266,8 @@ impl LazyTensor {
     ///
     /// Returns error if shapes are incompatible
     pub fn mul(&self, other: &Self) -> CandleResult<Self> {
-        self.add_operation(Operation::Mul, vec![self.node_id, other.node_id])
+        let other_node_id = self.merge_graph_from(other);
+        self.add_operation(Operation::Mul, vec![self.node_id, other_node_id])
     }
 
     /// Scalar multiplication: self * scalar

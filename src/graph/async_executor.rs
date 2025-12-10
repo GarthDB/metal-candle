@@ -76,12 +76,12 @@ impl AsyncGraphExecutor {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// use metal_candle::graph::{AsyncGraphExecutor, LazyTensor};
-    /// use candle_core::Device;
+    /// use metal_candle::backend::Device;
     ///
     /// let device = Device::new_metal(0)?;
     /// let mut executor = AsyncGraphExecutor::new(device.clone());
     ///
-    /// let a = LazyTensor::from_slice(&[1.0, 2.0], &[2], &device)?;
+    /// let a = LazyTensor::from_slice(&[1.0, 2.0], &[2], device.as_ref())?;
     /// let result = executor.execute_tensor(&a).await?;
     /// # Ok(())
     /// # }
