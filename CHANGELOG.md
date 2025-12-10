@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **LoRA Training Pipeline**: Complete Low-Rank Adaptation implementation for efficient fine-tuning
   - LoRA layers with configurable rank and alpha parameters
   - Support for Q-Proj, K-Proj, V-Proj, and O-Proj target modules
+  - **Dropout support**: Training/eval mode control for regularization (per LoRA paper)
   - Gradient flow verification and backpropagation support
   - **Performance**: Metal GPU delivers 1.76-3.14x speedup over CPU for LoRA operations
 
@@ -60,9 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Lazy evaluation graph with operation fusion
 
 #### Quality & Documentation
-- **190 comprehensive tests**: 137 library tests + 53 doctests
+- **195 comprehensive tests**: 187 library tests (including 8 dropout tests) + 56 doctests
 - **Clean codebase**: 4 documented pedantic warnings (all justified and documented)
-- **84.69% code coverage**: Exceeds 80% requirement
+- **Code coverage**: Exceeds 80% requirement
 - **100% API documentation**: All public APIs fully documented with examples
 - **6 working examples**: Demonstrating all major features
 - **Complete architecture documentation**: ARCHITECTURE.md, CONTRIBUTING.md, performance guides

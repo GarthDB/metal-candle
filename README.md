@@ -184,9 +184,9 @@ let batch_embeddings = model.encode(&large_corpus)?;
 
 **Current Phase**: v1.0 Release  
 **Version**: v1.0.0 🎉  
-**Tests**: 190 passing (137 lib + 53 doctests)  
+**Tests**: 243 passing (187 lib + 56 doctests)  
 **Warnings**: 4 pedantic (all documented) ✅  
-**Coverage**: 84.69% (exceeds 80% requirement)  
+**Coverage**: Exceeds 80% requirement  
 **Focus**: Type safety, ergonomic APIs, and single-binary deployment
 
 | Phase | Description | Status |
@@ -237,6 +237,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 ### Training
 
 - ✅ **LoRA Layers**: Low-rank adaptation for efficient fine-tuning
+- ✅ **Dropout Support**: Training/eval mode control for regularization
 - ✅ **AdamW Optimizer**: With decoupled weight decay
 - ✅ **LR Schedulers**: Constant, Linear, Cosine, WarmupCosine
 - ✅ **Checkpoint Management**: Save/load LoRA weights with metadata

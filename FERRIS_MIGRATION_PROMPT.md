@@ -1,21 +1,22 @@
 # Ferris Migration to metal-candle v1.0
 
-## ⚠️ Priority: Dropout Support Required
+## ✅ Dropout Support Included in v1.0.0
 
-**Before starting migration**, implement dropout support ([Issue #28](https://github.com/GarthDB/metal-candle/issues/28)):
+**Dropout support is now fully implemented** in metal-candle v1.0.0 ([Issue #28](https://github.com/GarthDB/metal-candle/issues/28) - closed):
 
-**Why Critical**:
-- ✅ Ferris training pipeline expects dropout to work
-- ✅ Critical for training quality and regularization
-- ✅ LoRA paper standard practice
-- ✅ Current `LoRAConfig` has `dropout: f32` field (not applied yet)
+**Features**:
+- ✅ Training/eval mode control (`set_training()`, `eval()`, `is_training()`)
+- ✅ Dropout applied between A and B matrices (per LoRA paper)
+- ✅ Automatic disable in eval mode for deterministic inference
+- ✅ Preserves gradient flow for backpropagation
+- ✅ 8 comprehensive tests included
 
-**Implementation**: Relatively straightforward (~2-4 hours)
-- Add training/inference mode flag to `LoRALayer`
-- Apply Candle's dropout between A and B matrices
-- Add tests
-
-**Timeline**: Implement before or alongside Ferris migration (v1.0.1 patch or immediate v1.1)
+**Usage**:
+```rust
+let mut layer = LoRALayer::new(64, 64, &config, &device)?;
+layer.set_training(true);  // Enable dropout (if configured)
+layer.eval();              // Disable dropout for inference
+```
 
 ---
 

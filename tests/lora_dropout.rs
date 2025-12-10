@@ -28,7 +28,10 @@ fn test_dropout_disabled_in_eval_mode() -> Result<(), Box<dyn std::error::Error>
     let mut found_difference = false;
     for i in 0..outputs.len() {
         for j in (i + 1)..outputs.len() {
-            let diff = (&outputs[i] - &outputs[j])?.abs()?.mean_all()?.to_scalar::<f32>()?;
+            let diff = (&outputs[i] - &outputs[j])?
+                .abs()?
+                .mean_all()?
+                .to_scalar::<f32>()?;
             if diff > 0.01 {
                 found_difference = true;
                 break;
@@ -38,7 +41,7 @@ fn test_dropout_disabled_in_eval_mode() -> Result<(), Box<dyn std::error::Error>
             break;
         }
     }
-    
+
     // If randomness is working, we should see differences (but this is probabilistic)
     // Note: This test might occasionally fail due to random chance
     // If it fails consistently, dropout isn't being applied
@@ -51,7 +54,10 @@ fn test_dropout_disabled_in_eval_mode() -> Result<(), Box<dyn std::error::Error>
     let output_eval1 = layer.forward(&input)?;
     let output_eval2 = layer.forward(&input)?;
 
-    let diff_eval = (&output_eval1 - &output_eval2)?.abs()?.mean_all()?.to_scalar::<f32>()?;
+    let diff_eval = (&output_eval1 - &output_eval2)?
+        .abs()?
+        .mean_all()?
+        .to_scalar::<f32>()?;
     assert!(
         diff_eval < 1e-6,
         "Eval mode should produce identical outputs (no dropout), got diff: {}",
@@ -79,7 +85,10 @@ fn test_dropout_zero_no_randomness() -> Result<(), Box<dyn std::error::Error>> {
     let output1 = layer.forward(&input)?;
     let output2 = layer.forward(&input)?;
 
-    let diff = (&output1 - &output2)?.abs()?.sum_all()?.to_scalar::<f32>()?;
+    let diff = (&output1 - &output2)?
+        .abs()?
+        .sum_all()?
+        .to_scalar::<f32>()?;
     assert!(
         diff < 1e-6,
         "Dropout=0.0 should produce identical outputs, got diff: {}",
@@ -196,13 +205,13 @@ fn test_dropout_with_batched_input() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let mut layer = LoRALayer::new(64, 64, &config, &device)?;
-    
+
     // Initialize LoRA B with non-zero values so we can see dropout effects
     // This simulates a trained layer (default initialization is zeros)
     let lora_b_data = Tensor::randn(0f32, 0.1, (8, 64), &device)?;
     let lora_b_var = candle_core::Var::from_tensor(&lora_b_data)?;
     // We can't directly set it, so this test will just verify mode switching works
-    
+
     layer.set_training(true);
 
     // Batched input [batch=4, seq=10, features=64]
@@ -213,8 +222,11 @@ fn test_dropout_with_batched_input() -> Result<(), Box<dyn std::error::Error>> {
     layer.eval();
     let output_eval1 = layer.forward(&input)?;
     let output_eval2 = layer.forward(&input)?;
-    
-    let diff_eval = (&output_eval1 - &output_eval2)?.abs()?.mean_all()?.to_scalar::<f32>()?;
+
+    let diff_eval = (&output_eval1 - &output_eval2)?
+        .abs()?
+        .mean_all()?
+        .to_scalar::<f32>()?;
     assert!(
         diff_eval < 1e-6,
         "Eval mode should produce consistent outputs, got diff: {}",
@@ -251,4 +263,3 @@ fn test_dropout_gradient_flow() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
