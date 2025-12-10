@@ -109,7 +109,7 @@ jobs:
           cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
           cargo llvm-cov --all-features --workspace --json --output-path coverage.json
       
-      - name: Check coverage threshold (≥78%)
+      - name: Check coverage threshold (≥80%)
         run: |
           # Extract coverage from JSON output (most reliable format)
           if command -v jq &> /dev/null; then
@@ -128,15 +128,12 @@ jobs:
           fi
           
           # Use awk for floating point comparison
-          # Temporarily lowered to 78% for v1.0 release due to graph merge features
-          # The new code is fully tested functionally, but llvm-cov reports lower percentage
-          # TODO: Increase back to 80% post-v1.0 with targeted coverage improvements
-          if awk "BEGIN {exit !($COVERAGE < 78)}"; then
-            echo "❌ Coverage ${COVERAGE}% is below threshold of 78%"
+          if awk "BEGIN {exit !($COVERAGE < 80)}"; then
+            echo "❌ Coverage ${COVERAGE}% is below threshold of 80%"
             exit 1
           fi
           
-          echo "✅ Coverage ${COVERAGE}% meets threshold (target: 80% post-v1.0)"
+          echo "✅ Coverage ${COVERAGE}% meets threshold"
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
