@@ -320,6 +320,13 @@ mod tests {
     }
 
     #[test]
+    fn test_from_candle_device() {
+        let candle_device = CandleDevice::Cpu;
+        let device = Device::from_candle_device(candle_device);
+        assert!(device.is_cpu());
+    }
+
+    #[test]
     fn test_device_conversions() {
         let candle_device = CandleDevice::Cpu;
         let device: Device = candle_device.into();

@@ -464,7 +464,7 @@ mod tests {
         // Create first graph with node A
         let mut graph1 = ComputationGraph::new(device.clone());
         let tensor_a = Tensor::from_slice(&[1.0_f32, 2.0], &[2], &device).unwrap();
-        let node_a = graph1.add_input(tensor_a);
+        let _node_a = graph1.add_input(tensor_a);
 
         // Create second graph with node B
         let mut graph2 = ComputationGraph::new(device.clone());
