@@ -41,7 +41,7 @@ fn main() {
 
         // Calculate GFLOPS: 2*M*N*K operations
         let ops = 2.0 * m as f64 * n as f64 * k as f64;
-        let gflops = (ops / (avg_us * 1000.0)); // Convert µs to seconds, ops to GFLOPS
+        let gflops = ops / (avg_us * 1000.0); // Convert µs to seconds, ops to GFLOPS
 
         println!(
             "{:<15} {:<15.2} {:<15.2}",
