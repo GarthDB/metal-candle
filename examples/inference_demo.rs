@@ -1,4 +1,8 @@
-//! Inference demonstration: KV-cache and sampling strategies.
+//! Inference demonstration: KV-cache and sampling strategies (Low-level API).
+//!
+//! **Note**: This example demonstrates low-level inference primitives.
+//! For high-level text generation, see `examples/generate_text.rs` which uses
+//! the `Generator` API with automatic repetition penalty and stop conditions.
 //!
 //! This example demonstrates:
 //! 1. KV-cache usage for efficient generation
@@ -143,7 +147,7 @@ fn demo_sampling(device: &Device) -> Result<()> {
     // 1. Greedy
     println!("1. Greedy Sampling (deterministic):");
     let strategy = SamplingStrategy::Greedy;
-    let token = sample_token(&logits, &strategy)?;
+    let token = sample_token(&logits, &strategy, &[], 1.0)?;
     println!("   Selected token: {token} (always picks highest logit)");
     println!();
 
@@ -152,7 +156,7 @@ fn demo_sampling(device: &Device) -> Result<()> {
     let strategy = SamplingStrategy::TopK { k: 3 };
     println!("   Candidates: top 3 tokens [1, 6, 2]");
     for _ in 0..5 {
-        let token = sample_token(&logits, &strategy)?;
+        let token = sample_token(&logits, &strategy, &[], 1.0)?;
         print!("   Sample: {token} ");
     }
     println!();
@@ -163,7 +167,7 @@ fn demo_sampling(device: &Device) -> Result<()> {
     let strategy = SamplingStrategy::TopP { p: 0.9 };
     println!("   Adaptive: includes tokens until cumulative prob ≥ 0.9");
     for _ in 0..5 {
-        let token = sample_token(&logits, &strategy)?;
+        let token = sample_token(&logits, &strategy, &[], 1.0)?;
         print!("   Sample: {token} ");
     }
     println!();
@@ -175,7 +179,7 @@ fn demo_sampling(device: &Device) -> Result<()> {
         let strategy = SamplingStrategy::Temperature { temperature: temp };
         print!("   T={temp}: ");
         for _ in 0..5 {
-            let token = sample_token(&logits, &strategy)?;
+            let token = sample_token(&logits, &strategy, &[], 1.0)?;
             print!("{token} ");
         }
         println!();
@@ -214,7 +218,7 @@ fn demo_performance(device: &Device) -> Result<()> {
         let start = Instant::now();
 
         for _ in 0..num_samples {
-            let _ = sample_token(&logits, &strategy)?;
+            let _ = sample_token(&logits, &strategy, &[], 1.0)?;
         }
 
         let elapsed = start.elapsed();

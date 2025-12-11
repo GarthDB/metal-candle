@@ -124,7 +124,7 @@ pub struct Qwen {
     embed_tokens: Embedding,
     layers: Vec<QwenDecoderLayer>,
     norm: RMSNorm,
-    lm_head: candle_nn::Linear,
+    pub(crate) lm_head: candle_nn::Linear,
 }
 
 impl Qwen {
