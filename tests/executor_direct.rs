@@ -289,3 +289,212 @@ fn test_executor_synchronize_no_op() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+#[cfg(feature = "custom-metal")]
+fn test_executor_lora_more_input_counts() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+    let mut executor = AsyncExecutor::new(device.clone())?;
+
+    // Test with 1 input (needs 3)
+    let a = Tensor::from_slice(&[1.0f32, 2.0], &[2], &device)?;
+    let result = executor.execute_operation(
+        &Operation::LoRA {
+            a: NodeId(0),
+            b: NodeId(1),
+            scale: 1.0,
+        },
+        &[a],
+    );
+    assert!(result.is_err());
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("LoRA requires 3 inputs"));
+
+    // Test with 4 inputs (needs 3)
+    let a = Tensor::from_slice(&[1.0f32, 2.0], &[2], &device)?;
+    let b = Tensor::from_slice(&[3.0f32, 4.0], &[2], &device)?;
+    let c = Tensor::from_slice(&[5.0f32, 6.0], &[2], &device)?;
+    let d = Tensor::from_slice(&[7.0f32, 8.0], &[2], &device)?;
+    let result = executor.execute_operation(
+        &Operation::LoRA {
+            a: NodeId(0),
+            b: NodeId(1),
+            scale: 1.0,
+        },
+        &[a, b, c, d],
+    );
+    assert!(result.is_err());
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("LoRA requires 3 inputs"));
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "custom-metal")]
+fn test_executor_lora_cpu_fallback() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+    let mut executor = AsyncExecutor::new(device.clone())?;
+
+    // Create test tensors: input (2x4), lora_a (4x2), lora_b (2x4)
+    // Result should be (2x4)
+    let input = Tensor::from_slice(
+        &[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+        &[2, 4],
+        &device,
+    )?;
+    let lora_a = Tensor::from_slice(
+        &[0.1f32, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+        &[4, 2],
+        &device,
+    )?;
+    let lora_b = Tensor::from_slice(
+        &[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+        &[2, 4],
+        &device,
+    )?;
+
+    let result = executor.execute_operation(
+        &Operation::LoRA {
+            a: NodeId(0),
+            b: NodeId(1),
+            scale: 0.5,
+        },
+        &[input, lora_a, lora_b],
+    )?;
+
+    assert_eq!(result.dims(), &[2, 4]);
+    // Verify it's not all zeros
+    let values = result.to_vec2::<f32>()?;
+    assert!(values.iter().flatten().any(|&x| x != 0.0));
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "custom-metal")]
+fn test_executor_lora_metal_success() -> Result<(), Box<dyn std::error::Error>> {
+    // Test LoRA on Metal device if available
+    if let Ok(device) = Device::new_metal(0) {
+        let mut executor = AsyncExecutor::new(device.clone())?;
+
+        let input = Tensor::from_slice(&[1.0f32, 2.0, 3.0, 4.0], &[1, 4], &device)?;
+        let lora_a = Tensor::from_slice(
+            &[0.1f32, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+            &[4, 2],
+            &device,
+        )?;
+        let lora_b = Tensor::from_slice(
+            &[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+            &[2, 4],
+            &device,
+        )?;
+
+        let result = executor.execute_operation(
+            &Operation::LoRA {
+                a: NodeId(0),
+                b: NodeId(1),
+                scale: 1.0,
+            },
+            &[input, lora_a, lora_b],
+        )?;
+
+        assert_eq!(result.dims(), &[1, 4]);
+    }
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "custom-metal")]
+fn test_executor_rmsnorm_more_input_counts() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+    let mut executor = AsyncExecutor::new(device.clone())?;
+
+    // Test with 2 inputs (needs 1)
+    let a = Tensor::from_slice(&[1.0f32, 2.0, 3.0], &[3], &device)?;
+    let b = Tensor::from_slice(&[4.0f32, 5.0, 6.0], &[3], &device)?;
+    let result = executor.execute_operation(&Operation::RMSNorm { eps: 1e-5 }, &[a, b]);
+    assert!(result.is_err());
+    assert!(result
+        .unwrap_err()
+        .to_string()
+        .contains("RMSNorm requires 1 input"));
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "custom-metal")]
+fn test_executor_rmsnorm_cpu_fallback() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+    let mut executor = AsyncExecutor::new(device.clone())?;
+
+    let input = Tensor::from_slice(&[1.0f32, 2.0, 3.0, 4.0], &[4], &device)?;
+
+    let result = executor.execute_operation(&Operation::RMSNorm { eps: 1e-6 }, &[input])?;
+
+    assert_eq!(result.dims(), &[4]);
+    // RMS norm should preserve shape
+    let values = result.to_vec1::<f32>()?;
+    assert_eq!(values.len(), 4);
+    // Values should be normalized
+    assert!(values.iter().all(|&x| x.is_finite()));
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "custom-metal")]
+fn test_executor_rmsnorm_metal_success() -> Result<(), Box<dyn std::error::Error>> {
+    // Test RMSNorm on Metal device if available
+    if let Ok(device) = Device::new_metal(0) {
+        let mut executor = AsyncExecutor::new(device.clone())?;
+
+        let input = Tensor::from_slice(
+            &[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+            &[2, 4],
+            &device,
+        )?;
+
+        let result = executor.execute_operation(&Operation::RMSNorm { eps: 1e-5 }, &[input])?;
+
+        assert_eq!(result.dims(), &[2, 4]);
+    }
+
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "custom-metal")]
+fn test_executor_rmsnorm_correctness() -> Result<(), Box<dyn std::error::Error>> {
+    let device = Device::Cpu;
+    let mut executor = AsyncExecutor::new(device.clone())?;
+
+    // Test with known values
+    let input = Tensor::from_slice(&[3.0f32, 4.0], &[2], &device)?;
+
+    let result = executor.execute_operation(&Operation::RMSNorm { eps: 0.0 }, &[input])?;
+
+    // RMS of [3, 4] is sqrt((9+16)/2) = sqrt(12.5) = 3.5355...
+    // Normalized: [3/3.5355, 4/3.5355] ≈ [0.8485, 1.1314]
+    let values = result.to_vec1::<f32>()?;
+    assert!((values[0] - 0.8485).abs() < 0.001);
+    assert!((values[1] - 1.1314).abs() < 0.001);
+
+    Ok(())
+}
+
+#[test]
+fn test_executor_debug_impl() {
+    let device = Device::Cpu;
+    let executor = AsyncExecutor::new(device).unwrap();
+
+    let debug_string = format!("{:?}", executor);
+    assert!(debug_string.contains("AsyncExecutor"));
+    assert!(debug_string.contains("device"));
+}

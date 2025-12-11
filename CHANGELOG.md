@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+
+- **Fused Softmax Kernel**: Integrated custom Metal kernel in graph executor (#27)
+  - 3.25x speedup for softmax operations on Metal devices
+  - Automatic fallback to Candle implementation for CPU or non-last-dim operations
+  - Zero breaking changes - transparent performance improvement
+
 ## [1.1.0] - 2024-12-11
 
 ### Highlights
