@@ -17,6 +17,17 @@ mod fused_rmsnorm_tests {
     const EPSILON: f32 = 1e-4; // Tolerance for float comparison
     const EPS: f32 = 1e-5; // RMS norm epsilon
 
+    /// Helper to get Metal device or skip test
+    fn get_metal_device_or_skip() -> Option<Device> {
+        match std::panic::catch_unwind(|| Device::new_metal(0)) {
+            Ok(Ok(d)) => Some(d),
+            Ok(Err(_)) | Err(_) => {
+                eprintln!("Metal device not available, skipping test");
+                None
+            }
+        }
+    }
+
     /// Reference RMS norm implementation using Candle ops
     fn rms_norm_reference(x: &Tensor, eps: f32) -> Result<Tensor, candle_core::Error> {
         // RMS = sqrt(mean(x^2) + eps)
@@ -29,7 +40,9 @@ mod fused_rmsnorm_tests {
     #[test]
     fn test_rmsnorm_correctness_2d() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting fused RMS norm correctness (2D tensor)");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         let batch_size = 4;
         let dim = 1024;
@@ -66,7 +79,9 @@ mod fused_rmsnorm_tests {
     #[test]
     fn test_rmsnorm_correctness_3d() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting fused RMS norm correctness (3D tensor)");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         let batch_size = 2;
         let seq_len = 128;
@@ -102,7 +117,9 @@ mod fused_rmsnorm_tests {
     #[test]
     fn test_rmsnorm_numerical_properties() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting RMS norm numerical properties");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         let input = Tensor::randn(0f32, 1f32, (4, 512), &device)?;
         let output = input.rms_norm_fused(EPS).unwrap();
@@ -131,10 +148,12 @@ mod fused_rmsnorm_tests {
     #[test]
     fn test_rmsnorm_various_shapes() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting various input shapes");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         // Test 2D shapes
-        let test_2d = vec![
+        let test_2d = [
             (1, 512),  // Single row
             (16, 256), // Small batch
         ];
@@ -156,7 +175,7 @@ mod fused_rmsnorm_tests {
         }
 
         // Test 3D shapes
-        let test_3d = vec![
+        let test_3d = [
             (1, 128, 768), // 3D with small seq
             (4, 64, 1024), // 3D with batch
         ];
@@ -186,7 +205,9 @@ mod fused_rmsnorm_tests {
     #[test]
     fn test_rmsnorm_extreme_values() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting RMS norm with extreme values");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         // Test with large values
         println!("  Testing large values...");

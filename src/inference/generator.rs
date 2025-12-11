@@ -341,7 +341,7 @@ mod tests {
         fn forward(&self, input_ids: &Tensor, _attention_mask: Option<&Tensor>) -> Result<Tensor> {
             let seq_len = input_ids.dims()[1];
             // Return mock logits: higher values for lower token IDs
-            let logits = vec![3.0f32, 2.0, 1.0, 0.5]; // Vocab size 4
+            let logits = [3.0f32, 2.0, 1.0, 0.5]; // Vocab size 4
             let batch_logits: Vec<f32> =
                 (0..seq_len).flat_map(|_| logits.iter().copied()).collect();
 
@@ -364,7 +364,7 @@ mod tests {
         let config = GeneratorConfig::default();
         assert_eq!(config.max_tokens, 100);
         assert!((config.temperature - 1.0).abs() < 1e-7);
-        assert_eq!(config.repetition_penalty, 1.0);
+        assert!((config.repetition_penalty - 1.0).abs() < 1e-7);
         assert!(config.stop_on_eos);
         assert!(config.eos_token_id.is_none());
         assert!(config.top_p.is_none());
@@ -381,7 +381,7 @@ mod tests {
             top_k: Some(50),
             repetition_penalty: 1.2,
             stop_on_eos: false,
-            eos_token_id: Some(151643),
+            eos_token_id: Some(151_643),
             stop_tokens: vec![100, 200],
             ..Default::default()
         };
@@ -390,9 +390,9 @@ mod tests {
         assert!((config.temperature - 0.7).abs() < 1e-7);
         assert_eq!(config.top_p, Some(0.95));
         assert_eq!(config.top_k, Some(50));
-        assert_eq!(config.repetition_penalty, 1.2);
+        assert!((config.repetition_penalty - 1.2).abs() < 1e-7);
         assert!(!config.stop_on_eos);
-        assert_eq!(config.eos_token_id, Some(151643));
+        assert_eq!(config.eos_token_id, Some(151_643));
         assert_eq!(config.stop_tokens, vec![100, 200]);
     }
 

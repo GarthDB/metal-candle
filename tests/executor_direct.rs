@@ -379,7 +379,10 @@ fn test_executor_lora_cpu_fallback() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(feature = "custom-metal")]
 fn test_executor_lora_metal_success() -> Result<(), Box<dyn std::error::Error>> {
     // Test LoRA on Metal device if available
-    if let Ok(device) = Device::new_metal(0) {
+    let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+        return Ok(());
+    };
+    {
         let mut executor = AsyncExecutor::new(device.clone())?;
 
         let input = Tensor::from_slice(&[1.0f32, 2.0, 3.0, 4.0], &[1, 4], &device)?;
@@ -452,7 +455,10 @@ fn test_executor_rmsnorm_cpu_fallback() -> Result<(), Box<dyn std::error::Error>
 #[cfg(feature = "custom-metal")]
 fn test_executor_rmsnorm_metal_success() -> Result<(), Box<dyn std::error::Error>> {
     // Test RMSNorm on Metal device if available
-    if let Ok(device) = Device::new_metal(0) {
+    let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+        return Ok(());
+    };
+    {
         let mut executor = AsyncExecutor::new(device.clone())?;
 
         let input = Tensor::from_slice(

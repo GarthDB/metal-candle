@@ -45,7 +45,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-metal-candle = "1.1"
+metal-candle = "1.2"
 ```
 
 **Requirements**: Rust 1.75+, Apple Silicon Mac (M1/M2/M3/M4), macOS 12.0+

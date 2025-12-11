@@ -150,19 +150,26 @@ mod tests {
 
     #[test]
     fn test_metal_layer_norm_metal() -> Result<()> {
-        if let Ok(device) = Device::new_metal(0) {
-            let vb = VarBuilder::zeros(DType::F32, &device);
+        // Use panic catching to handle case where Metal device enumeration fails
+        // This is a workaround for candle-core 0.9.1 bug where Device::new_metal
+        // can panic instead of returning Err in some environments
+        let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+            // Metal not available or panic during initialization, skip test
+            eprintln!("Metal device not available, skipping test");
+            return Ok(());
+        };
 
-            // Create layer norm
-            let ln = metal_layer_norm(4, 1e-5, vb.pp("test"))?;
+        let vb = VarBuilder::zeros(DType::F32, &device);
 
-            // Test input
-            let input = Tensor::new(&[[1.0f32, 2.0, 3.0, 4.0]], &device)?;
-            let output = ln.forward(&input)?;
+        // Create layer norm
+        let ln = metal_layer_norm(4, 1e-5, vb.pp("test"))?;
 
-            // Should normalize to mean≈0, variance≈1
-            assert_eq!(output.dims(), &[1, 4]);
-        }
+        // Test input
+        let input = Tensor::new(&[[1.0f32, 2.0, 3.0, 4.0]], &device)?;
+        let output = ln.forward(&input)?;
+
+        // Should normalize to mean≈0, variance≈1
+        assert_eq!(output.dims(), &[1, 4]);
 
         Ok(())
     }

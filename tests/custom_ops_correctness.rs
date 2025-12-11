@@ -15,12 +15,10 @@ mod fused_lora_tests {
     #[test]
     fn test_fused_lora_correctness_basic() {
         // Skip if Metal not available
-        let device = match Device::new_metal(0) {
-            Ok(d) => d,
-            Err(_) => {
-                println!("Skipping test: Metal device not available");
-                return;
-            }
+        // Use panic catching to handle case where Metal device enumeration fails
+        let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+            println!("Skipping test: Metal device not available");
+            return;
         };
 
         println!("Testing fused LoRA correctness on Metal device");
@@ -92,9 +90,8 @@ mod fused_lora_tests {
     /// Test with different batch sizes
     #[test]
     fn test_fused_lora_various_batch_sizes() {
-        let device = match Device::new_metal(0) {
-            Ok(d) => d,
-            Err(_) => return,
+        let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+            return;
         };
 
         for batch_size in [1, 4, 8] {
@@ -136,9 +133,8 @@ mod fused_lora_tests {
     /// Test with different ranks
     #[test]
     fn test_fused_lora_various_ranks() {
-        let device = match Device::new_metal(0) {
-            Ok(d) => d,
-            Err(_) => return,
+        let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+            return;
         };
 
         for rank in [4, 8, 16, 32] {

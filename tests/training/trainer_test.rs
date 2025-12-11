@@ -63,7 +63,7 @@ fn test_trainer_creation_with_custom_config() -> anyhow::Result<()> {
 }
 
 #[test]
-fn test_trainer_with_zero_rank_fails() -> anyhow::Result<()> {
+fn test_trainer_with_zero_rank_fails() {
     let device = Device::Cpu;
     let lora_config = LoRAAdapterConfig {
         rank: 0, // Invalid
@@ -74,8 +74,6 @@ fn test_trainer_with_zero_rank_fails() -> anyhow::Result<()> {
     let result = Trainer::new(256, 512, 4, &lora_config, training_config, &device);
 
     assert!(result.is_err());
-
-    Ok(())
 }
 
 #[test]

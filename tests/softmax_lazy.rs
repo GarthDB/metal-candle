@@ -199,7 +199,10 @@ fn test_executor_uses_fused_softmax() -> Result<(), Box<dyn std::error::Error>> 
     // This test verifies that the executor correctly uses the fused softmax kernel
     // when running on Metal devices and falls back to Candle's implementation otherwise
 
-    if let Ok(device) = Device::new_metal(0) {
+    let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+        return Ok(());
+    };
+    {
         println!("Testing with Metal device...");
         let mut executor = AsyncExecutor::new(device.clone())?;
 
@@ -207,7 +210,7 @@ fn test_executor_uses_fused_softmax() -> Result<(), Box<dyn std::error::Error>> 
         let dim = 2; // Last dimension
 
         let operation = Operation::Softmax { dim };
-        let output = executor.execute_operation(&operation, &[input.clone()])?;
+        let output = executor.execute_operation(&operation, std::slice::from_ref(&input))?;
 
         // Verify correctness against Candle reference
         let reference = candle_nn::ops::softmax(&input, dim)?;
@@ -238,8 +241,6 @@ fn test_executor_uses_fused_softmax() -> Result<(), Box<dyn std::error::Error>> 
         }
 
         println!("✓ Fused softmax executor test passed!");
-    } else {
-        println!("Metal device not available, skipping test");
     }
 
     Ok(())
@@ -250,7 +251,10 @@ fn test_executor_uses_fused_softmax() -> Result<(), Box<dyn std::error::Error>> 
 fn test_executor_softmax_fallback() -> Result<(), Box<dyn std::error::Error>> {
     // Test that the executor falls back correctly for non-last-dimension softmax
 
-    if let Ok(device) = Device::new_metal(0) {
+    let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+        return Ok(());
+    };
+    {
         println!("Testing softmax fallback for non-last dimension...");
         let mut executor = AsyncExecutor::new(device.clone())?;
 
@@ -258,7 +262,7 @@ fn test_executor_softmax_fallback() -> Result<(), Box<dyn std::error::Error>> {
         let dim = 1; // Not last dimension - should use fallback
 
         let operation = Operation::Softmax { dim };
-        let output = executor.execute_operation(&operation, &[input.clone()])?;
+        let output = executor.execute_operation(&operation, std::slice::from_ref(&input))?;
 
         // Verify correctness against Candle reference
         let reference = candle_nn::ops::softmax(&input, dim)?;
@@ -277,8 +281,6 @@ fn test_executor_softmax_fallback() -> Result<(), Box<dyn std::error::Error>> {
         );
 
         println!("✓ Softmax fallback test passed!");
-    } else {
-        println!("Metal device not available, skipping test");
     }
 
     Ok(())
