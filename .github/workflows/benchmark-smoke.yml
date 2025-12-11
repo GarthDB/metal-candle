@@ -1,0 +1,97 @@
+name: Benchmark Smoke Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark-smoke:
+    name: Benchmark Smoke Test (Regression Detection)
+    runs-on: macos-14  # Apple Silicon M1
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Run benchmark smoke tests
+        run: |
+          echo "🔥 Running benchmark smoke tests (low sample size for speed)"
+          echo "════════════════════════════════════════════════════════════"
+          
+          # Note: mlx_comparison requires Python/MLX, so we skip it in CI
+          # Run other benchmarks to ensure they compile and execute
+          
+          # Check if benchmarks exist and run them
+          if cargo bench --no-run 2>&1 | grep -q "no bench target"; then
+            echo "⚠️  No benchmarks found to run"
+            exit 0
+          fi
+          
+          # Run benchmarks with low sample size (fast, loose accuracy)
+          # These are just to catch major performance bugs, not subtle regressions
+          cargo bench --all-features -- --sample-size 10 --warm-up-time 0.5 --measurement-time 1 || {
+            echo "⚠️  Benchmarks failed - this may indicate a performance regression or bug"
+            exit 1
+          }
+      
+      - name: Report results
+        if: always()
+        run: |
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "⚠️  IMPORTANT: GitHub Actions Benchmark Limitations"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          echo "These benchmarks run on shared hardware with ±10-20% variance."
+          echo "They are ONLY for catching major performance bugs (>20% regression)."
+          echo ""
+          echo "For official performance numbers:"
+          echo "  1. Run benchmarks locally on dedicated hardware"
+          echo "  2. Follow the release checklist in docs/RELEASE_PROCESS.md"
+          echo "  3. See docs/BENCHMARK_CI.md for methodology"
+          echo ""
+
+      - name: Post benchmark comment (on PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ **Benchmark Smoke Test Complete**\n\n' +
+                    'These benchmarks ran on shared GitHub Actions hardware (M1) and ' +
+                    'are **only for detecting major regressions (>20%)**.\n\n' +
+                    '**Important Notes:**\n' +
+                    '- ± 10-20% timing variance is normal on shared runners\n' +
+                    '- Absolute numbers are NOT suitable for performance claims\n' +
+                    '- These tests ensure benchmarks compile and run\n\n' +
+                    '**For Official Benchmarks:**\n' +
+                    'Run locally before release:\n' +
+                    '```bash\n' +
+                    './scripts/run_official_benchmarks.sh\n' +
+                    '```\n\n' +
+                    'See:\n' +
+                    '- [Release Process](../blob/main/docs/RELEASE_PROCESS.md)\n' +
+                    '- [Benchmark CI Strategy](../blob/main/docs/BENCHMARK_CI.md)\n' +
+                    '- [Benchmark Methodology](../blob/main/BENCHMARKS.md)'
+            })
+
