@@ -14,6 +14,8 @@ jobs:
   benchmark-smoke:
     name: Benchmark Smoke Test (Regression Detection)
     runs-on: macos-14  # Apple Silicon M1
+    permissions:
+      pull-requests: write  # Required to post comments on PRs
     
     steps:
       - uses: actions/checkout@v4
