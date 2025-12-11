@@ -1108,9 +1108,10 @@ mod tests {
         // Use F32 for Metal compatibility
         let candle_device = device.as_candle_device();
         let lora_a = Tensor::randn(0.0f32, 0.01f32, (512, 8), candle_device).unwrap();
-        let lora_b = Tensor::zeros((16, 512), DType::F32, candle_device).unwrap(); // Wrong rank!
+        let lora_b = Tensor::zeros((16, 512), DType::F32, candle_device).unwrap(); // Wrong rank: 8 != 16
 
-        let op = FusedLoRAOp::new(lora_b, lora_a, 2.0);
+        // These dimensions are incompatible: lora_a is 512×8 but lora_b expects rank 16
+        let op = FusedLoRAOp::new(lora_a, lora_b, 2.0);
         assert!(op.is_err());
     }
 }
