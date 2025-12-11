@@ -12,10 +12,8 @@ env:
 
 jobs:
   benchmark-smoke:
-    name: Benchmark Smoke Test (Regression Detection)
+    name: Benchmark Smoke Test (Compilation Check)
     runs-on: macos-14  # Apple Silicon M1
-    permissions:
-      pull-requests: write  # Required to post comments on PRs
     
     steps:
       - uses: actions/checkout@v4
@@ -61,42 +59,13 @@ jobs:
         run: |
           echo ""
           echo "════════════════════════════════════════════════════════════"
-          echo "⚠️  IMPORTANT: GitHub Actions Benchmark Limitations"
+          echo "✅ Benchmark Compilation Check Complete"
           echo "════════════════════════════════════════════════════════════"
           echo ""
-          echo "These benchmarks run on shared hardware with ±10-20% variance."
-          echo "They are ONLY for catching major performance bugs (>20% regression)."
+          echo "This smoke test verifies benchmarks remain buildable."
+          echo "Actual performance measurements should be run locally."
           echo ""
-          echo "For official performance numbers:"
-          echo "  1. Run benchmarks locally on dedicated hardware"
-          echo "  2. Follow the release checklist in docs/RELEASE_PROCESS.md"
-          echo "  3. See docs/BENCHMARK_CI.md for methodology"
+          echo "For official benchmarks before release:"
+          echo "  ./scripts/run_official_benchmarks.sh"
           echo ""
-
-      - name: Post benchmark comment (on PR)
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ **Benchmark Smoke Test Complete**\n\n' +
-                    'Verified that all benchmarks **compile successfully**. This smoke test ensures ' +
-                    'benchmarks remain buildable but does not run performance measurements in CI.\n\n' +
-                    '**Why not run benchmarks in CI?**\n' +
-                    '- Shared GitHub Actions hardware has ±10-20% timing variance\n' +
-                    '- Results are not suitable for performance claims\n' +
-                    '- Would significantly slow down CI pipeline\n\n' +
-                    '**For Official Benchmarks:**\n' +
-                    'Run locally on dedicated hardware before release:\n' +
-                    '```bash\n' +
-                    './scripts/run_official_benchmarks.sh\n' +
-                    '```\n\n' +
-                    'See:\n' +
-                    '- [Release Process](docs/RELEASE_PROCESS.md)\n' +
-                    '- [Benchmark CI Strategy](docs/BENCHMARK_CI.md)\n' +
-                    '- [Benchmark Methodology](BENCHMARKS.md)'
-            })
 
