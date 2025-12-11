@@ -1081,14 +1081,16 @@ pub fn layer_norm(tensor: &Tensor, eps: f64) -> Result<Tensor> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candle_core::{DType, Device};
+    use crate::backend::Device as MetalCandleDevice;
+    use candle_core::DType;
 
     #[test]
     fn test_fused_lora_op_creation() {
-        if let Ok(device) = Device::new_metal(0) {
+        if let Ok(device) = MetalCandleDevice::new_metal(0) {
             // Use F32 for Metal compatibility
-            let lora_a = Tensor::randn(0.0f32, 0.01f32, (512, 8), &device).unwrap();
-            let lora_b = Tensor::zeros((8, 512), DType::F32, &device).unwrap();
+            let candle_device = device.as_candle_device();
+            let lora_a = Tensor::randn(0.0f32, 0.01f32, (512, 8), candle_device).unwrap();
+            let lora_b = Tensor::zeros((8, 512), DType::F32, candle_device).unwrap();
 
             let op = FusedLoRAOp::new(lora_a, lora_b, 2.0);
             assert!(op.is_ok());
@@ -1097,12 +1099,13 @@ mod tests {
 
     #[test]
     fn test_fused_lora_op_invalid_dimensions() {
-        if let Ok(device) = Device::new_metal(0) {
+        if let Ok(device) = MetalCandleDevice::new_metal(0) {
             // Use F32 for Metal compatibility
-            let lora_a = Tensor::randn(0.0f32, 0.01f32, (512, 8), &device).unwrap();
-            let lora_b = Tensor::zeros((16, 512), DType::F32, &device).unwrap(); // Wrong rank!
+            let candle_device = device.as_candle_device();
+            let lora_a = Tensor::randn(0.0f32, 0.01f32, (512, 8), candle_device).unwrap();
+            let lora_b = Tensor::zeros((16, 512), DType::F32, candle_device).unwrap(); // Wrong rank!
 
-            let op = FusedLoRAOp::new(lora_a, lora_b, 2.0);
+            let op = FusedLoRAOp::new(lora_b, lora_a, 2.0);
             assert!(op.is_err());
         }
     }

@@ -173,17 +173,18 @@ impl CustomMetalOps for Tensor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candle_core::Device;
+    use crate::backend::Device as MetalCandleDevice;
 
     #[test]
     fn test_custom_ops_implemented() {
         // Verify that custom ops now work (they were implemented in Phase 5)
-        if let Ok(device) = Device::new_metal(0) {
-            let tensor = Tensor::zeros((4, 4), candle_core::DType::F32, &device)
+        if let Ok(device) = MetalCandleDevice::new_metal(0) {
+            let candle_device = device.as_candle_device();
+            let tensor = Tensor::zeros((4, 4), candle_core::DType::F32, candle_device)
                 .expect("Failed to create tensor");
-            let lora_a = Tensor::zeros((4, 2), candle_core::DType::F32, &device)
+            let lora_a = Tensor::zeros((4, 2), candle_core::DType::F32, candle_device)
                 .expect("Failed to create lora_a");
-            let lora_b = Tensor::zeros((2, 4), candle_core::DType::F32, &device)
+            let lora_b = Tensor::zeros((2, 4), candle_core::DType::F32, candle_device)
                 .expect("Failed to create lora_b");
 
             // Custom ops are now implemented and should succeed

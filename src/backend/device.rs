@@ -5,6 +5,7 @@
 
 use crate::error::{DeviceError, Result};
 use candle_core::Device as CandleDevice;
+use std::sync::OnceLock;
 
 /// A wrapper around Candle's Device with additional Metal-specific functionality.
 #[derive(Debug, Clone)]
@@ -55,10 +56,31 @@ impl Device {
     ///
     /// Returns [`DeviceError::MetalUnavailable`] if Metal is not available on the system.
     pub fn new_metal(index: usize) -> Result<Self> {
-        match CandleDevice::new_metal(index) {
-            Ok(inner) => Ok(Self { inner }),
-            Err(e) => Err(DeviceError::MetalUnavailable {
+        // Guard against panics from Candle's Metal backend initialization.
+        // The Metal backend can panic with "swap_remove index should be < len"
+        // if Metal device enumeration returns an empty list (known Candle issue).
+
+        // Temporarily disable panic printing to avoid test failures from caught panics
+        let old_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {})); // Suppress panic output
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            CandleDevice::new_metal(index)
+        }));
+
+        // Restore the original panic hook
+        std::panic::set_hook(old_hook);
+
+        match result {
+            Ok(Ok(inner)) => Ok(Self { inner }),
+            Ok(Err(e)) => Err(DeviceError::MetalUnavailable {
                 reason: format!("Failed to initialize Metal device {index}: {e}"),
+            }
+            .into()),
+            Err(_) => Err(DeviceError::MetalUnavailable {
+                reason: format!(
+                    "Metal device {index} initialization panicked (likely no Metal devices available)"
+                ),
             }
             .into()),
         }
@@ -199,6 +221,10 @@ impl Device {
     ///
     /// This is useful for detecting Apple Silicon vs. other platforms.
     ///
+    /// This function uses lazy initialization and caching to avoid repeatedly
+    /// querying Metal device availability, which can cause race conditions and
+    /// panics in Candle's internal Metal backend when called concurrently.
+    ///
     /// # Examples
     ///
     /// ```
@@ -210,7 +236,26 @@ impl Device {
     /// ```
     #[must_use]
     pub fn is_metal_available() -> bool {
-        CandleDevice::new_metal(0).is_ok()
+        static METAL_AVAILABLE: OnceLock<bool> = OnceLock::new();
+
+        *METAL_AVAILABLE.get_or_init(|| {
+            // Guard against panics from Candle's Metal backend initialization.
+            // The Metal backend can panic with "swap_remove index should be < len"
+            // if Metal device enumeration returns an empty list (known Candle issue).
+
+            // Temporarily disable panic printing to avoid test failures from caught panics
+            let old_hook = std::panic::take_hook();
+            std::panic::set_hook(Box::new(|_| {})); // Suppress panic output
+
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                CandleDevice::new_metal(0).is_ok()
+            }));
+
+            // Restore the original panic hook
+            std::panic::set_hook(old_hook);
+
+            result.unwrap_or(false)
+        })
     }
 
     /// Get the underlying Metal device for MPS operations.
