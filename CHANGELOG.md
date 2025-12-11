@@ -133,6 +133,12 @@ let output = generator.generate(&input_ids)?;
   - Current Candle softmax performs adequately
   - Will optimize in v1.2.0 after full pipeline validation
 
+- **Generator KV-Cache Optimization**: Planned for v1.2.0
+  - Current implementation passes all tokens on each forward pass
+  - Future optimization will use incremental approach (only pass last token)
+  - This will significantly improve generation performance for longer sequences
+  - Does not affect API compatibility
+
 ## [1.0.0] - 2024-12-10
 
 ### Highlights

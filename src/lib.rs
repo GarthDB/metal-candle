@@ -8,7 +8,7 @@
 //!
 //! - **`LoRA` Training**: Fine-tune transformer models efficiently using Low-Rank Adaptation
 //! - **Model Loading**: Support for safetensors format with extensibility for others
-//! - **Text Generation**: High-level [`Generator`](inference::Generator) API with streaming, repetition penalty, and stop conditions
+//! - **Text Generation**: High-level [`Generator`] API with streaming, repetition penalty, and stop conditions
 //! - **Sampling Strategies**: Greedy, Top-k, Top-p (nucleus), and Temperature sampling
 //! - **Metal Acceleration**: Native Metal backend for optimal Apple Silicon performance
 //!
