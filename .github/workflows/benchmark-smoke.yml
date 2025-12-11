@@ -82,21 +82,21 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '⚠️ **Benchmark Smoke Test Complete**\n\n' +
-                    'These benchmarks ran on shared GitHub Actions hardware (M1) and ' +
-                    'are **only for detecting major regressions (>20%)**.\n\n' +
-                    '**Important Notes:**\n' +
-                    '- ± 10-20% timing variance is normal on shared runners\n' +
-                    '- Absolute numbers are NOT suitable for performance claims\n' +
-                    '- These tests ensure benchmarks compile and run\n\n' +
+              body: '✅ **Benchmark Smoke Test Complete**\n\n' +
+                    'Verified that all benchmarks **compile successfully**. This smoke test ensures ' +
+                    'benchmarks remain buildable but does not run performance measurements in CI.\n\n' +
+                    '**Why not run benchmarks in CI?**\n' +
+                    '- Shared GitHub Actions hardware has ±10-20% timing variance\n' +
+                    '- Results are not suitable for performance claims\n' +
+                    '- Would significantly slow down CI pipeline\n\n' +
                     '**For Official Benchmarks:**\n' +
-                    'Run locally before release:\n' +
+                    'Run locally on dedicated hardware before release:\n' +
                     '```bash\n' +
                     './scripts/run_official_benchmarks.sh\n' +
                     '```\n\n' +
                     'See:\n' +
-                    '- [Release Process](../blob/main/docs/RELEASE_PROCESS.md)\n' +
-                    '- [Benchmark CI Strategy](../blob/main/docs/BENCHMARK_CI.md)\n' +
-                    '- [Benchmark Methodology](../blob/main/BENCHMARKS.md)'
+                    '- [Release Process](docs/RELEASE_PROCESS.md)\n' +
+                    '- [Benchmark CI Strategy](docs/BENCHMARK_CI.md)\n' +
+                    '- [Benchmark Methodology](BENCHMARKS.md)'
             })
 
