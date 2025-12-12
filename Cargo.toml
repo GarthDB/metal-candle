@@ -1,6 +1,6 @@
 [package]
 name = "metal-candle"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2021"
 rust-version = "1.75"
 authors = ["Garth Braithwaite <garthdb@gmail.com>"]
@@ -124,5 +124,13 @@ harness = false
 
 [[bench]]
 name = "mlx_comparison"
+harness = false
+
+[[bench]]
+name = "fused_lora_bench"
+harness = false
+
+[[bench]]
+name = "lazy_vs_eager"
 harness = false
 
