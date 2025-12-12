@@ -1,0 +1,78 @@
+name: Documentation Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - '.github/workflows/docs-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+
+jobs:
+  docs:
+    name: Check docs.rs build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build documentation (docs.rs simulation)
+        env:
+          RUSTDOCFLAGS: "--cfg docsrs"
+        run: |
+          cargo +nightly rustdoc \
+            --lib \
+            --no-default-features \
+            --features "embeddings,graph" \
+            -- \
+            --cfg docsrs
+
+      - name: Check for docs.rs metadata
+        run: |
+          echo "Checking Cargo.toml for docs.rs metadata..."
+          if ! grep -q "\[package.metadata.docs.rs\]" Cargo.toml; then
+            echo "::warning::No [package.metadata.docs.rs] section found in Cargo.toml"
+          else
+            echo "✅ docs.rs metadata found"
+          fi
+
+      - name: Verify no Metal dependencies
+        run: |
+          echo "Checking dependency tree for Metal/Objective-C dependencies..."
+          if cargo tree --no-default-features --features "embeddings,graph" | grep -i "objc\|metal"; then
+            echo "::error::Found Metal or Objective-C dependencies without custom-metal feature!"
+            echo "This will cause docs.rs build to fail on Linux."
+            exit 1
+          else
+            echo "✅ No Metal/Objective-C dependencies found"
+          fi
+
+      - name: Test build without any features
+        run: |
+          cargo check --lib --no-default-features
+
