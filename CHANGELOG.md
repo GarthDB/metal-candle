@@ -9,20 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
-## [1.2.2] - 2025-12-12
+## [1.2.3] - 2025-12-12
 
 ### Fixed
 
-- **docs.rs Build**: Configure docs.rs to build without macOS-specific Metal dependencies
-  - Added `[package.metadata.docs.rs]` configuration
-  - Made `candle-metal-kernels` optional (part of `custom-metal` feature)
-  - docs.rs now builds successfully on Linux by excluding `custom-metal` feature
+- **docs.rs Build**: Properly configure dependencies to avoid Objective-C compilation on Linux
+  - Removed hardcoded `metal` feature from `candle-core` base dependency  
+  - Made Metal features conditional via `custom-metal` feature flag
+  - Feature syntax: `custom-metal = ["dep:metal", "dep:objc", "dep:candle-metal-kernels", "candle-core/metal"]`
+  - docs.rs builds with `embeddings` and `graph` features only (no Metal dependencies)
+  - Fixes `objc_exception` compilation error on Linux
   - All API documentation now available at https://docs.rs/metal-candle
 
 ### Notes
 
-- No functional changes - documentation-only fix
+- No functional changes on macOS - Metal features work exactly as before
 - Local builds and functionality unchanged
+- v1.2.2 had incomplete fix that still pulled in Objective-C dependencies
+
+## [1.2.2] - 2025-12-12
+
+### Fixed
+
+- **docs.rs Build**: Initial attempt to configure docs.rs (incomplete - see v1.2.3)
+  - Added `[package.metadata.docs.rs]` configuration
+  - Made `candle-metal-kernels` optional
+  - Note: This version still failed on docs.rs due to hardcoded `candle-core` metal feature
+
+### Notes
+
+- Superseded by v1.2.3 with complete fix
 
 ## [1.2.1] - 2025-12-11
 

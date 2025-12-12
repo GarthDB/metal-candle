@@ -1,6 +1,6 @@
 [package]
 name = "metal-candle"
-version = "1.2.2"
+version = "1.2.3"
 edition = "2021"
 rust-version = "1.75"
 authors = ["Garth Braithwaite <garthdb@gmail.com>"]
@@ -21,12 +21,11 @@ features = ["embeddings", "graph"]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-# Candle - ML framework with Metal backend
-# Note: Metal features are available but docs.rs builds without them (Linux)
-candle-core = { version = "0.9", features = ["metal"], optional = false }
+# Candle - ML framework
+# Metal features added via custom-metal feature flag (macOS only)
+candle-core = "0.9"
 candle-nn = "0.9"
 candle-transformers = "0.9"
-candle-metal-kernels = { version = "0.9", optional = true }
 
 # Model formats
 safetensors = "0.4"
@@ -60,6 +59,8 @@ dashmap = { version = "5.5", optional = true }
 
 # Custom Metal kernels (for performance optimization)
 # Must match candle-core's metal version (0.27)
+# These are only used on macOS via the custom-metal feature
+candle-metal-kernels = { version = "0.9", optional = true }
 metal = { version = "0.27", optional = true }
 objc = { version = "0.2", optional = true }
 
@@ -78,7 +79,9 @@ anyhow = "1.0"
 
 [features]
 default = ["custom-metal", "graph"]
-custom-metal = ["dep:metal", "dep:objc", "dep:candle-metal-kernels"]
+# custom-metal enables Metal GPU acceleration (macOS only)
+# This also enables the metal feature on candle-core
+custom-metal = ["dep:metal", "dep:objc", "dep:candle-metal-kernels", "candle-core/metal"]
 embeddings = []
 graph = []  # Lazy evaluation framework (v2.0+)
 async-exec = ["graph", "dep:tokio", "dep:async-trait", "dep:dashmap"]  # Async execution (Phase 5)
