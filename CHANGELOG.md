@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
+## [1.2.1] - 2025-12-11
+
+### Fixed
+
+- **Benchmark Configuration**: Added missing `[[bench]]` entries for `fused_lora_bench` and `lazy_vs_eager` benchmarks in `Cargo.toml` (#36)
+  - Both benchmarks now properly execute and produce output
+  - No code changes required - purely a configuration fix
+  
+- **Embeddings Test**: Confirmed `test_metal_layer_norm_metal` now passes consistently (#34)
+  - Test failure was already resolved by Metal device initialization improvements in v1.2.0
+  - No additional fixes required
+
+### Quality Metrics
+
+- All 407 tests passing (0 failures)
+- Code coverage: 81.64% (maintained above 80% threshold)
+- Zero clippy warnings (pedantic mode)
+- Formatting verified
+
+### Notes
+
+- This is a pure bugfix release with no breaking changes
+- No functional code changes - only build configuration updates
+
 ## [1.2.0] - 2025-12-11
 
 ### Highlights
