@@ -1,0 +1,59 @@
+Benchmark Run Information
+========================
+
+Date: Thu Dec 11 18:46:47 MST 2025
+Hostname: Garths-MacBook-Pro.local
+OS: macOS 26.1
+Architecture: arm64
+Rust: rustc 1.91.1 (ed61e7d7e 2025-11-07) (Homebrew)
+Cargo: cargo 1.91.1 (Homebrew)
+
+Hardware:
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: Mac16,5
+      Model Number: MX2W3LL/A
+      Chip: Apple M4 Max
+      Total Number of Cores: 16 (12 performance and 4 efficiency)
+      Memory: 48 GB
+      System Firmware Version: 13822.41.1
+      OS Loader Version: 13822.41.1
+      Serial Number (system): FY2CXFXWCF
+      Hardware UUID: B91EF022-574C-5615-999B-75CC23488806
+      Provisioning UDID: 00006041-000A71DC1468801C
+      Activation Lock Status: Disabled
+
+Git Info:
+Branch: main
+Commit: 0136f7b53edf760aae73616945420454ab16ff3a
+Status:  M .github/workflows/doc-validation.yml
+ M benches/fused_lora_simple.rs
+ M benches/mps_simple.rs
+ M benchmarks/pytorch_embeddings_bench.py
+ M docs/BENCHMARK_CI.md
+ M docs/PR33_IMPLEMENTATION_SUMMARY.md
+ M docs/RELEASE_PROCESS.md
+ M examples/ferris_hybrid_demo.rs
+ M examples/metal_embeddings_test.rs
+ M examples/mps_lora_benchmark.rs
+ M examples/rmsnorm_bench.rs
+ M examples/softmax_bench.rs
+ M scripts/run_official_benchmarks.sh
+ M scripts/update-metrics.sh
+ M tests/embeddings/loader_test.rs
+ M tests/embeddings/mod.rs
+ M tests/fixtures/embeddings/config.json
+ M tests/fixtures/embeddings/config_invalid.json
+ M tests/models_integration.rs
+ M tests/training/mod.rs
+ M tests/training_integration.rs
+?? benchmark_results/
+?? release_notes_v1.2.0.md
+
+Configuration:
+Runs per benchmark: 5
+Quick mode: false
+MLX comparison: Skipped

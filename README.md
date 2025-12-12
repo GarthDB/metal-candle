@@ -22,7 +22,7 @@
 - **25.9x Faster than MLX**: Beats Apple's official ML framework for embeddings
 - **Single Binary**: No Python runtime or virtual environments required
 - **Pure Rust**: Type-safe ML with compile-time guarantees
-- **Production Ready**: 254 tests, ≥80% coverage, 100% API documentation
+- **Production Ready**: 216 tests, 84.7% coverage, 100% API documentation
 - **Ergonomic API**: Builder patterns, sensible defaults, clear error messages
 
 ### Performance

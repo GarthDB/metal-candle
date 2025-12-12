@@ -1,0 +1,8 @@
+   Compiling metal-candle v1.2.0 (/Users/garthdb/Projects/metal-candle)
+    Finished `bench` profile [optimized] target(s) in 1.40s
+     Running benches/lazy_vs_eager.rs (target/release/deps/lazy_vs_eager-32ce243836cdd18d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
