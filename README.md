@@ -5,25 +5,18 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
 
-> Production-quality Rust ML crate for Apple Silicon - LoRA training, inference, text generation, and semantic embeddings using Candle with Metal backend
+> Production-quality Rust ML library for Apple Silicon - LoRA training, text generation, and semantic embeddings
 
 ## Overview
 
-`metal-candle` is a pure Rust machine learning library designed specifically for Apple Silicon, providing production-ready tools for:
+Pure Rust machine learning library optimized for Apple Silicon:
 
-- **LoRA Training**: Fine-tune transformer models efficiently using Low-Rank Adaptation
-- **Model Loading**: Safetensors format with comprehensive validation
-- **Text Generation**: High-level Generator API with streaming, repetition penalty, and stop conditions
-- **Semantic Embeddings**: Sentence-transformers (E5, MiniLM, MPNet) for RAG and search
-- **Metal Acceleration**: Native Metal backend for optimal M-series chip performance
+- **LoRA Training**: Fine-tune transformer models efficiently
+- **Text Generation**: Streaming, multiple sampling strategies, repetition penalty
+- **Semantic Embeddings**: E5, MiniLM, MPNet models for RAG and search
+- **Metal Acceleration**: Native GPU acceleration on M-series chips
 
-### Why metal-candle?
-
-- **25.9x Faster than MLX**: Beats Apple's official ML framework for embeddings
-- **Single Binary**: No Python runtime or virtual environments required
-- **Pure Rust**: Type-safe ML with compile-time guarantees
-- **Production Ready**: 216 tests, 84.7% coverage, 100% API documentation
-- **Ergonomic API**: Builder patterns, sensible defaults, clear error messages
+**Why metal-candle?** 25.9x faster than MLX for embeddings, single binary deployment, type-safe ML, production-ready (407 tests, 81.6% coverage)
 
 ### Performance
 
@@ -41,14 +34,12 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance analysis and methodo
 
 ## Installation
 
-Add to your `Cargo.toml`:
-
 ```toml
 [dependencies]
 metal-candle = "1.2"
 ```
 
-**Requirements**: Rust 1.75+, Apple Silicon Mac (M1/M2/M3/M4), macOS 12.0+
+**Requirements**: Rust 1.75+, Apple Silicon (M1/M2/M3/M4), macOS 12.0+
 
 ## Quick Start
 
@@ -137,15 +128,11 @@ let metrics = trainer.train(&dataset)?;
 
 ## Features
 
-**Training**: LoRA layers with dropout, AdamW optimizer, LR schedulers (Constant, Linear, Cosine, WarmupCosine), checkpoint management, gradient flow, cross-entropy loss with label smoothing
-
-**Inference**: KV-cache (~173 MB for 2048 tokens), multiple sampling strategies (Greedy, Top-k, Top-p, Temperature), repetition penalty, streaming generation with callbacks, stop conditions (EOS tokens, custom tokens)
-
-**Models**: Qwen2.5-Coder architecture, safetensors format, transformer components (RoPE, GQA, MLP), builder pattern with dtype conversion
-
-**Embeddings** (feature: `embeddings`): Sentence transformers (E5-small-v2, MiniLM-L6-v2, MPNet-base-v2), HuggingFace Hub integration, mean pooling, L2 normalization, Metal acceleration
-
-**Quality**: 254 tests (179 lib + 75 doc), ≥80% code coverage enforced, strict clippy pedantic linting, 100% API documentation, CI/CD on Apple Silicon
+- **Training**: LoRA with dropout, AdamW optimizer, learning rate schedulers, checkpoint management
+- **Inference**: KV-cache, multiple sampling strategies, streaming generation, repetition penalty
+- **Models**: Qwen2.5-Coder, safetensors format, transformer components (RoPE, GQA, MLP)
+- **Embeddings**: E5, MiniLM, MPNet with HuggingFace Hub integration
+- **Quality**: 407 tests, 81.6% coverage, strict clippy linting, 100% API documentation
 
 ## Architecture
 
@@ -205,41 +192,22 @@ cargo run --example embeddings_demo --features embeddings
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development setup, testing guidelines, and coding standards.
-
-**Quick start**:
 ```bash
-# Clone and build
 git clone https://github.com/GarthDB/metal-candle.git
 cd metal-candle
-cargo build
-
-# Run tests and checks
-cargo test
-cargo clippy -- -D warnings
-cargo fmt --check
+cargo build && cargo test
 ```
 
-**Quality standards enforced**: Zero clippy warnings (pedantic), ≥80% code coverage, 100% API documentation, all tests passing.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines. Quality standards: zero clippy warnings (pedantic), ≥80% coverage, 100% API docs.
 
 ## Roadmap
 
-### v1.1 ✅ Complete
+### Current: v1.2 ✅
 
-- ✅ Foundation & Metal Backend
-- ✅ Model Loading & Architecture (Qwen2.5-Coder)
-- ✅ LoRA Training Pipeline
-- ✅ Inference & Text Generation
-- ✅ High-level Generator API
-- ✅ Advanced sampling strategies with repetition penalty
-- ✅ Streaming generation with callbacks
-- ✅ Semantic embeddings (E5, MiniLM, MPNet)
-- ✅ Quality & Documentation
+Core features complete: LoRA training, text generation, KV-cache, embeddings, custom Metal kernels
 
-### v1.2+ (Future)
+### Future: v1.3+
 
-- [ ] Generator KV-cache optimization (incremental token passing)
-- [ ] Custom fused softmax kernel (Issue #27)
 - [ ] GGUF format support
 - [ ] Additional model architectures (LLaMA, Mistral)
 - [ ] Quantization (4-bit, 8-bit)
@@ -248,21 +216,13 @@ cargo fmt --check
 
 ## Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for code quality standards, testing requirements, and PR process.
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for standards.
 
-**Quick checklist**:
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes
-- [ ] `cargo fmt` applied
-- [ ] New code has tests
-- [ ] Public APIs documented
-- [ ] No `unwrap()` in library code
+**Checklist**: clippy passes, tests pass, code formatted, APIs documented, no `unwrap()` in library code.
 
 ## License
 
-Licensed under the Apache License, Version 2.0 ([LICENSE](LICENSE) or http://www.apache.org/licenses/LICENSE-2.0).
-
-The Apache License provides explicit patent protection, which is important for production machine learning libraries.
+Licensed under Apache-2.0 ([LICENSE](LICENSE)). Provides explicit patent protection for production ML.
 
 ## Acknowledgments
 
@@ -272,11 +232,7 @@ The Apache License provides explicit patent protection, which is important for p
 
 ## Known Advisories
 
-This project has two transitive dependencies flagged as unmaintained (not security issues):
-- `number_prefix` (via hf-hub → indicatif)
-- `paste` (via candle-core → gemm/metal)
-
-These are from major, trusted dependencies (Candle, HuggingFace) and pose no security risk. They will be resolved when upstream updates. See `deny.toml` for details.
+Two unmaintained transitive dependencies (non-security): `number_prefix`, `paste` from trusted upstream (Candle, HF). See `deny.toml` for details.
 
 ## Support
 
@@ -286,6 +242,6 @@ These are from major, trusted dependencies (Candle, HuggingFace) and pose no sec
 
 ---
 
-**Status**: ✅ v1.1.0 Released - Production Ready  
+**Status**: ✅ v1.2.1 Released - Production Ready  
 **Maintained by**: [@GarthDB](https://github.com/GarthDB)  
 **License**: Apache-2.0
