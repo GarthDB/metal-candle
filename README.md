@@ -1,5 +1,6 @@
 # metal-candle
 
+[![Crates.io](https://img.shields.io/crates/v/metal-candle.svg)](https://crates.io/crates/metal-candle)
 [![CI](https://github.com/GarthDB/metal-candle/workflows/CI/badge.svg)](https://github.com/GarthDB/metal-candle/actions)
 [![codecov](https://codecov.io/gh/GarthDB/metal-candle/branch/main/graph/badge.svg)](https://codecov.io/gh/GarthDB/metal-candle)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -36,7 +37,7 @@ See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance analysis and methodo
 
 ```toml
 [dependencies]
-metal-candle = "1.2"
+metal-candle = "1.2"  # or latest from crates.io
 ```
 
 **Requirements**: Rust 1.75+, Apple Silicon (M1/M2/M3/M4), macOS 12.0+
@@ -216,9 +217,7 @@ Core features complete: LoRA training, text generation, KV-cache, embeddings, cu
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for standards.
-
-**Checklist**: clippy passes, tests pass, code formatted, APIs documented, no `unwrap()` in library code.
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development standards and testing requirements.
 
 ## License
 
@@ -242,6 +241,4 @@ Two unmaintained transitive dependencies (non-security): `number_prefix`, `paste
 
 ---
 
-**Status**: ✅ v1.2.1 Released - Production Ready  
-**Maintained by**: [@GarthDB](https://github.com/GarthDB)  
-**License**: Apache-2.0
+**Maintained by**: [@GarthDB](https://github.com/GarthDB)
