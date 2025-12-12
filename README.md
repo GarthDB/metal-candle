@@ -204,12 +204,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines. Quality standards: z
 
 ## Future Work
 
-See [open enhancement issues](https://github.com/GarthDB/metal-candle/labels/enhancement) for planned features:
-- [GGUF format support](https://github.com/GarthDB/metal-candle/issues/38)
-- [LLaMA/Mistral architectures](https://github.com/GarthDB/metal-candle/issues/39)
-- [4-bit/8-bit quantization](https://github.com/GarthDB/metal-candle/issues/40)
-- [Flash Attention](https://github.com/GarthDB/metal-candle/issues/41)
-- [Multi-GPU support](https://github.com/GarthDB/metal-candle/issues/42)
+See the [v1.3+ Feature Roadmap](https://github.com/users/GarthDB/projects/3) project board for planned features:
+- [GGUF format support](https://github.com/GarthDB/metal-candle/issues/38) - Load quantized models
+- [LLaMA/Mistral architectures](https://github.com/GarthDB/metal-candle/issues/39) - Broader model compatibility
+- [4-bit/8-bit quantization](https://github.com/GarthDB/metal-candle/issues/40) - Reduced memory usage
+- [Flash Attention](https://github.com/GarthDB/metal-candle/issues/41) - 2-4x faster inference
+- [Multi-GPU support](https://github.com/GarthDB/metal-candle/issues/42) - Scale to 70B+ models
 
 Vote with 👍 on issues you'd like to see prioritized!
 
