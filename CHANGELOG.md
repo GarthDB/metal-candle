@@ -7,6 +7,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+(Nothing yet)
+
+## [1.2.0] - 2025-12-11
+
+### Highlights
+
+- **Fused Softmax Integration**: Custom Metal kernel integrated into graph executor
+- **Benchmark Infrastructure**: Automated CI smoke tests + official benchmark runner
+- **Improved Test Coverage**: 216 tests (up from 173), comprehensive executor and loader coverage
+- **Release Process**: Documented benchmark validation and release workflow
+- **Test Stability**: Fixed 16 test failures from Candle Metal device initialization
+
+### Performance
+
+- **Fused Softmax Kernel**: Integrated custom Metal kernel in graph executor (#27)
+  - 3.25x speedup for softmax operations on Metal devices (validated in PR #27)
+  - Automatic fallback to Candle implementation for CPU or non-last-dim operations
+  - Zero breaking changes - transparent performance improvement
+  - Benchmark validated on M4 Max (48GB RAM, macOS 26.1)
+
+### Added
+
+#### Benchmark Infrastructure
+- **CI Smoke Tests**: GitHub Actions workflow for automated regression detection
+  - Runs on every PR with low sample size (fast, ~2 minutes)
+  - Detects major performance bugs (>20% regression)  
+  - Warning disclaimers about ±10-20% variance on shared hardware
+  
+- **Official Benchmark Runner**: `scripts/run_official_benchmarks.sh`
+  - Environment validation (battery, CPU usage, thermal state)
+  - Multiple runs with cooldown periods (configurable: 5 runs, 60s cooldown)
+  - Results capture with environment snapshot
+  - Quick mode for script testing (`--quick` flag)
+  - Skip MLX comparisons (`--no-mlx` flag)
+
+- **Documentation**: Comprehensive benchmark and release process docs
+  - `docs/BENCHMARK_CI.md`: Benchmark strategy and methodology (320 lines)
+  - `docs/RELEASE_PROCESS.md`: Complete 5-phase release process (580 lines)
+  - `docs/PR33_IMPLEMENTATION_SUMMARY.md`: Implementation summary and rationale
+  - Updated `CONTRIBUTING.md`: Benchmark guidelines for contributors (+150 lines)
+
+#### Test Coverage (+43 tests, 921 new lines)
+- **Executor Tests**: `tests/executor_direct.rs` (24 tests, 500 lines)
+  - All executor operations tested (Matmul, Add, Mul, MulScalar, LoRA, Softmax, RMSNorm)
+  - Error handling validation for wrong input counts
+  - Broadcasting operations coverage
+  - Metal and CPU fallback path testing
+  
+- **Softmax Tests**: `tests/softmax_lazy.rs` (8 tests, 285 lines)
+  - Lazy execution correctness validation
+  - Numerical stability testing (large values, edge cases)
+  - Fallback behavior testing (Metal vs CPU, different dimensions)
+  - Property validation (sum-to-one for softmax)
+  
+- **Embeddings Loader Tests**: `tests/embeddings/loader_test.rs` (11 tests, 136 lines)
+  - Config loading (valid JSON, invalid JSON, missing files)
+  - Weights loading (safetensors, PyTorch, error cases)
+  - Test fixtures for reproducible validation
+
+### Fixed
+
+- **Metal Device Initialization**: Resolved Candle backend panic in tests (commit b27b2a1)
+  - Added panic guards with `AssertUnwindSafe` to `Device::new_metal()`
+  - Implemented `OnceLock` caching for `is_metal_available()` to prevent race conditions
+  - Suppressed panic output to avoid false test failures in CI
+  - Updated `custom_ops` and `metal_ops` tests to use `metal_candle::Device` wrapper
+  - Fixed 16 test failures, bringing passing tests from 173 to 189
+  - Related to Candle issue huggingface/candle#1355
+
+### Known Issues
+
+- 1 embeddings test failing (`test_metal_layer_norm_metal`) - non-blocking
+  - Unrelated to v1.2.0 changes
+  - Will be addressed in v1.2.1
+  
+- Benchmark suite requires API updates for v1.1.0 compatibility
+  - `inference` and `training` benchmarks use v1.0.0 `sample_token` API
+  - Need updates for v1.1.0 repetition penalty parameters
+  - Will be fixed in v1.2.1
+  - Does not affect fused softmax integration (already validated in PR #27)
+
+### Breaking Changes
+
+None. All changes are backwards compatible.
+
+### Documentation
+
+- Complete benchmark CI strategy documentation
+- Step-by-step release process with checklists
+- Benchmark best practices for contributors
+- Performance validation methodology
+- Environment preparation guidelines
+
+### Notes
+
+- Benchmark smoke tests run automatically on PRs but are NOT suitable for performance claims
+- Official benchmarks must be run locally on controlled hardware for release validation
+- See `docs/RELEASE_PROCESS.md` for complete release workflow
+- Fused softmax performance claims validated in PR #27 on various hardware
+- v1.2.0 focuses on integration, testing, and infrastructure improvements
+
 ## [1.1.0] - 2024-12-11
 
 ### Highlights

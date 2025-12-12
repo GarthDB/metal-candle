@@ -16,10 +16,23 @@ mod fused_softmax_tests {
 
     const EPSILON: f32 = 1e-4; // Tolerance for float comparison
 
+    /// Helper to get Metal device or skip test
+    fn get_metal_device_or_skip() -> Option<Device> {
+        match std::panic::catch_unwind(|| Device::new_metal(0)) {
+            Ok(Ok(d)) => Some(d),
+            Ok(Err(_)) | Err(_) => {
+                eprintln!("Metal device not available, skipping test");
+                None
+            }
+        }
+    }
+
     #[test]
     fn test_softmax_correctness_2d() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting fused softmax correctness (2D tensor)");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         let batch_size = 4;
         let dim = 1024;
@@ -56,7 +69,9 @@ mod fused_softmax_tests {
     #[test]
     fn test_softmax_correctness_3d() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting fused softmax correctness (3D tensor)");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         let batch_size = 2;
         let seq_len = 128;
@@ -92,7 +107,9 @@ mod fused_softmax_tests {
     #[test]
     fn test_softmax_numerical_properties() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting softmax numerical properties");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         let input = Tensor::randn(0f32, 1f32, (4, 512), &device)?;
         let output = input.softmax_fused().unwrap();
@@ -126,10 +143,12 @@ mod fused_softmax_tests {
     #[test]
     fn test_softmax_various_shapes() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting various input shapes");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         // Test 2D shapes
-        let test_2d = vec![
+        let test_2d = [
             (1, 512),  // Single row
             (16, 256), // Small batch
         ];
@@ -151,7 +170,7 @@ mod fused_softmax_tests {
         }
 
         // Test 3D shapes
-        let test_3d = vec![
+        let test_3d = [
             (1, 128, 768), // 3D with small seq
             (4, 64, 1024), // 3D with batch
         ];
@@ -181,7 +200,9 @@ mod fused_softmax_tests {
     #[test]
     fn test_softmax_extreme_values() -> Result<(), Box<dyn std::error::Error>> {
         println!("\nTesting softmax with extreme values");
-        let device = Device::new_metal(0).expect("Metal device required for test");
+        let Some(device) = get_metal_device_or_skip() else {
+            return Ok(());
+        };
 
         // Test with large positive values (should not overflow)
         println!("  Testing large positive values...");

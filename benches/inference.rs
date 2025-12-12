@@ -125,8 +125,8 @@ fn benchmark_sampling_strategies(c: &mut Criterion) {
     let strategy_greedy = SamplingStrategy::Greedy;
     group.bench_function("greedy", |b| {
         b.iter(|| {
-            let token =
-                sample_token(black_box(&logits), &strategy_greedy).expect("Greedy sampling failed");
+            let token = sample_token(black_box(&logits), &strategy_greedy, &[], 1.0)
+                .expect("Greedy sampling failed");
             black_box(token)
         });
     });
@@ -139,8 +139,8 @@ fn benchmark_sampling_strategies(c: &mut Criterion) {
             &strategy,
             |b, strategy| {
                 b.iter(|| {
-                    let token =
-                        sample_token(black_box(&logits), strategy).expect("Top-k sampling failed");
+                    let token = sample_token(black_box(&logits), strategy, &[], 1.0)
+                        .expect("Top-k sampling failed");
                     black_box(token)
                 });
             },
@@ -155,8 +155,8 @@ fn benchmark_sampling_strategies(c: &mut Criterion) {
             &strategy,
             |b, strategy| {
                 b.iter(|| {
-                    let token =
-                        sample_token(black_box(&logits), strategy).expect("Top-p sampling failed");
+                    let token = sample_token(black_box(&logits), strategy, &[], 1.0)
+                        .expect("Top-p sampling failed");
                     black_box(token)
                 });
             },
@@ -171,7 +171,7 @@ fn benchmark_sampling_strategies(c: &mut Criterion) {
             &strategy,
             |b, strategy| {
                 b.iter(|| {
-                    let token = sample_token(black_box(&logits), strategy)
+                    let token = sample_token(black_box(&logits), strategy, &[], 1.0)
                         .expect("Temperature sampling failed");
                     black_box(token)
                 });
@@ -255,8 +255,8 @@ fn benchmark_sampling_vocab_size(c: &mut Criterion) {
             &(&logits, &strategy_greedy),
             |b, (logits, strategy)| {
                 b.iter(|| {
-                    let token =
-                        sample_token(black_box(logits), strategy).expect("Greedy sampling failed");
+                    let token = sample_token(black_box(logits), strategy, &[], 1.0)
+                        .expect("Greedy sampling failed");
                     black_box(token)
                 });
             },
@@ -269,8 +269,8 @@ fn benchmark_sampling_vocab_size(c: &mut Criterion) {
             &(&logits, &strategy_topk),
             |b, (logits, strategy)| {
                 b.iter(|| {
-                    let token =
-                        sample_token(black_box(logits), strategy).expect("Top-k sampling failed");
+                    let token = sample_token(black_box(logits), strategy, &[], 1.0)
+                        .expect("Top-k sampling failed");
                     black_box(token)
                 });
             },
@@ -283,8 +283,8 @@ fn benchmark_sampling_vocab_size(c: &mut Criterion) {
             &(&logits, &strategy_top_p),
             |b, (logits, strategy)| {
                 b.iter(|| {
-                    let token =
-                        sample_token(black_box(logits), strategy).expect("Top-p sampling failed");
+                    let token = sample_token(black_box(logits), strategy, &[], 1.0)
+                        .expect("Top-p sampling failed");
                     black_box(token)
                 });
             },
@@ -368,7 +368,7 @@ fn benchmark_generation_simulation(c: &mut Criterion) {
 
             // 2. Sample next token
             let strategy = SamplingStrategy::TopP { p: 0.9 };
-            let token = sample_token(&logits, &strategy).expect("Sampling failed");
+            let token = sample_token(&logits, &strategy, &[], 1.0).expect("Sampling failed");
 
             black_box(token)
         });

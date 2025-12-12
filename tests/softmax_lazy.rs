@@ -5,6 +5,9 @@
 use candle_core::{Device, Tensor};
 use metal_candle::graph::LazyTensor;
 
+#[cfg(feature = "custom-metal")]
+use metal_candle::graph::{AsyncExecutor, Operation};
+
 #[test]
 fn test_softmax_lazy_basic() -> Result<(), Box<dyn std::error::Error>> {
     let device = Device::Cpu;
@@ -186,6 +189,99 @@ fn test_softmax_lazy_chain() -> Result<(), Box<dyn std::error::Error>> {
     let diff = (eager_output - lazy_output)?.abs()?;
     let diff_flat = diff.flatten_all()?;
     assert!(diff_flat.max(0)?.to_scalar::<f32>()? < 1e-4);
+
+    Ok(())
+}
+
+#[cfg(feature = "custom-metal")]
+#[test]
+fn test_executor_uses_fused_softmax() -> Result<(), Box<dyn std::error::Error>> {
+    // This test verifies that the executor correctly uses the fused softmax kernel
+    // when running on Metal devices and falls back to Candle's implementation otherwise
+
+    let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+        return Ok(());
+    };
+    {
+        println!("Testing with Metal device...");
+        let mut executor = AsyncExecutor::new(device.clone())?;
+
+        let input = Tensor::randn(0f32, 1f32, (2, 128, 512), &device)?;
+        let dim = 2; // Last dimension
+
+        let operation = Operation::Softmax { dim };
+        let output = executor.execute_operation(&operation, std::slice::from_ref(&input))?;
+
+        // Verify correctness against Candle reference
+        let reference = candle_nn::ops::softmax(&input, dim)?;
+        let diff = output
+            .sub(&reference)?
+            .abs()?
+            .flatten_all()?
+            .max(0)?
+            .to_vec0::<f32>()?;
+
+        println!("Max absolute difference: {:.2e}", diff);
+        assert!(
+            diff < 1e-4,
+            "Fused softmax differs from reference: {}",
+            diff
+        );
+
+        // Verify softmax properties
+        let sum = output.sum(dim)?;
+        let sum_vec = sum.flatten_all()?.to_vec1::<f32>()?;
+        for (i, &s) in sum_vec.iter().enumerate() {
+            assert!(
+                (s - 1.0).abs() < 1e-5,
+                "Sum at index {} is {} (should be 1.0)",
+                i,
+                s
+            );
+        }
+
+        println!("✓ Fused softmax executor test passed!");
+    }
+
+    Ok(())
+}
+
+#[cfg(feature = "custom-metal")]
+#[test]
+fn test_executor_softmax_fallback() -> Result<(), Box<dyn std::error::Error>> {
+    // Test that the executor falls back correctly for non-last-dimension softmax
+
+    let Ok(Ok(device)) = std::panic::catch_unwind(|| Device::new_metal(0)) else {
+        return Ok(());
+    };
+    {
+        println!("Testing softmax fallback for non-last dimension...");
+        let mut executor = AsyncExecutor::new(device.clone())?;
+
+        let input = Tensor::randn(0f32, 1f32, (2, 128, 512), &device)?;
+        let dim = 1; // Not last dimension - should use fallback
+
+        let operation = Operation::Softmax { dim };
+        let output = executor.execute_operation(&operation, std::slice::from_ref(&input))?;
+
+        // Verify correctness against Candle reference
+        let reference = candle_nn::ops::softmax(&input, dim)?;
+        let diff = output
+            .sub(&reference)?
+            .abs()?
+            .flatten_all()?
+            .max(0)?
+            .to_vec0::<f32>()?;
+
+        println!("Max absolute difference: {:.2e}", diff);
+        assert!(
+            diff < 1e-4,
+            "Fallback softmax differs from reference: {}",
+            diff
+        );
+
+        println!("✓ Softmax fallback test passed!");
+    }
 
     Ok(())
 }

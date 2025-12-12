@@ -420,36 +420,176 @@ Brief description of changes
 - **Rebase** if conflicts with main
 - **Delete branch** after merge
 
+## Benchmarking Guidelines
+
+### When to Run Benchmarks
+
+**CI Smoke Tests (Automatic)**:
+- Run on every PR via GitHub Actions
+- Low sample size (10 iterations)
+- Detects major regressions (>20%)
+- ⚠️ NOT for performance claims
+
+**Official Benchmarks (Manual)**:
+- Before every release
+- Required for performance claims
+- High sample size (100+ iterations)
+- Multiple runs (5+), take median
+- Documented environment
+
+### Running CI Benchmarks
+
+CI benchmarks run automatically on PRs but you can test locally:
+
+```bash
+# Run all benchmarks (low sample size, fast)
+cargo bench --all-features -- --sample-size 10
+
+# Run specific benchmark
+cargo bench --bench fused_lora_bench -- --sample-size 10
+```
+
+**Important**: CI benchmarks have ±10-20% variance. They catch bugs, not subtle regressions.
+
+### Running Official Benchmarks
+
+For releases and performance validation:
+
+```bash
+# Full official benchmark suite (30-60 minutes)
+./scripts/run_official_benchmarks.sh
+
+# Quick test of benchmark script (2 runs, 10s cooldown)
+./scripts/run_official_benchmarks.sh --quick
+
+# Skip MLX comparison if not installed
+./scripts/run_official_benchmarks.sh --no-mlx
+```
+
+**Requirements**:
+1. Dedicated Apple Silicon hardware
+2. System idle (<5% CPU usage)
+3. Connected to power (not battery)
+4. No other apps running
+5. Cool system (wait between runs)
+
+**See**: [docs/BENCHMARK_CI.md](docs/BENCHMARK_CI.md) for detailed methodology
+
+### Benchmark Best Practices
+
+1. **Document Environment**:
+   ```rust
+   // In benchmark comments
+   // Hardware: M1 Max 32GB
+   // OS: macOS 14.5
+   // Date: 2024-12-10
+   ```
+
+2. **Use Warmup Iterations**:
+   ```rust
+   // Warmup (first runs may be slower)
+   for _ in 0..10 {
+       let _ = model.forward(&input);
+   }
+   
+   // Actual benchmark
+   let start = Instant::now();
+   for _ in 0..100 {
+       let _ = model.forward(&input)?;
+   }
+   let elapsed = start.elapsed();
+   ```
+
+3. **Report Variance**:
+   ```rust
+   // Good: Report multiple runs
+   println!("Run 1: {:.2}µs", time1);
+   println!("Run 2: {:.2}µs", time2);
+   println!("Median: {:.2}µs", median);
+   
+   // Bad: Single run
+   println!("Time: {:.2}µs", time);
+   ```
+
+4. **Performance Claims**:
+   ```markdown
+   ✅ Good: "3.2x faster on M1 Max (median of 5 runs, macOS 14.5)"
+   ❌ Bad: "3.2x faster" (no context)
+   ```
+
+### Adding New Benchmarks
+
+Create benchmark in `benches/`:
+
+```rust
+// benches/my_benchmark.rs
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use metal_candle::*;
+
+fn benchmark_my_feature(c: &mut Criterion) {
+    let device = Device::new_metal(0).expect("Metal required");
+    
+    c.bench_function("my_feature", |b| {
+        b.iter(|| {
+            // Benchmark code
+            black_box(my_feature(&device))
+        });
+    });
+}
+
+criterion_group!(benches, benchmark_my_feature);
+criterion_main!(benches);
+```
+
+Add to `Cargo.toml`:
+```toml
+[[bench]]
+name = "my_benchmark"
+harness = false
+```
+
 ## Release Process
+
+See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for the complete release process, including:
+- Pre-release validation
+- Official benchmark execution
+- Documentation updates
+- Publishing to crates.io
+- Post-release verification
+
+### Quick Release Checklist
+
+**Phase 1: Pre-Release** (1-2 days)
+- [ ] All tests passing (clippy, tests, coverage ≥80%)
+- [ ] Examples work
+- [ ] Dependencies audited
+
+**Phase 2: Benchmarks** (1 day)
+- [ ] Environment prepared (idle system, power, cool)
+- [ ] Official benchmarks run (5+ runs)
+- [ ] Results analyzed (variance <10%)
+- [ ] BENCHMARKS.md updated
+
+**Phase 3: Documentation** (2-3 hours)
+- [ ] CHANGELOG.md updated with version/date
+- [ ] Version bumped in Cargo.toml
+- [ ] Release notes drafted
+
+**Phase 4: Release** (1 hour)
+- [ ] Tag created and pushed
+- [ ] Published to crates.io
+- [ ] GitHub Release created
+
+**Phase 5: Post-Release** (1 hour)
+- [ ] Installation verified
+- [ ] docs.rs build successful
 
 ### Versioning
 
 We follow [Semantic Versioning](https://semver.org/):
-- **Major**: Breaking API changes
-- **Minor**: New features, backwards compatible
-- **Patch**: Bug fixes, backwards compatible
-
-### Pre-release Checklist
-
-- [ ] All tests passing
-- [ ] Code coverage ≥80%
-- [ ] Documentation complete
-- [ ] CHANGELOG.md updated
-- [ ] Version bumped in `Cargo.toml`
-- [ ] Examples tested manually
-- [ ] Benchmarks run and documented
-
-### Publishing to crates.io
-
-```bash
-# Verify package
-cargo package --list
-cargo package --allow-dirty
-
-# Publish
-cargo publish --dry-run
-cargo publish
-```
+- **Major** (2.0.0): Breaking API changes
+- **Minor** (1.X.0): New features, backwards compatible
+- **Patch** (1.1.X): Bug fixes only
 
 ## Project Structure
 

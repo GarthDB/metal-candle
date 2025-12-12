@@ -205,7 +205,7 @@ fn test_config_with_mismatched_head_count() {
 
 #[test]
 fn test_config_from_invalid_json() {
-    let invalid_json = r#"{ invalid json }"#;
+    let invalid_json = r"{ invalid json }";
 
     let result = ModelConfig::from_json(invalid_json);
     assert!(result.is_err());
@@ -274,7 +274,7 @@ fn test_config_with_large_values() {
     }"#;
 
     let config = ModelConfig::from_json(json).expect("Failed to parse config");
-    assert_eq!(config.vocab_size, 100000);
+    assert_eq!(config.vocab_size, 100_000);
     assert_eq!(config.hidden_size, 4096);
 
     // Should pass validation

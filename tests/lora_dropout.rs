@@ -209,7 +209,7 @@ fn test_dropout_with_batched_input() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize LoRA B with non-zero values so we can see dropout effects
     // This simulates a trained layer (default initialization is zeros)
     let lora_b_data = Tensor::randn(0f32, 0.1, (8, 64), &device)?;
-    let lora_b_var = candle_core::Var::from_tensor(&lora_b_data)?;
+    let _lora_b_var = candle_core::Var::from_tensor(&lora_b_data)?;
     // We can't directly set it, so this test will just verify mode switching works
 
     layer.set_training(true);

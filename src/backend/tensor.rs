@@ -386,7 +386,7 @@ mod tests {
         let result = tensor.rms_norm(1e-6)?;
 
         // Values should maintain their ratios: 2:4:6 = 1:2:3
-        let values = result.to_vec2::<f32>()?[0].to_vec();
+        let values = result.to_vec2::<f32>()?[0].clone();
         let ratio1 = values[1] / values[0];
         let ratio2 = values[2] / values[0];
 

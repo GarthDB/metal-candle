@@ -1,0 +1,71 @@
+name: Benchmark Smoke Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+env:
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark-smoke:
+    name: Benchmark Smoke Test (Compilation Check)
+    runs-on: macos-14  # Apple Silicon M1
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Run benchmark smoke tests
+        run: |
+          echo "🔥 Running benchmark smoke tests (low sample size for speed)"
+          echo "════════════════════════════════════════════════════════════"
+          
+          # Note: mlx_comparison requires Python/MLX, so we skip it in CI
+          # Run other benchmarks to ensure they compile and execute
+          
+          # Check if benchmarks exist and run them
+          if cargo bench --no-run 2>&1 | grep -q "no bench target"; then
+            echo "⚠️  No benchmarks found to run"
+            exit 0
+          fi
+          
+          # Run benchmarks to verify they compile and execute
+          # Note: We can't pass criterion-specific options via cargo bench --
+          # Just verify benchmarks compile and don't panic
+          cargo bench --all-features --no-run || {
+            echo "⚠️  Benchmarks failed to compile"
+            exit 1
+          }
+          
+          echo "✅ Benchmarks compile successfully"
+      
+      - name: Report results
+        if: always()
+        run: |
+          echo ""
+          echo "════════════════════════════════════════════════════════════"
+          echo "✅ Benchmark Compilation Check Complete"
+          echo "════════════════════════════════════════════════════════════"
+          echo ""
+          echo "This smoke test verifies benchmarks remain buildable."
+          echo "Actual performance measurements should be run locally."
+          echo ""
+          echo "For official benchmarks before release:"
+          echo "  ./scripts/run_official_benchmarks.sh"
+          echo ""
+
