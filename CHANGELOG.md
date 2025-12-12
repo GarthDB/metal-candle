@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
+## [1.2.2] - 2025-12-12
+
+### Fixed
+
+- **docs.rs Build**: Configure docs.rs to build without macOS-specific Metal dependencies
+  - Added `[package.metadata.docs.rs]` configuration
+  - Made `candle-metal-kernels` optional (part of `custom-metal` feature)
+  - docs.rs now builds successfully on Linux by excluding `custom-metal` feature
+  - All API documentation now available at https://docs.rs/metal-candle
+
+### Notes
+
+- No functional changes - documentation-only fix
+- Local builds and functionality unchanged
+
 ## [1.2.1] - 2025-12-11
 
 ### Fixed

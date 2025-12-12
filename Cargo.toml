@@ -1,6 +1,6 @@
 [package]
 name = "metal-candle"
-version = "1.2.1"
+version = "1.2.2"
 edition = "2021"
 rust-version = "1.75"
 authors = ["Garth Braithwaite <garthdb@gmail.com>"]
@@ -13,12 +13,20 @@ keywords = ["machine-learning", "metal", "lora", "apple-silicon", "transformer"]
 categories = ["science", "algorithms"]
 readme = "README.md"
 
+[package.metadata.docs.rs]
+# docs.rs builds on Linux, so we can't use Metal-specific features (custom-metal)
+# Build with embeddings and graph features to show complete API except Metal internals
+default-features = false
+features = ["embeddings", "graph"]
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
 # Candle - ML framework with Metal backend
-candle-core = { version = "0.9", features = ["metal"] }
+# Note: Metal features are available but docs.rs builds without them (Linux)
+candle-core = { version = "0.9", features = ["metal"], optional = false }
 candle-nn = "0.9"
 candle-transformers = "0.9"
-candle-metal-kernels = "0.9"
+candle-metal-kernels = { version = "0.9", optional = true }
 
 # Model formats
 safetensors = "0.4"
@@ -70,7 +78,7 @@ anyhow = "1.0"
 
 [features]
 default = ["custom-metal", "graph"]
-custom-metal = ["dep:metal", "dep:objc"]
+custom-metal = ["dep:metal", "dep:objc", "dep:candle-metal-kernels"]
 embeddings = []
 graph = []  # Lazy evaluation framework (v2.0+)
 async-exec = ["graph", "dep:tokio", "dep:async-trait", "dep:dashmap"]  # Async execution (Phase 5)
