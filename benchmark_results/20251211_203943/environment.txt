@@ -1,0 +1,39 @@
+Benchmark Run Information
+========================
+
+Date: Thu Dec 11 21:58:04 MST 2025
+Hostname: Garths-MacBook-Pro.local
+OS: macOS 26.1
+Architecture: arm64
+Rust: rustc 1.91.1 (ed61e7d7e 2025-11-07) (Homebrew)
+Cargo: cargo 1.91.1 (Homebrew)
+
+Hardware:
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: Mac16,5
+      Model Number: MX2W3LL/A
+      Chip: Apple M4 Max
+      Total Number of Cores: 16 (12 performance and 4 efficiency)
+      Memory: 48 GB
+      System Firmware Version: 13822.41.1
+      OS Loader Version: 13822.41.1
+      Serial Number (system): FY2CXFXWCF
+      Hardware UUID: B91EF022-574C-5615-999B-75CC23488806
+      Provisioning UDID: 00006041-000A71DC1468801C
+      Activation Lock Status: Disabled
+
+Git Info:
+Branch: release/v1.2.1
+Commit: cfe50052ec39970a0ca8652de13e50ef6dfc1431
+Status: ?? benchmark_results/20251210_222755/
+?? benchmark_results/20251211_203943/
+?? release_notes_v1.2.0.md
+
+Configuration:
+Runs per benchmark: 5
+Quick mode: false
+MLX comparison: Skipped

@@ -1,0 +1,25 @@
+    Finished `bench` profile [optimized] target(s) in 2.07s
+     Running benches/fused_lora_bench.rs (target/release/deps/fused_lora_bench-204a80f63351e09f)
+Gnuplot not found, using plotters backend
+Benchmarking lora_unfused (Candle)
+Benchmarking lora_unfused (Candle): Warming up for 3.0000 s
+Benchmarking lora_unfused (Candle): Collecting 100 samples in estimated 5.1041 s (217k iterations)
+Benchmarking lora_unfused (Candle): Analyzing
+lora_unfused (Candle)   time:   [22.723 µs 22.873 µs 23.029 µs]
+                        change: [-0.9458% -0.1167% +0.8695%] (p = 0.81 > 0.05)
+                        No change in performance detected.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low severe
+
+Benchmarking lora_fused (Metal)
+Benchmarking lora_fused (Metal): Warming up for 3.0000 s
+Benchmarking lora_fused (Metal): Collecting 100 samples in estimated 8.2117 s (10k iterations)
+Benchmarking lora_fused (Metal): Analyzing
+lora_fused (Metal)      time:   [1.2916 ms 1.3404 ms 1.3885 ms]
+                        change: [-14.803% -1.2890% +14.650%] (p = 0.87 > 0.05)
+                        No change in performance detected.
+Found 18 outliers among 100 measurements (18.00%)
+  13 (13.00%) low mild
+  3 (3.00%) high mild
+  2 (2.00%) high severe
+

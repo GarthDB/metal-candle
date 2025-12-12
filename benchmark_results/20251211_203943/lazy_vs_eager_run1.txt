@@ -1,0 +1,185 @@
+    Finished `bench` profile [optimized] target(s) in 0.18s
+     Running benches/lazy_vs_eager.rs (target/release/deps/lazy_vs_eager-b4e2712dfdf44bbe)
+Gnuplot not found, using plotters backend
+Benchmarking basic_operations/eager_add
+Benchmarking basic_operations/eager_add: Warming up for 3.0000 s
+Benchmarking basic_operations/eager_add: Collecting 100 samples in estimated 5.0000 s (13M iterations)
+Benchmarking basic_operations/eager_add: Analyzing
+basic_operations/eager_add
+                        time:   [358.81 ns 361.57 ns 364.49 ns]
+                        change: [-19.492% -18.926% -18.333%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+Benchmarking basic_operations/lazy_add_sync
+Benchmarking basic_operations/lazy_add_sync: Warming up for 3.0000 s
+Benchmarking basic_operations/lazy_add_sync: Collecting 100 samples in estimated 5.0019 s (6.8M iterations)
+Benchmarking basic_operations/lazy_add_sync: Analyzing
+basic_operations/lazy_add_sync
+                        time:   [752.20 ns 761.61 ns 770.45 ns]
+                        change: [-25.489% -24.915% -24.295%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 16 outliers among 100 measurements (16.00%)
+  2 (2.00%) high mild
+  14 (14.00%) high severe
+
+Benchmarking matmul/eager/64
+Benchmarking matmul/eager/64: Warming up for 3.0000 s
+Benchmarking matmul/eager/64: Collecting 100 samples in estimated 5.0335 s (747k iterations)
+Benchmarking matmul/eager/64: Analyzing
+matmul/eager/64         time:   [6.7456 µs 6.7529 µs 6.7607 µs]
+                        thrpt:  [38.775 Gelem/s 38.819 Gelem/s 38.861 Gelem/s]
+                 change:
+                        time:   [-4.7016% -4.4621% -4.2451%] (p = 0.00 < 0.05)
+                        thrpt:  [+4.4333% +4.6705% +4.9336%]
+                        Performance has improved.
+Benchmarking matmul/lazy_sync/64
+Benchmarking matmul/lazy_sync/64: Warming up for 3.0000 s
+Benchmarking matmul/lazy_sync/64: Collecting 100 samples in estimated 5.0045 s (687k iterations)
+Benchmarking matmul/lazy_sync/64: Analyzing
+matmul/lazy_sync/64     time:   [7.2740 µs 7.2797 µs 7.2857 µs]
+                        thrpt:  [35.980 Gelem/s 36.010 Gelem/s 36.039 Gelem/s]
+                 change:
+                        time:   [-8.7140% -8.3944% -8.0899%] (p = 0.00 < 0.05)
+                        thrpt:  [+8.8020% +9.1637% +9.5458%]
+                        Performance has improved.
+Found 5 outliers among 100 measurements (5.00%)
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking matmul/eager/128
+Benchmarking matmul/eager/128: Warming up for 3.0000 s
+Benchmarking matmul/eager/128: Collecting 100 samples in estimated 5.1323 s (56k iterations)
+Benchmarking matmul/eager/128: Analyzing
+matmul/eager/128        time:   [92.172 µs 92.496 µs 92.828 µs]
+                        thrpt:  [22.592 Gelem/s 22.673 Gelem/s 22.753 Gelem/s]
+                 change:
+                        time:   [+0.4288% +1.7387% +3.1539%] (p = 0.01 < 0.05)
+                        thrpt:  [-3.0575% -1.7090% -0.4270%]
+                        Change within noise threshold.
+Found 3 outliers among 100 measurements (3.00%)
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking matmul/lazy_sync/128
+Benchmarking matmul/lazy_sync/128: Warming up for 3.0000 s
+Benchmarking matmul/lazy_sync/128: Collecting 100 samples in estimated 5.1871 s (56k iterations)
+Benchmarking matmul/lazy_sync/128: Analyzing
+matmul/lazy_sync/128    time:   [92.752 µs 93.070 µs 93.388 µs]
+                        thrpt:  [22.456 Gelem/s 22.533 Gelem/s 22.610 Gelem/s]
+                 change:
+                        time:   [-1.2720% -0.3008% +0.6424%] (p = 0.55 > 0.05)
+                        thrpt:  [-0.6383% +0.3017% +1.2884%]
+                        No change in performance detected.
+Found 9 outliers among 100 measurements (9.00%)
+  3 (3.00%) low mild
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+Benchmarking matmul/eager/256
+Benchmarking matmul/eager/256: Warming up for 3.0000 s
+Benchmarking matmul/eager/256: Collecting 100 samples in estimated 5.1332 s (30k iterations)
+Benchmarking matmul/eager/256: Analyzing
+matmul/eager/256        time:   [163.74 µs 165.60 µs 167.15 µs]
+                        thrpt:  [100.37 Gelem/s 101.31 Gelem/s 102.46 Gelem/s]
+                 change:
+                        time:   [-2.6841% -1.5012% -0.3468%] (p = 0.01 < 0.05)
+                        thrpt:  [+0.3480% +1.5241% +2.7581%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  5 (5.00%) low severe
+  4 (4.00%) low mild
+  3 (3.00%) high mild
+Benchmarking matmul/lazy_sync/256
+Benchmarking matmul/lazy_sync/256: Warming up for 3.0000 s
+Benchmarking matmul/lazy_sync/256: Collecting 100 samples in estimated 5.0609 s (30k iterations)
+Benchmarking matmul/lazy_sync/256: Analyzing
+matmul/lazy_sync/256    time:   [166.50 µs 167.44 µs 168.36 µs]
+                        thrpt:  [99.648 Gelem/s 100.20 Gelem/s 100.76 Gelem/s]
+                 change:
+                        time:   [-2.4868% -1.2537% +0.2406%] (p = 0.07 > 0.05)
+                        thrpt:  [-0.2400% +1.2697% +2.5503%]
+                        No change in performance detected.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low severe
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking lora/eager_lora
+Benchmarking lora/eager_lora: Warming up for 3.0000 s
+Benchmarking lora/eager_lora: Collecting 100 samples in estimated 5.0065 s (2.1M iterations)
+Benchmarking lora/eager_lora: Analyzing
+lora/eager_lora         time:   [2.4043 µs 2.4112 µs 2.4189 µs]
+                        change: [-9.5120% -9.1293% -8.7520%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking lora/lazy_lora_sync
+Benchmarking lora/lazy_lora_sync: Warming up for 3.0000 s
+Benchmarking lora/lazy_lora_sync: Collecting 100 samples in estimated 5.0056 s (1.5M iterations)
+Benchmarking lora/lazy_lora_sync: Analyzing
+lora/lazy_lora_sync     time:   [3.4159 µs 3.4255 µs 3.4352 µs]
+                        change: [-14.984% -14.545% -14.112%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking complex_graph/eager_chain
+Benchmarking complex_graph/eager_chain: Warming up for 3.0000 s
+Benchmarking complex_graph/eager_chain: Collecting 100 samples in estimated 5.0379 s (232k iterations)
+Benchmarking complex_graph/eager_chain: Analyzing
+complex_graph/eager_chain
+                        time:   [21.768 µs 21.793 µs 21.820 µs]
+                        change: [-1.1611% -1.0149% -0.8855%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+Benchmarking complex_graph/lazy_chain_sync
+Benchmarking complex_graph/lazy_chain_sync: Warming up for 3.0000 s
+Benchmarking complex_graph/lazy_chain_sync: Collecting 100 samples in estimated 5.0063 s (222k iterations)
+Benchmarking complex_graph/lazy_chain_sync: Analyzing
+complex_graph/lazy_chain_sync
+                        time:   [22.547 µs 22.574 µs 22.601 µs]
+                        change: [-4.3494% -4.0583% -3.7996%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 15 outliers among 100 measurements (15.00%)
+  13 (13.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking graph_building/build_graph_no_eval
+Benchmarking graph_building/build_graph_no_eval: Warming up for 3.0000 s
+Benchmarking graph_building/build_graph_no_eval: Collecting 100 samples in estimated 5.0012 s (5.3M iterations)
+Benchmarking graph_building/build_graph_no_eval: Analyzing
+graph_building/build_graph_no_eval
+                        time:   [930.91 ns 935.51 ns 940.61 ns]
+                        change: [-32.811% -32.573% -32.316%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  1 (1.00%) high mild
+  3 (3.00%) high severe
+Benchmarking graph_building/build_and_eval
+Benchmarking graph_building/build_and_eval: Warming up for 3.0000 s
+Benchmarking graph_building/build_and_eval: Collecting 100 samples in estimated 5.0126 s (1.5M iterations)
+Benchmarking graph_building/build_and_eval: Analyzing
+graph_building/build_and_eval
+                        time:   [3.4418 µs 3.4471 µs 3.4532 µs]
+                        change: [-18.758% -18.532% -18.298%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  12 (12.00%) high mild
+
+Benchmarking async_overhead/sync_eval
+Benchmarking async_overhead/sync_eval: Warming up for 3.0000 s
+Benchmarking async_overhead/sync_eval: Collecting 100 samples in estimated 5.0013 s (7.3M iterations)
+Benchmarking async_overhead/sync_eval: Analyzing
+async_overhead/sync_eval
+                        time:   [674.39 ns 676.53 ns 679.18 ns]
+Found 12 outliers among 100 measurements (12.00%)
+  11 (11.00%) high mild
+  1 (1.00%) high severe
+Benchmarking async_overhead/async_eval
+Benchmarking async_overhead/async_eval: Warming up for 3.0000 s
+Benchmarking async_overhead/async_eval: Collecting 100 samples in estimated 5.0137 s (732k iterations)
+Benchmarking async_overhead/async_eval: Analyzing
+async_overhead/async_eval
+                        time:   [6.6558 µs 6.7186 µs 6.7702 µs]
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low mild
+
