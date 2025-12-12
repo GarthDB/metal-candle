@@ -9,6 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
+## [1.2.6] - 2025-12-12
+
+### Fixed
+
+- **docs.rs Build (Complete Fix)**: Moved MPS examples out of examples/ directory
+  - `examples/mps_lora_benchmark.rs` → `experiments/`
+  - `examples/mps_matmul_prototype.rs` → `experiments/`
+  - `examples/mps_matmul_simple.rs` → `experiments/`
+  - All three had unconditional `use objc::*` statements
+  - rustdoc scans examples even though they're dev-dependencies
+  - **This was the ACTUAL root cause after v1.2.5 still failed**
+
+### Complete Investigation Chain
+
+1. v1.2.2-v1.2.4: Attempted various Cargo.toml configurations
+2. v1.2.5: Removed orphaned `src/backend/mps/` module
+3. v1.2.6: **Removed experimental `examples/mps_*.rs` examples** ← FINAL FIX
+
+### Verified
+
+- ✅ No objc/metal deps without `custom-metal` feature
+- ✅ rustdoc builds successfully
+- ✅ All tests passing
+- ✅ Examples preserved in experiments/ directory
+
+### Notes
+
+- The MPS examples were experimental prototypes never documented
+- Moving them preserves code for future development
+- No functional changes to library or public examples
+
 ## [1.2.5] - 2025-12-12
 
 ### Fixed
