@@ -1,6 +1,6 @@
 [package]
 name = "metal-candle"
-version = "1.2.6"
+version = "1.2.7"
 edition = "2021"
 rust-version = "1.75"
 authors = ["Garth Braithwaite <garthdb@gmail.com>"]
@@ -16,7 +16,9 @@ readme = "README.md"
 [package.metadata.docs.rs]
 # docs.rs builds on Linux, so we can't use Metal-specific features (custom-metal)
 # Build with embeddings and graph features to show complete API except Metal internals
-default-features = false
+# CRITICAL: all-features = false ensures we don't enable custom-metal (which requires macOS)
+all-features = false
+no-default-features = true
 features = ["embeddings", "graph"]
 rustdoc-args = ["--cfg", "docsrs"]
 

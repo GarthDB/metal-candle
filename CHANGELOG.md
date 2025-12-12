@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
+## [1.2.7] - 2025-12-12
+
+### Fixed
+
+- **docs.rs Metadata Configuration**: Fixed incorrect field name in `[package.metadata.docs.rs]`
+  - Changed `default-features = false` → `no-default-features = true`
+  - Added explicit `all-features = false` for extra safety
+  - **This is why v1.2.2-v1.2.6 all failed!**
+  
+### The Real Root Cause (FINALLY!)
+
+Looking at docs.rs build logs, discovered it was calling:
+```
+cargo rustdoc --lib --features "embeddings graph"
+```
+
+**WITHOUT `--no-default-features`!**
+
+This meant `default = ["custom-metal", "graph"]` was STILL being enabled!
+
+### Why Previous Versions Failed
+
+| Version | What We Fixed | Why It Failed |
+|---------|--------------|---------------|
+| v1.2.2-v1.2.4 | Cargo.toml dependencies | Metadata used wrong field name |
+| v1.2.5 | Removed `src/backend/mps/` | Metadata still wrong |
+| v1.2.6 | Removed `examples/mps_*.rs` | **Metadata still wrong!** |
+| **v1.2.7** | **Fixed metadata field name** | ✅ **SHOULD WORK!** |
+
+### The Complete Fix Stack
+
+1. ✅ Cargo dependencies configured correctly (v1.2.4)
+2. ✅ Orphaned source modules removed (v1.2.5)
+3. ✅ Experimental examples removed (v1.2.6)
+4. ✅ **docs.rs metadata field name corrected** (v1.2.7) ← **THIS WAS IT!**
+
+### Verified
+
+- ✅ `no-default-features = true` (correct field name)
+- ✅ `all-features = false` (belt AND suspenders)
+- ✅ Local docs build works
+- ✅ No objc dependencies in tree
+
 ## [1.2.6] - 2025-12-12
 
 ### Fixed
