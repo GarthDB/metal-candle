@@ -26,6 +26,14 @@ coverage.json
 # Benchmarks
 /target/criterion/
 
+# Benchmark results - ignore old/incomplete runs
+# (official release benchmarks are explicitly tracked)
+benchmark_results/20251210_222755/
+benchmark_results/20251211_225926/
+
+# Release notes drafts (use CHANGELOG.md and RELEASE_*.md)
+release_notes_*.md
+
 # Examples output
 examples/output/
 test_output/
