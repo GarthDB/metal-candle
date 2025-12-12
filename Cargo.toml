@@ -1,6 +1,6 @@
 [package]
 name = "metal-candle"
-version = "1.2.3"
+version = "1.2.4"
 edition = "2021"
 rust-version = "1.75"
 authors = ["Garth Braithwaite <garthdb@gmail.com>"]
@@ -23,9 +23,10 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 # Candle - ML framework
 # Metal features added via custom-metal feature flag (macOS only)
-candle-core = "0.9"
-candle-nn = "0.9"
-candle-transformers = "0.9"
+# Disable default features to avoid pulling in platform-specific dependencies
+candle-core = { version = "0.9", default-features = false }
+candle-nn = { version = "0.9", default-features = false }
+candle-transformers = { version = "0.9", default-features = false }
 
 # Model formats
 safetensors = "0.4"

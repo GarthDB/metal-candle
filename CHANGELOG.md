@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
+## [1.2.4] - 2025-12-12
+
+### Fixed
+
+- **docs.rs Build**: Disable default features on all Candle dependencies
+  - `candle-core`, `candle-nn`, `candle-transformers` now use `default-features = false`
+  - This prevents transitive dependencies from pulling in Metal/Objective-C on Linux
+  - Completely eliminates `objc_exception` compilation error on docs.rs
+  - All API documentation will now build successfully at https://docs.rs/metal-candle
+
+### Technical Details
+
+The issue was that even though we made the `metal` feature optional on `candle-core`, the default features of `candle-nn` or `candle-transformers` were pulling in Metal-related dependencies transitively.
+
+**Solution**: Disable default features on all Candle crates, then explicitly enable only what's needed via feature flags.
+
+### Notes
+
+- No functional changes on macOS - Metal features work exactly as before
+- All 190 tests passing
+- Verified: No `objc` or `metal` dependencies without `custom-metal` feature
+- v1.2.2 and v1.2.3 had incomplete fixes
+
 ## [1.2.3] - 2025-12-12
 
 ### Fixed
