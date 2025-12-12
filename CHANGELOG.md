@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
+## [1.2.5] - 2025-12-12
+
+### Fixed
+
+- **docs.rs Build**: Remove orphaned MPS module causing Objective-C compilation
+  - Moved `src/backend/mps/` to `experiments/mps/` (orphaned experimental code)
+  - MPS module was not exported in public API but rustdoc scanned it anyway
+  - Files had unconditional `use objc::*` statements that triggered compilation
+  - Referenced non-existent `mps` feature (`#![cfg(feature = "mps")]`)
+  - **This was the root cause of v1.2.2-1.2.4 docs.rs failures**
+  
+### Verified
+
+- ✅ No Metal/Objective-C dependencies without `custom-metal` feature
+- ✅ Documentation builds successfully with `embeddings+graph` features
+- ✅ All 190 tests passing
+- ✅ No functional changes to public API
+
+### Notes
+
+- The MPS code was experimental/prototyping code never integrated into the library
+- Moving it preserves the code for potential future use without affecting docs
+- This should finally allow docs.rs to build successfully
+
 ## [1.2.4] - 2025-12-12
 
 ### Fixed
