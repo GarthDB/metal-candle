@@ -202,19 +202,16 @@ cargo build && cargo test
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines. Quality standards: zero clippy warnings (pedantic), ≥80% coverage, 100% API docs.
 
-## Roadmap
+## Future Work
 
-### Current: v1.2 ✅
+See [open enhancement issues](https://github.com/GarthDB/metal-candle/labels/enhancement) for planned features:
+- [GGUF format support](https://github.com/GarthDB/metal-candle/issues/38)
+- [LLaMA/Mistral architectures](https://github.com/GarthDB/metal-candle/issues/39)
+- [4-bit/8-bit quantization](https://github.com/GarthDB/metal-candle/issues/40)
+- [Flash Attention](https://github.com/GarthDB/metal-candle/issues/41)
+- [Multi-GPU support](https://github.com/GarthDB/metal-candle/issues/42)
 
-Core features complete: LoRA training, text generation, KV-cache, embeddings, custom Metal kernels
-
-### Future: v1.3+
-
-- [ ] GGUF format support
-- [ ] Additional model architectures (LLaMA, Mistral)
-- [ ] Quantization (4-bit, 8-bit)
-- [ ] Flash Attention integration
-- [ ] Multi-GPU support
+Vote with 👍 on issues you'd like to see prioritized!
 
 ## Contributing
 
