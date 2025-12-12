@@ -64,7 +64,8 @@ jobs:
       - name: Verify no Metal dependencies
         run: |
           echo "Checking dependency tree for Metal/Objective-C dependencies..."
-          if cargo tree --no-default-features --features "embeddings,graph" | grep -i "objc\|metal"; then
+          # Look for actual Metal/Objective-C crates (not our own metal-candle package name)
+          if cargo tree --no-default-features --features "embeddings,graph" | grep -E "objc[_-]|metal[_-]|candle-metal" | grep -v "^metal-candle"; then
             echo "::error::Found Metal or Objective-C dependencies without custom-metal feature!"
             echo "This will cause docs.rs build to fail on Linux."
             exit 1
