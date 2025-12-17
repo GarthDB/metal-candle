@@ -35,6 +35,8 @@
 //! ```
 
 pub mod adapter;
+pub mod adapter_registry;
+pub mod apply_adapter;
 pub mod checkpoint;
 pub mod lora;
 pub mod loss;
@@ -44,6 +46,8 @@ pub mod trainer;
 
 // Re-export main types
 pub use adapter::{LoRAAdapter, LoRAAdapterConfig, TargetModule};
+pub use adapter_registry::AdapterRegistry;
+pub use apply_adapter::ApplyAdapter;
 pub use lora::{LoRAConfig, LoRALayer};
 pub use loss::{cross_entropy_loss, cross_entropy_loss_with_smoothing};
 pub use optimizer::{AdamW, AdamWConfig};

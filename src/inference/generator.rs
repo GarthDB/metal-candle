@@ -1,9 +1,14 @@
 //! Text generation pipeline.
 
 use crate::error::Result;
-use crate::inference::{sample_token, SamplingStrategy};
+use crate::inference::{sample_token, sample_token_with_metadata, SamplingStrategy, StreamToken};
 use crate::models::LanguageModel;
 use candle_core::{IndexOp, Tensor};
+
+#[cfg(feature = "streaming")]
+use async_stream::stream;
+#[cfg(feature = "streaming")]
+use futures::stream::Stream;
 
 /// Configuration for text generation.
 ///
@@ -206,7 +211,8 @@ impl Generator {
     /// Generates tokens autoregressively with streaming callback.
     ///
     /// This method generates tokens one at a time and calls the provided callback
-    /// for each generated token. The callback can stop generation by returning `false`.
+    /// for each generated token with rich metadata. The callback can stop generation
+    /// by returning `false`.
     ///
     /// # Arguments
     ///
@@ -231,7 +237,7 @@ impl Generator {
     /// # fn example(mut generator: Generator) -> Result<(), Box<dyn std::error::Error>> {
     /// let input_ids = vec![1, 2, 3];
     /// let output_ids = generator.generate_stream(&input_ids, |token| {
-    ///     print!("{} ", token);
+    ///     println!("Token {}: prob={:.2}%", token.token_id, token.probability * 100.0);
     ///     true // Continue generation
     /// })?;
     /// # Ok(())
@@ -239,7 +245,7 @@ impl Generator {
     /// ```
     pub fn generate_stream<F>(&mut self, input_ids: &[u32], mut callback: F) -> Result<Vec<u32>>
     where
-        F: FnMut(u32) -> bool,
+        F: FnMut(StreamToken) -> bool,
     {
         let mut generated_ids = input_ids.to_vec();
         let device = self.model.device();
@@ -265,27 +271,192 @@ impl Generator {
             // Get logits for the last token
             let last_logits = logits.i((0, logits.dims()[1] - 1))?;
 
-            // Sample next token with repetition penalty
-            let next_token = sample_token(
+            // Sample next token with metadata
+            let stream_token = sample_token_with_metadata(
                 &last_logits,
                 &self.config.sampling,
                 &generated_ids,
                 self.config.repetition_penalty,
+                self.config.eos_token_id,
             )?;
 
             // Add to generated sequence
-            generated_ids.push(next_token);
+            generated_ids.push(stream_token.token_id);
 
             // Call callback with the newly generated token
-            let should_continue = callback(next_token);
+            let should_continue = callback(stream_token.clone());
 
             // Check stop conditions
-            if !should_continue || self.should_stop(next_token) {
+            if !should_continue || self.should_stop(stream_token.token_id) {
                 break;
             }
         }
 
         Ok(generated_ids)
+    }
+
+    /// Generates tokens autoregressively with async streaming.
+    ///
+    /// This method generates tokens one at a time and yields each token as a `StreamToken`
+    /// through an async stream. The stream can be consumed with `.await` and `.next()`.
+    ///
+    /// This is useful for real-time applications like code completion or chat interfaces
+    /// where you want to display tokens as they're generated.
+    ///
+    /// # Arguments
+    ///
+    /// * `input_ids` - Input token IDs to condition generation on
+    ///
+    /// # Returns
+    ///
+    /// Returns an async `Stream` that yields `Result<StreamToken>` for each generated token.
+    ///
+    /// # Errors
+    ///
+    /// Each yielded item may be an error if:
+    /// - Model forward pass fails
+    /// - Sampling fails
+    /// - Tensor operations fail
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # #[cfg(feature = "streaming")]
+    /// # use metal_candle::inference::{Generator, GeneratorConfig};
+    /// # use futures::stream::StreamExt;
+    /// # async fn example(mut generator: Generator) -> Result<(), Box<dyn std::error::Error>> {
+    /// let input_ids = vec![1, 2, 3];
+    /// let mut stream = generator.generate_stream_async(&input_ids);
+    ///
+    /// while let Some(result) = stream.next().await {
+    ///     let token = result?;
+    ///     println!("Token {}: prob={:.2}%", token.token_id, token.probability * 100.0);
+    ///     
+    ///     if token.is_eos {
+    ///         break;
+    ///     }
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Cancellation
+    ///
+    /// The stream can be cancelled by dropping it. This will stop generation immediately.
+    ///
+    /// ```no_run
+    /// # #[cfg(feature = "streaming")]
+    /// # use metal_candle::inference::{Generator, GeneratorConfig};
+    /// # use futures::stream::StreamExt;
+    /// # async fn example(mut generator: Generator) -> Result<(), Box<dyn std::error::Error>> {
+    /// let input_ids = vec![1, 2, 3];
+    /// let mut stream = generator.generate_stream_async(&input_ids);
+    ///
+    /// // Take only first 10 tokens
+    /// let tokens: Vec<_> = stream.take(10).collect().await;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "streaming")]
+    pub fn generate_stream_async(
+        &mut self,
+        input_ids: &[u32],
+    ) -> impl Stream<Item = Result<StreamToken>> + '_ {
+        let mut generated_ids = input_ids.to_vec();
+        let device = self.model.device().clone();
+        let max_tokens = self.config.max_tokens;
+        let sampling = self.config.sampling.clone();
+        let repetition_penalty = self.config.repetition_penalty;
+        let eos_token_id = self.config.eos_token_id;
+        let stop_on_eos = self.config.stop_on_eos;
+        let stop_tokens = self.config.stop_tokens.clone();
+
+        stream! {
+            for _ in 0..max_tokens {
+                // Prepare input tensor for current step
+                if generated_ids.is_empty() {
+                    break;
+                }
+
+                // Convert to tensor
+                let input_tensor = match Tensor::new(&generated_ids[..], &device) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        yield Err(e.into());
+                        break;
+                    }
+                };
+
+                let input_tensor = match input_tensor.unsqueeze(0) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        yield Err(e.into());
+                        break;
+                    }
+                };
+
+                // Forward pass (blocking operation, but wrapped in async context)
+                // Note: In production, you might want to use tokio::task::spawn_blocking
+                // for truly non-blocking GPU operations
+                let logits = match self.model.forward(&input_tensor, None) {
+                    Ok(l) => l,
+                    Err(e) => {
+                        yield Err(e);
+                        break;
+                    }
+                };
+
+                // Get logits for the last token
+                let last_logits = match logits.i((0, logits.dims()[1] - 1)) {
+                    Ok(l) => l,
+                    Err(e) => {
+                        yield Err(e.into());
+                        break;
+                    }
+                };
+
+                // Sample next token with metadata
+                let stream_token = match sample_token_with_metadata(
+                    &last_logits,
+                    &sampling,
+                    &generated_ids,
+                    repetition_penalty,
+                    eos_token_id,
+                ) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        yield Err(e);
+                        break;
+                    }
+                };
+
+                // Add to generated sequence
+                generated_ids.push(stream_token.token_id);
+
+                // Check stop conditions before yielding
+                let should_stop = if stop_on_eos {
+                    if let Some(eos_id) = eos_token_id {
+                        if stream_token.token_id == eos_id {
+                            true
+                        } else {
+                            stop_tokens.contains(&stream_token.token_id)
+                        }
+                    } else {
+                        stop_tokens.contains(&stream_token.token_id)
+                    }
+                } else {
+                    stop_tokens.contains(&stream_token.token_id)
+                };
+
+                // Yield the token
+                yield Ok(stream_token);
+
+                // Stop if needed
+                if should_stop {
+                    break;
+                }
+            }
+        }
     }
 
     /// Checks if generation should stop based on the generated token.
@@ -476,7 +647,7 @@ mod tests {
         let mut streamed_tokens = Vec::new();
         let output = generator
             .generate_stream(&input_ids, |token| {
-                streamed_tokens.push(token);
+                streamed_tokens.push(token.token_id);
                 true // Continue
             })
             .unwrap();
@@ -503,7 +674,7 @@ mod tests {
 
         let mut count = 0;
         let output = generator
-            .generate_stream(&input_ids, |_token| {
+            .generate_stream(&input_ids, |_stream_token| {
                 count += 1;
                 count < 3 // Return false on 3rd call
             })
@@ -531,8 +702,12 @@ mod tests {
 
         let mut streamed_tokens = Vec::new();
         let output = generator
-            .generate_stream(&input_ids, |token| {
-                streamed_tokens.push(token);
+            .generate_stream(&input_ids, |stream_token| {
+                streamed_tokens.push(stream_token.token_id);
+                // Verify is_eos flag is set correctly
+                if stream_token.token_id == 0 {
+                    assert!(stream_token.is_eos);
+                }
                 true
             })
             .unwrap();
@@ -543,5 +718,164 @@ mod tests {
         if !streamed_tokens.is_empty() {
             assert_eq!(streamed_tokens[streamed_tokens.len() - 1], 0);
         }
+    }
+
+    #[test]
+    fn test_stream_token_metadata() {
+        let model = MockModel::new(4);
+        let config = GeneratorConfig {
+            max_tokens: 3,
+            sampling: SamplingStrategy::Greedy,
+            ..Default::default()
+        };
+
+        let mut generator = Generator::new(Box::new(model), config).unwrap();
+        let input_ids = vec![1u32];
+
+        let mut metadata_tokens = Vec::new();
+        generator
+            .generate_stream(&input_ids, |stream_token| {
+                // Verify metadata is present
+                assert!(stream_token.probability >= 0.0 && stream_token.probability <= 1.0);
+                assert!(!stream_token.logit.is_nan());
+                
+                // Text should be None (no tokenizer provided)
+                assert!(stream_token.text.is_none());
+                
+                metadata_tokens.push(stream_token);
+                true
+            })
+            .unwrap();
+
+        // Should have generated some tokens
+        assert!(!metadata_tokens.is_empty());
+        
+        // Probabilities should sum to reasonable values (greedy picks highest)
+        for token in &metadata_tokens {
+            // Greedy sampling should pick high-probability tokens
+            assert!(token.probability > 0.0);
+        }
+    }
+
+    #[test]
+    fn test_stream_token_probability_ordering() {
+        let model = MockModel::new(4);
+        let config = GeneratorConfig {
+            max_tokens: 5,
+            sampling: SamplingStrategy::Greedy,
+            ..Default::default()
+        };
+
+        let mut generator = Generator::new(Box::new(model), config).unwrap();
+        let input_ids = vec![1u32];
+
+        let mut probabilities = Vec::new();
+        generator
+            .generate_stream(&input_ids, |stream_token| {
+                probabilities.push(stream_token.probability);
+                true
+            })
+            .unwrap();
+
+        // With greedy sampling, all probabilities should be relatively high
+        // (since we're always picking the argmax)
+        for prob in probabilities {
+            assert!(prob > 0.1, "Greedy sampling should pick high-probability tokens");
+        }
+    }
+
+    #[cfg(feature = "streaming")]
+    #[tokio::test]
+    async fn test_async_streaming_basic() {
+        use futures::stream::StreamExt;
+        use futures::pin_mut;
+
+        let model = MockModel::new(4);
+        let config = GeneratorConfig {
+            max_tokens: 5,
+            sampling: SamplingStrategy::Greedy,
+            ..Default::default()
+        };
+
+        let mut generator = Generator::new(Box::new(model), config).unwrap();
+        let input_ids = vec![1u32];
+
+        let stream = generator.generate_stream_async(&input_ids);
+        pin_mut!(stream);
+        let mut count = 0;
+
+        while let Some(result) = stream.next().await {
+            let token = result.unwrap();
+            assert!(token.probability >= 0.0 && token.probability <= 1.0);
+            count += 1;
+        }
+
+        // Should have generated some tokens
+        assert!(count > 0);
+        assert!(count <= 5); // Respects max_tokens
+    }
+
+    #[cfg(feature = "streaming")]
+    #[tokio::test]
+    async fn test_async_streaming_cancellation() {
+        use futures::stream::StreamExt;
+        use futures::pin_mut;
+
+        let model = MockModel::new(4);
+        let config = GeneratorConfig {
+            max_tokens: 100, // Large number
+            sampling: SamplingStrategy::Greedy,
+            ..Default::default()
+        };
+
+        let mut generator = Generator::new(Box::new(model), config).unwrap();
+        let input_ids = vec![1u32];
+
+        // Take only first 3 tokens
+        let stream = generator.generate_stream_async(&input_ids);
+        pin_mut!(stream);
+        let tokens: Vec<_> = stream.take(3).collect::<Vec<_>>().await;
+
+        // Should have exactly 3 tokens
+        assert_eq!(tokens.len(), 3);
+        
+        // All should be Ok
+        for result in tokens {
+            assert!(result.is_ok());
+        }
+    }
+
+    #[cfg(feature = "streaming")]
+    #[tokio::test]
+    async fn test_async_streaming_with_eos() {
+        use futures::stream::StreamExt;
+        use futures::pin_mut;
+
+        let model = MockModel::new(4);
+        let config = GeneratorConfig {
+            max_tokens: 10,
+            sampling: SamplingStrategy::Greedy,
+            stop_on_eos: true,
+            eos_token_id: Some(0),
+            ..Default::default()
+        };
+
+        let mut generator = Generator::new(Box::new(model), config).unwrap();
+        let input_ids = vec![1u32];
+
+        let stream = generator.generate_stream_async(&input_ids);
+        pin_mut!(stream);
+        let mut found_eos = false;
+
+        while let Some(result) = stream.next().await {
+            let token = result.unwrap();
+            if token.is_eos {
+                found_eos = true;
+                assert_eq!(token.token_id, 0);
+                break;
+            }
+        }
+
+        assert!(found_eos, "Should have encountered EOS token");
     }
 }

@@ -69,11 +69,26 @@ let gen_config = GeneratorConfig {
 let mut generator = Generator::new(Box::new(model), gen_config)?;
 let output_ids = generator.generate(&input_ids)?;
 
-// Or use streaming for real-time generation
+// Or use streaming for real-time generation (v1.3.0+)
 generator.generate_stream(&input_ids, |token| {
-    print!("{} ", token);
+    println!("Token {}: prob={:.2}%", token.token_id, token.probability * 100.0);
     true // Continue generation
 })?;
+
+// Async streaming (requires 'streaming' feature)
+#[cfg(feature = "streaming")]
+{
+    use futures::stream::StreamExt;
+    use futures::pin_mut;
+    
+    let stream = generator.generate_stream_async(&input_ids);
+    pin_mut!(stream);
+    
+    while let Some(result) = stream.next().await {
+        let token = result?;
+        println!("Token: {}", token.token_id);
+    }
+}
 ```
 
 ### Semantic Embeddings (RAG & Search)
@@ -128,10 +143,36 @@ let trainer = Trainer::new(adapter, training_config)?;
 let metrics = trainer.train(&dataset)?;
 ```
 
+### LoRA Adapter Management (v1.3.0+)
+
+```rust
+use metal_candle::training::{AdapterRegistry, LoRAAdapter, LoRAAdapterConfig};
+
+// Create registry for managing multiple adapters
+let mut registry = AdapterRegistry::new();
+
+// Load task-specific adapters
+let code_adapter = LoRAAdapter::new(768, 3072, 12, &config, &device)?;
+let chat_adapter = LoRAAdapter::new(768, 3072, 12, &config, &device)?;
+
+registry.add_adapter("code-assistant".to_string(), code_adapter)?;
+registry.add_adapter("chat".to_string(), chat_adapter)?;
+
+// Switch between adapters without reloading base model
+registry.activate("code-assistant")?;
+// ... use model for code generation ...
+
+registry.activate("chat")?;
+// ... use model for chat ...
+
+// Memory efficient: adapters are ~0.03% of base model size
+println!("Active adapter: {:?}", registry.active_adapter());
+```
+
 ## Features
 
-- **Training**: LoRA with dropout, AdamW optimizer, learning rate schedulers, checkpoint management
-- **Inference**: KV-cache, multiple sampling strategies, streaming generation, repetition penalty
+- **Training**: LoRA with dropout, AdamW optimizer, learning rate schedulers, checkpoint management, adapter registry (v1.3.0+)
+- **Inference**: KV-cache, multiple sampling strategies, streaming generation (sync & async), repetition penalty, rich token metadata (v1.3.0+)
 - **Models**: Qwen2.5-Coder, safetensors format, transformer components (RoPE, GQA, MLP)
 - **Embeddings**: E5, MiniLM, MPNet with HuggingFace Hub integration
 - **Quality**: 407 tests, 81.6% coverage, strict clippy linting, 100% API documentation
