@@ -325,8 +325,11 @@ impl Generator {
     /// # use metal_candle::inference::{Generator, GeneratorConfig};
     /// # use futures::stream::StreamExt;
     /// # async fn example(mut generator: Generator) -> Result<(), Box<dyn std::error::Error>> {
+    /// use futures::pin_mut;
+    ///
     /// let input_ids = vec![1, 2, 3];
-    /// let mut stream = generator.generate_stream_async(&input_ids);
+    /// let stream = generator.generate_stream_async(&input_ids);
+    /// pin_mut!(stream);
     ///
     /// while let Some(result) = stream.next().await {
     ///     let token = result?;
@@ -349,8 +352,11 @@ impl Generator {
     /// # use metal_candle::inference::{Generator, GeneratorConfig};
     /// # use futures::stream::StreamExt;
     /// # async fn example(mut generator: Generator) -> Result<(), Box<dyn std::error::Error>> {
+    /// use futures::pin_mut;
+    ///
     /// let input_ids = vec![1, 2, 3];
-    /// let mut stream = generator.generate_stream_async(&input_ids);
+    /// let stream = generator.generate_stream_async(&input_ids);
+    /// pin_mut!(stream);
     ///
     /// // Take only first 10 tokens
     /// let tokens: Vec<_> = stream.take(10).collect().await;
