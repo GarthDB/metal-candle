@@ -199,5 +199,3 @@ fn run_demo() -> Result<()> {
 
     Ok(())
 }
-
-

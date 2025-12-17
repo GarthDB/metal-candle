@@ -38,9 +38,18 @@ fn main() -> Result<()> {
     let docs_adapter = LoRAAdapter::new(768, 3072, 12, &config, &device)?;
 
     println!("Created 3 adapters:");
-    println!("  - code-assistant: {} params", code_adapter.num_trainable_parameters());
-    println!("  - chat: {} params", chat_adapter.num_trainable_parameters());
-    println!("  - docs: {} params", docs_adapter.num_trainable_parameters());
+    println!(
+        "  - code-assistant: {} params",
+        code_adapter.num_trainable_parameters()
+    );
+    println!(
+        "  - chat: {} params",
+        chat_adapter.num_trainable_parameters()
+    );
+    println!(
+        "  - docs: {} params",
+        docs_adapter.num_trainable_parameters()
+    );
 
     // Add to registry
     registry.add_adapter("code-assistant".to_string(), code_adapter)?;
@@ -68,7 +77,10 @@ fn main() -> Result<()> {
     println!("Activated: {}", registry.active_adapter().unwrap());
 
     if let Some(adapter) = registry.get_active() {
-        println!("Active adapter has {} parameters", adapter.num_trainable_parameters());
+        println!(
+            "Active adapter has {} parameters",
+            adapter.num_trainable_parameters()
+        );
     }
     println!();
 
@@ -150,4 +162,3 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-

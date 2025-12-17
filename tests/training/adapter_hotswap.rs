@@ -29,7 +29,9 @@ fn test_adapter_registry_workflow() -> Result<()> {
 
     // Verify both are loaded
     assert_eq!(registry.len(), 2);
-    assert!(registry.list_adapters().contains(&"code-assistant".to_string()));
+    assert!(registry
+        .list_adapters()
+        .contains(&"code-assistant".to_string()));
     assert!(registry.list_adapters().contains(&"chat".to_string()));
 
     // Activate first adapter
@@ -69,7 +71,7 @@ fn test_adapter_save_and_load_workflow() -> Result<()> {
     // Save to temporary file
     let temp_file = NamedTempFile::new().unwrap();
     let checkpoint_path = temp_file.path();
-    
+
     metal_candle::training::checkpoint::save_checkpoint(&adapter, checkpoint_path, None)?;
 
     // Create new adapter with same config
@@ -200,7 +202,11 @@ fn test_adapter_memory_efficiency() -> Result<()> {
     // For rank=8, 2 target modules, 12 layers:
     // Each module: (512 * 8 + 8 * 512) = 8,192 params per module
     // Total: 8,192 * 2 modules * 12 layers = 196,608 params
-    assert!(params > 150_000 && params < 250_000, "Expected ~196k params, got {}", params);
+    assert!(
+        params > 150_000 && params < 250_000,
+        "Expected ~196k params, got {}",
+        params
+    );
 
     // Add to registry (no duplication of base model)
     let mut registry = AdapterRegistry::new();
@@ -211,4 +217,3 @@ fn test_adapter_memory_efficiency() -> Result<()> {
 
     Ok(())
 }
-

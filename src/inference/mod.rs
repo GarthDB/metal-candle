@@ -62,8 +62,8 @@ pub use sampling::{
 ///     is_eos: false,
 /// };
 ///
-/// println!("Token {}: {} (prob: {:.2}%)", 
-///          token.token_id, 
+/// println!("Token {}: {} (prob: {:.2}%)",
+///          token.token_id,
 ///          token.text.as_deref().unwrap_or("?"),
 ///          token.probability * 100.0);
 /// ```
@@ -71,24 +71,24 @@ pub use sampling::{
 pub struct StreamToken {
     /// The generated token ID.
     pub token_id: u32,
-    
+
     /// Decoded text representation (if tokenizer available).
     ///
     /// Will be `None` if the generator was created without a tokenizer,
     /// or if decoding fails for this particular token.
     pub text: Option<String>,
-    
+
     /// Raw logit score before softmax.
     ///
     /// Higher values indicate the model's stronger preference for this token.
     pub logit: f32,
-    
+
     /// Probability after softmax (0.0-1.0).
     ///
     /// Represents the model's confidence in this token choice.
     /// Values closer to 1.0 indicate higher confidence.
     pub probability: f32,
-    
+
     /// Whether this token is an end-of-sequence (EOS) token.
     ///
     /// When `true`, generation should typically stop.

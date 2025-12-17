@@ -738,10 +738,10 @@ mod tests {
                 // Verify metadata is present
                 assert!(stream_token.probability >= 0.0 && stream_token.probability <= 1.0);
                 assert!(!stream_token.logit.is_nan());
-                
+
                 // Text should be None (no tokenizer provided)
                 assert!(stream_token.text.is_none());
-                
+
                 metadata_tokens.push(stream_token);
                 true
             })
@@ -749,7 +749,7 @@ mod tests {
 
         // Should have generated some tokens
         assert!(!metadata_tokens.is_empty());
-        
+
         // Probabilities should sum to reasonable values (greedy picks highest)
         for token in &metadata_tokens {
             // Greedy sampling should pick high-probability tokens
@@ -780,15 +780,18 @@ mod tests {
         // With greedy sampling, all probabilities should be relatively high
         // (since we're always picking the argmax)
         for prob in probabilities {
-            assert!(prob > 0.1, "Greedy sampling should pick high-probability tokens");
+            assert!(
+                prob > 0.1,
+                "Greedy sampling should pick high-probability tokens"
+            );
         }
     }
 
     #[cfg(feature = "streaming")]
     #[tokio::test]
     async fn test_async_streaming_basic() {
-        use futures::stream::StreamExt;
         use futures::pin_mut;
+        use futures::stream::StreamExt;
 
         let model = MockModel::new(4);
         let config = GeneratorConfig {
@@ -818,8 +821,8 @@ mod tests {
     #[cfg(feature = "streaming")]
     #[tokio::test]
     async fn test_async_streaming_cancellation() {
-        use futures::stream::StreamExt;
         use futures::pin_mut;
+        use futures::stream::StreamExt;
 
         let model = MockModel::new(4);
         let config = GeneratorConfig {
@@ -838,7 +841,7 @@ mod tests {
 
         // Should have exactly 3 tokens
         assert_eq!(tokens.len(), 3);
-        
+
         // All should be Ok
         for result in tokens {
             assert!(result.is_ok());
@@ -848,8 +851,8 @@ mod tests {
     #[cfg(feature = "streaming")]
     #[tokio::test]
     async fn test_async_streaming_with_eos() {
-        use futures::stream::StreamExt;
         use futures::pin_mut;
+        use futures::stream::StreamExt;
 
         let model = MockModel::new(4);
         let config = GeneratorConfig {

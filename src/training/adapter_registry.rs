@@ -549,4 +549,3 @@ mod tests {
         assert_eq!(registry.len(), 3);
     }
 }
-

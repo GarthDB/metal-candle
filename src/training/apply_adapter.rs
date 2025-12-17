@@ -99,4 +99,3 @@ pub trait ApplyAdapter {
 // This is planned for v1.3.1 as a follow-up enhancement. The current v1.3.0
 // release provides the `AdapterRegistry` for managing multiple adapters,
 // which can be used with manual model reloading as an interim solution.
-
