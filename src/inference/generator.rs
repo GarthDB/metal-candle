@@ -303,6 +303,16 @@ impl Generator {
     /// This is useful for real-time applications like code completion or chat interfaces
     /// where you want to display tokens as they're generated.
     ///
+    /// # Performance Note
+    ///
+    /// **Important**: The current implementation performs GPU operations (model forward pass,
+    /// tensor operations) directly in the async context without using `spawn_blocking`. This
+    /// means GPU-bound operations will block the async runtime. For high-concurrency scenarios
+    /// or long-running GPU operations, consider wrapping calls in `tokio::task::spawn_blocking`
+    /// or using the synchronous [`generate_stream()`](Self::generate_stream) method instead.
+    ///
+    /// Future versions may integrate `spawn_blocking` for truly non-blocking GPU operations.
+    ///
     /// # Arguments
     ///
     /// * `input_ids` - Input token IDs to condition generation on

@@ -1,0 +1,31 @@
+   Compiling async-stream-impl v0.3.6
+   Compiling candle-transformers v0.9.1
+   Compiling async-stream v0.3.6
+   Compiling metal-candle v1.3.0 (/Users/garthdb/Projects/metal-candle)
+    Finished `bench` profile [optimized] target(s) in 26.62s
+     Running benches/fused_lora_bench.rs (target/release/deps/fused_lora_bench-0fefa8f76134ea0a)
+Gnuplot not found, using plotters backend
+Benchmarking lora_unfused (Candle)
+Benchmarking lora_unfused (Candle): Warming up for 3.0000 s
+Benchmarking lora_unfused (Candle): Collecting 100 samples in estimated 5.0424 s (177k iterations)
+Benchmarking lora_unfused (Candle): Analyzing
+lora_unfused (Candle)   time:   [24.597 µs 24.626 µs 24.652 µs]
+                        change: [-0.5138% +0.1749% +0.8798%] (p = 0.64 > 0.05)
+                        No change in performance detected.
+Found 16 outliers among 100 measurements (16.00%)
+  8 (8.00%) low severe
+  6 (6.00%) low mild
+  2 (2.00%) high severe
+
+Benchmarking lora_fused (Metal)
+Benchmarking lora_fused (Metal): Warming up for 3.0000 s
+Benchmarking lora_fused (Metal): Collecting 100 samples in estimated 8.1840 s (10k iterations)
+Benchmarking lora_fused (Metal): Analyzing
+lora_fused (Metal)      time:   [1.2870 ms 1.3356 ms 1.3837 ms]
+                        change: [-10.647% +7.0181% +31.715%] (p = 0.54 > 0.05)
+                        No change in performance detected.
+Found 18 outliers among 100 measurements (18.00%)
+  12 (12.00%) low mild
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+

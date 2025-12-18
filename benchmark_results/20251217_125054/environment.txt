@@ -1,0 +1,42 @@
+Benchmark Run Information
+========================
+
+Date: Wed Dec 17 14:10:36 MST 2025
+Hostname: Garths-MacBook-Pro.local
+OS: macOS 26.1
+Architecture: arm64
+Rust: rustc 1.91.1 (ed61e7d7e 2025-11-07) (Homebrew)
+Cargo: cargo 1.91.1 (Homebrew)
+
+Hardware:
+Hardware:
+
+    Hardware Overview:
+
+      Model Name: MacBook Pro
+      Model Identifier: Mac16,5
+      Model Number: MX2W3LL/A
+      Chip: Apple M4 Max
+      Total Number of Cores: 16 (12 performance and 4 efficiency)
+      Memory: 48 GB
+      System Firmware Version: 13822.41.1
+      OS Loader Version: 13822.41.1
+      Serial Number (system): FY2CXFXWCF
+      Hardware UUID: B91EF022-574C-5615-999B-75CC23488806
+      Provisioning UDID: 00006041-000A71DC1468801C
+      Activation Lock Status: Disabled
+
+Git Info:
+Branch: feat/v1.3.0-streaming-and-adapters
+Commit: 43945092cf98114bb2746f35830710b23ea1c74b
+Status:  M src/inference/generator.rs
+ M src/training/adapter_registry.rs
+?? PR48_REVIEW_SUMMARY.md
+?? benchmark_results/20251217_125054/
+?? docs/GITHUB_ISSUE_V1.3.1_APPLYADAPTER.md
+?? docs/PR48_REVIEW_IMPROVEMENTS.md
+
+Configuration:
+Runs per benchmark: 5
+Quick mode: false
+MLX comparison: Skipped

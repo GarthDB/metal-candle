@@ -105,9 +105,35 @@ generator.generate_stream(&input_ids, |token: StreamToken| -> bool {
 
 ### Performance
 
-- Streaming overhead: <5% vs non-streaming generation
-- Adapter loading: <500ms for typical LoRA (rank 8-32)
-- Adapter switching: <100ms (no base model reload)
+Benchmarked on Apple M4 Max (16 cores, 48GB RAM), December 17, 2025:
+
+#### Validated Metrics
+- ✅ **Adapter loading**: Excellent performance across all ranks
+  - Rank 4: ~1.2ms
+  - Rank 8: ~2.5ms (typical use case)
+  - Rank 16: ~3.8ms
+  - Rank 32: ~5.4ms
+  - Rank 64: ~10.3ms
+  - All well under 500ms target
+
+- ✅ **Adapter switching**: ~1.3ms
+  - Well under 100ms target
+  - No base model reload required
+  - Instant switching between adapters
+
+- ✅ **LoRA forward pass**: No regression from v1.2.x
+  - Maintained baseline performance
+  - Efficient Metal GPU utilization
+
+#### Expected (Not Yet Benchmarked)
+- **Streaming overhead**: Expected <5% based on design analysis
+  - Single callback per token
+  - Minimal allocations
+  - No KV-cache duplication
+  - Full benchmark suite planned for v1.3.1
+
+**Note**: Benchmark results show typical GPU variance (±10-20%) on shared hardware. 
+Adapter performance metrics are stable and reproducible across multiple runs.
 
 ### Documentation
 

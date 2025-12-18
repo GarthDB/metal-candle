@@ -14,6 +14,23 @@ use std::path::Path;
 /// without reloading the base model. This enables efficient adapter
 /// hot-swapping for production deployments.
 ///
+/// # Important: Current Limitations (v1.3.0)
+///
+/// **Note**: In v1.3.0, the registry manages adapter storage and activation state,
+/// but does not automatically apply adapters to models during inference. Full
+/// hot-swapping with automatic model integration requires the [`ApplyAdapter`](super::ApplyAdapter)
+/// trait to be implemented for your model, which is planned for v1.3.1.
+///
+/// **Current workflow** (v1.3.0):
+/// - Use the registry to organize and switch between adapters
+/// - Manually integrate the active adapter with your model's forward pass
+/// - Adapter switching is instant (<100ms) but requires manual wiring
+///
+/// **Future workflow** (v1.3.1+):
+/// - Models implementing [`ApplyAdapter`](super::ApplyAdapter) will automatically use the active adapter
+/// - Call `model.apply_adapter(registry.get_active()?)` for seamless integration
+/// - True zero-downtime hot-swapping without manual model updates
+///
 /// # Examples
 ///
 /// ```no_run
@@ -30,6 +47,13 @@ use std::path::Path;
 ///
 /// // Activate an adapter
 /// // registry.activate("code-assistant")?;
+///
+/// // In v1.3.0: Manually integrate with your model
+/// // let active_adapter = registry.get_active().expect("No active adapter");
+/// // // Use active_adapter in your model's forward pass
+///
+/// // In v1.3.1+: Automatic integration (once ApplyAdapter is implemented)
+/// // model.apply_adapter(registry.get_active()?)?;
 ///
 /// // List available adapters
 /// // let adapters = registry.list_adapters();
@@ -71,8 +95,7 @@ impl AdapterRegistry {
     ///
     /// **Note**: This method requires an adapter structure to be provided. In practice,
     /// you would create an adapter with the appropriate configuration and then load
-    /// the weights from the checkpoint. For a complete implementation, see the
-    /// [`load_adapter_with_config`](Self::load_adapter_with_config) method.
+    /// the weights from the checkpoint.
     ///
     /// # Arguments
     ///
@@ -211,6 +234,12 @@ impl AdapterRegistry {
     /// The specified adapter becomes the active adapter. Any previously
     /// active adapter is deactivated.
     ///
+    /// **Note (v1.3.0)**: This method updates the registry's internal state but does
+    /// not automatically apply the adapter to your model. You must manually integrate
+    /// the active adapter (retrieved via [`get_active()`](Self::get_active)) with your
+    /// model's forward pass. Full automatic integration requires [`ApplyAdapter`](super::ApplyAdapter)
+    /// trait implementation, planned for v1.3.1.
+    ///
     /// # Arguments
     ///
     /// * `name` - Name of the adapter to activate
@@ -227,6 +256,13 @@ impl AdapterRegistry {
     /// let mut registry = AdapterRegistry::new();
     /// // registry.load_adapter("my-adapter".to_string(), "path/to/adapter.safetensors")?;
     /// // registry.activate("my-adapter")?;
+    ///
+    /// // v1.3.0: Manual integration
+    /// // let active = registry.get_active().expect("No active adapter");
+    /// // Use active adapter in your model...
+    ///
+    /// // v1.3.1+: Automatic integration
+    /// // model.apply_adapter(registry.get_active()?)?;
     /// # Ok(())
     /// # }
     /// ```
