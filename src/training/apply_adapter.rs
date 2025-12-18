@@ -5,6 +5,7 @@
 
 use super::adapter::LoRAAdapter;
 use crate::error::Result;
+use std::sync::Arc;
 
 /// Trait for models that support `LoRA` adapter hot-swapping.
 ///
@@ -15,8 +16,9 @@ use crate::error::Result;
 ///
 /// ```no_run
 /// use metal_candle::training::{ApplyAdapter, LoRAAdapter};
+/// use std::sync::Arc;
 ///
-/// # fn example<M: ApplyAdapter>(mut model: M, adapter: &LoRAAdapter) -> Result<(), Box<dyn std::error::Error>> {
+/// # fn example<M: ApplyAdapter>(mut model: M, adapter: Arc<LoRAAdapter>) -> Result<(), Box<dyn std::error::Error>> {
 /// // Apply adapter
 /// model.apply_adapter(adapter)?;
 ///
@@ -35,7 +37,7 @@ pub trait ApplyAdapter {
     ///
     /// # Arguments
     ///
-    /// * `adapter` - The `LoRA` adapter to apply
+    /// * `adapter` - The `LoRA` adapter to apply (wrapped in `Arc` for efficient sharing)
     ///
     /// # Errors
     ///
@@ -47,12 +49,13 @@ pub trait ApplyAdapter {
     ///
     /// ```no_run
     /// # use metal_candle::training::{ApplyAdapter, LoRAAdapter};
-    /// # fn example<M: ApplyAdapter>(mut model: M, adapter: &LoRAAdapter) -> Result<(), Box<dyn std::error::Error>> {
+    /// # use std::sync::Arc;
+    /// # fn example<M: ApplyAdapter>(mut model: M, adapter: Arc<LoRAAdapter>) -> Result<(), Box<dyn std::error::Error>> {
     /// model.apply_adapter(adapter)?;
     /// # Ok(())
     /// # }
     /// ```
-    fn apply_adapter(&mut self, adapter: &LoRAAdapter) -> Result<()>;
+    fn apply_adapter(&mut self, adapter: Arc<LoRAAdapter>) -> Result<()>;
 
     /// Removes the currently applied `LoRA` adapter.
     ///
