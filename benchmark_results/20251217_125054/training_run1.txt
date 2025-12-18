@@ -1,0 +1,213 @@
+   Compiling metal-candle v1.3.0 (/Users/garthdb/Projects/metal-candle)
+    Finished `bench` profile [optimized] target(s) in 13.43s
+     Running benches/training.rs (target/release/deps/training-7a28ec06ad056ebf)
+Gnuplot not found, using plotters backend
+Benchmarking lora_forward/forward/small_512x512_r8
+Benchmarking lora_forward/forward/small_512x512_r8: Warming up for 3.0000 s
+Benchmarking lora_forward/forward/small_512x512_r8: Collecting 100 samples in estimated 5.0996 s (15k iterations)
+Benchmarking lora_forward/forward/small_512x512_r8: Analyzing
+lora_forward/forward/small_512x512_r8
+                        time:   [410.14 µs 418.47 µs 426.76 µs]
+                        thrpt:  [76.783 Melem/s 78.305 Melem/s 79.896 Melem/s]
+                 change:
+                        time:   [-14.423% -5.0736% +6.3360%] (p = 0.36 > 0.05)
+                        thrpt:  [-5.9585% +5.3447% +16.854%]
+                        No change in performance detected.
+Found 14 outliers among 100 measurements (14.00%)
+  8 (8.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking lora_forward/forward/medium_1024x1024_r8
+Benchmarking lora_forward/forward/medium_1024x1024_r8: Warming up for 3.0000 s
+Benchmarking lora_forward/forward/medium_1024x1024_r8: Collecting 100 samples in estimated 8.1327 s (10k iterations)
+Benchmarking lora_forward/forward/medium_1024x1024_r8: Analyzing
+lora_forward/forward/medium_1024x1024_r8
+                        time:   [2.4097 ms 2.5019 ms 2.5923 ms]
+                        thrpt:  [25.281 Melem/s 26.194 Melem/s 27.197 Melem/s]
+                 change:
+                        time:   [-20.662% -0.0018% +28.581%] (p = 1.00 > 0.05)
+                        thrpt:  [-22.228% +0.0018% +26.043%]
+                        No change in performance detected.
+Found 18 outliers among 100 measurements (18.00%)
+  12 (12.00%) low mild
+  3 (3.00%) high mild
+  3 (3.00%) high severe
+Benchmarking lora_forward/forward/large_2048x2048_r8
+Benchmarking lora_forward/forward/large_2048x2048_r8: Warming up for 3.0000 s
+Benchmarking lora_forward/forward/large_2048x2048_r8: Collecting 100 samples in estimated 5.1836 s (2100 iterations)
+Benchmarking lora_forward/forward/large_2048x2048_r8: Analyzing
+lora_forward/forward/large_2048x2048_r8
+                        time:   [4.0120 ms 5.6595 ms 7.4235 ms]
+                        thrpt:  [17.656 Melem/s 23.160 Melem/s 32.670 Melem/s]
+                 change:
+                        time:   [-36.006% +0.0321% +54.053%] (p = 1.00 > 0.05)
+                        thrpt:  [-35.087% -0.0321% +56.264%]
+                        No change in performance detected.
+Found 18 outliers among 100 measurements (18.00%)
+  18 (18.00%) high mild
+Benchmarking lora_forward/forward/small_512x512_r16
+Benchmarking lora_forward/forward/small_512x512_r16: Warming up for 3.0000 s
+Benchmarking lora_forward/forward/small_512x512_r16: Collecting 100 samples in estimated 5.6815 s (600 iterations)
+Benchmarking lora_forward/forward/small_512x512_r16: Analyzing
+lora_forward/forward/small_512x512_r16
+                        time:   [5.0219 ms 10.006 ms 15.817 ms]
+                        thrpt:  [2.0717 Melem/s 3.2747 Melem/s 6.5250 Melem/s]
+                 change:
+                        time:   [-58.292% +0.9496% +129.82%] (p = 0.91 > 0.05)
+                        thrpt:  [-56.487% -0.9407% +139.76%]
+                        No change in performance detected.
+Found 12 outliers among 100 measurements (12.00%)
+  12 (12.00%) high severe
+
+Benchmarking gradient_computation/forward_backward
+Benchmarking gradient_computation/forward_backward: Warming up for 3.0000 s
+Benchmarking gradient_computation/forward_backward: Collecting 100 samples in estimated 9.7423 s (200 iterations)
+Benchmarking gradient_computation/forward_backward: Analyzing
+gradient_computation/forward_backward
+                        time:   [5.1465 ms 5.1556 ms 5.1645 ms]
+                        change: [-18.980% -6.2757% +1.7741%] (p = 0.64 > 0.05)
+                        No change in performance detected.
+
+Benchmarking optimizer_step/adamw_step
+Benchmarking optimizer_step/adamw_step: Warming up for 3.0000 s
+Benchmarking optimizer_step/adamw_step: Collecting 100 samples in estimated 5.0493 s (2500 iterations)
+Benchmarking optimizer_step/adamw_step: Analyzing
+optimizer_step/adamw_step
+                        time:   [1.8784 ms 1.9212 ms 1.9680 ms]
+                        change: [+13.232% +23.828% +36.190%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high severe
+
+Benchmarking full_training_step/complete_iteration
+Benchmarking full_training_step/complete_iteration: Warming up for 3.0000 s
+Benchmarking full_training_step/complete_iteration: Collecting 10 samples in estimated 5.1296 s (330 iterations)
+Benchmarking full_training_step/complete_iteration: Analyzing
+full_training_step/complete_iteration
+                        time:   [11.296 ms 13.582 ms 17.223 ms]
+                        thrpt:  [7.6102 Melem/s 9.6507 Melem/s 11.603 Melem/s]
+                 change:
+                        time:   [+248.63% +415.50% +771.71%] (p = 0.00 < 0.05)
+                        thrpt:  [-88.528% -80.601% -71.316%]
+                        Performance has regressed.
+Found 4 outliers among 10 measurements (40.00%)
+  1 (10.00%) low severe
+  1 (10.00%) low mild
+  2 (20.00%) high severe
+
+Benchmarking layer_operations/softmax_stable
+Benchmarking layer_operations/softmax_stable: Warming up for 3.0000 s
+Benchmarking layer_operations/softmax_stable: Collecting 100 samples in estimated 5.0810 s (96k iterations)
+Benchmarking layer_operations/softmax_stable: Analyzing
+layer_operations/softmax_stable
+                        time:   [44.539 µs 44.714 µs 44.868 µs]
+                        change: [-2.6309% -1.3460% -0.2445%] (p = 0.02 < 0.05)
+                        Change within noise threshold.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low severe
+  3 (3.00%) low mild
+  1 (1.00%) high mild
+Benchmarking layer_operations/layer_norm
+Benchmarking layer_operations/layer_norm: Warming up for 3.0000 s
+Benchmarking layer_operations/layer_norm: Collecting 100 samples in estimated 5.1231 s (106k iterations)
+Benchmarking layer_operations/layer_norm: Analyzing
+layer_operations/layer_norm
+                        time:   [48.454 µs 48.548 µs 48.628 µs]
+                        change: [+0.7278% +1.4539% +2.2695%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  7 (7.00%) low severe
+  3 (3.00%) low mild
+  1 (1.00%) high mild
+  2 (2.00%) high severe
+Benchmarking layer_operations/rms_norm
+Benchmarking layer_operations/rms_norm: Warming up for 3.0000 s
+Benchmarking layer_operations/rms_norm: Collecting 100 samples in estimated 5.0650 s (197k iterations)
+Benchmarking layer_operations/rms_norm: Analyzing
+layer_operations/rms_norm
+                        time:   [25.711 µs 25.725 µs 25.740 µs]
+                        change: [+0.2016% +0.5714% +1.0036%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) low severe
+  3 (3.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking lora_rank_scaling/forward/rank_4
+Benchmarking lora_rank_scaling/forward/rank_4: Warming up for 3.0000 s
+Benchmarking lora_rank_scaling/forward/rank_4: Collecting 100 samples in estimated 7.4798 s (10k iterations)
+Benchmarking lora_rank_scaling/forward/rank_4: Analyzing
+lora_rank_scaling/forward/rank_4
+                        time:   [1.1789 ms 1.2224 ms 1.2651 ms]
+                        change: [-17.700% -0.1111% +20.113%] (p = 1.00 > 0.05)
+                        No change in performance detected.
+Found 17 outliers among 100 measurements (17.00%)
+  12 (12.00%) low mild
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+Benchmarking lora_rank_scaling/forward/rank_8
+Benchmarking lora_rank_scaling/forward/rank_8: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 7.5s, enable flat sampling, or reduce sample count to 50.
+Benchmarking lora_rank_scaling/forward/rank_8: Collecting 100 samples in estimated 7.4697 s (5050 iterations)
+Benchmarking lora_rank_scaling/forward/rank_8: Analyzing
+lora_rank_scaling/forward/rank_8
+                        time:   [2.3509 ms 2.5219 ms 2.6878 ms]
+                        change: [-19.922% +1.5382% +30.399%] (p = 0.90 > 0.05)
+                        No change in performance detected.
+Found 4 outliers among 100 measurements (4.00%)
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+Benchmarking lora_rank_scaling/forward/rank_16
+Benchmarking lora_rank_scaling/forward/rank_16: Warming up for 3.0000 s
+Benchmarking lora_rank_scaling/forward/rank_16: Collecting 100 samples in estimated 5.1754 s (2100 iterations)
+Benchmarking lora_rank_scaling/forward/rank_16: Analyzing
+lora_rank_scaling/forward/rank_16
+                        time:   [2.8175 ms 3.7724 ms 4.7859 ms]
+                        change: [-28.103% +3.5792% +50.733%] (p = 0.85 > 0.05)
+                        No change in performance detected.
+Benchmarking lora_rank_scaling/forward/rank_32
+Benchmarking lora_rank_scaling/forward/rank_32: Warming up for 3.0000 s
+Benchmarking lora_rank_scaling/forward/rank_32: Collecting 100 samples in estimated 5.1376 s (900 iterations)
+Benchmarking lora_rank_scaling/forward/rank_32: Analyzing
+lora_rank_scaling/forward/rank_32
+                        time:   [3.2971 ms 5.3847 ms 7.7526 ms]
+                        change: [-43.713% +1.0894% +86.376%] (p = 0.97 > 0.05)
+                        No change in performance detected.
+Found 18 outliers among 100 measurements (18.00%)
+  18 (18.00%) high severe
+Benchmarking lora_rank_scaling/forward/rank_64
+Benchmarking lora_rank_scaling/forward/rank_64: Warming up for 3.0000 s
+Benchmarking lora_rank_scaling/forward/rank_64: Collecting 100 samples in estimated 5.3031 s (1000 iterations)
+Benchmarking lora_rank_scaling/forward/rank_64: Analyzing
+lora_rank_scaling/forward/rank_64
+                        time:   [6.2520 ms 10.287 ms 14.692 ms]
+                        change: [-43.502% +5.2978% +94.424%] (p = 0.86 > 0.05)
+                        No change in performance detected.
+Found 21 outliers among 100 measurements (21.00%)
+  1 (1.00%) high mild
+  20 (20.00%) high severe
+
+Benchmarking lazy_vs_eager_lora/eager_forward
+Benchmarking lazy_vs_eager_lora/eager_forward: Warming up for 3.0000 s
+Benchmarking lazy_vs_eager_lora/eager_forward: Collecting 100 samples in estimated 8.3759 s (10k iterations)
+Benchmarking lazy_vs_eager_lora/eager_forward: Analyzing
+lazy_vs_eager_lora/eager_forward
+                        time:   [2.6305 ms 2.8230 ms 3.0953 ms]
+                        change: [+18.707% +58.706% +113.27%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 20 outliers among 100 measurements (20.00%)
+  12 (12.00%) low mild
+  4 (4.00%) high mild
+  4 (4.00%) high severe
+Benchmarking lazy_vs_eager_lora/lazy_forward_sync
+Benchmarking lazy_vs_eager_lora/lazy_forward_sync: Warming up for 3.0000 s
+Benchmarking lazy_vs_eager_lora/lazy_forward_sync: Collecting 100 samples in estimated 5.2508 s (1400 iterations)
+Benchmarking lazy_vs_eager_lora/lazy_forward_sync: Analyzing
+lazy_vs_eager_lora/lazy_forward_sync
+                        time:   [1.7617 ms 2.5736 ms 3.4387 ms]
+                        change: [-42.957% -0.4327% +60.987%] (p = 0.99 > 0.05)
+                        No change in performance detected.
+

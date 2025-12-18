@@ -200,7 +200,7 @@ fn demo_streaming_generation() -> Result<()> {
 
     let mut token_count = 0;
     let output = generator.generate_stream(&input_ids, |token| {
-        print!("{token} ");
+        print!("{} ", token.token_id);
         std::io::Write::flush(&mut std::io::stdout()).unwrap();
         token_count += 1;
 

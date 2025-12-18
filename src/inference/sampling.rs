@@ -1,6 +1,7 @@
 //! Sampling strategies for text generation.
 
 use crate::error::Result;
+use crate::inference::StreamToken;
 use candle_core::Tensor;
 use rand::Rng;
 
@@ -130,6 +131,96 @@ pub fn sample_token(
         SamplingStrategy::TopP { p } => sample_top_p(&logits, *p),
         SamplingStrategy::Temperature { temperature } => sample_temperature(&logits, *temperature),
     }
+}
+
+/// Samples a token and returns rich metadata for streaming.
+///
+/// # Arguments
+///
+/// * `logits` - Logits tensor, shape: `(vocab_size,)`
+/// * `strategy` - Sampling strategy to use
+/// * `generated_ids` - Previously generated token IDs (for repetition penalty)
+/// * `repetition_penalty` - Penalty factor for repeated tokens (1.0 = no penalty)
+/// * `eos_token_id` - Optional EOS token ID to mark in the result
+///
+/// # Returns
+///
+/// Returns a `StreamToken` with the sampled token and metadata.
+///
+/// # Errors
+///
+/// Returns an error if sampling fails or tensor operations fail.
+///
+/// # Panics
+///
+/// This function does not panic under normal circumstances.
+///
+/// # Examples
+///
+/// ```no_run
+/// use metal_candle::inference::sampling::{sample_token_with_metadata, SamplingStrategy};
+/// use candle_core::{Device, Tensor};
+///
+/// let device = Device::Cpu;
+/// let logits = Tensor::new(&[1.0f32, 2.0, 3.0, 4.0], &device)?;
+/// let strategy = SamplingStrategy::Greedy;
+/// let generated = vec![1, 2];
+///
+/// let stream_token = sample_token_with_metadata(&logits, &strategy, &generated, 1.2, Some(3))?;
+/// println!("Token {}: prob={:.2}", stream_token.token_id, stream_token.probability);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub fn sample_token_with_metadata(
+    logits: &Tensor,
+    strategy: &SamplingStrategy,
+    generated_ids: &[u32],
+    repetition_penalty: f32,
+    eos_token_id: Option<u32>,
+) -> Result<StreamToken> {
+    // Apply repetition penalty if needed
+    let mut penalized_logits = logits.clone();
+    apply_repetition_penalty(&mut penalized_logits, generated_ids, repetition_penalty)?;
+
+    // Sample the token
+    let token_id = match strategy {
+        SamplingStrategy::Greedy => sample_greedy(&penalized_logits)?,
+        SamplingStrategy::TopK { k } => sample_top_k(&penalized_logits, *k)?,
+        SamplingStrategy::TopP { p } => sample_top_p(&penalized_logits, *p)?,
+        SamplingStrategy::Temperature { temperature } => {
+            sample_temperature(&penalized_logits, *temperature)?
+        }
+    };
+
+    // Get logit and probability for the sampled token
+    let logits_vec = penalized_logits.to_vec1::<f32>()?;
+    let logit = logits_vec
+        .get(token_id as usize)
+        .copied()
+        .unwrap_or(f32::NEG_INFINITY);
+
+    // Compute softmax probability for the sampled token
+    let max_logit = logits_vec
+        .iter()
+        .copied()
+        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap_or(0.0);
+    let exp_sum: f32 = logits_vec.iter().map(|l| (l - max_logit).exp()).sum();
+    let probability = if exp_sum > 0.0 {
+        (logit - max_logit).exp() / exp_sum
+    } else {
+        0.0
+    };
+
+    // Check if this is an EOS token
+    let is_eos = eos_token_id == Some(token_id);
+
+    Ok(StreamToken {
+        token_id,
+        text: None, // Text decoding happens in generator if tokenizer available
+        logit,
+        probability,
+        is_eos,
+    })
 }
 
 /// Greedy sampling (argmax).

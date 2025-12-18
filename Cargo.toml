@@ -1,6 +1,6 @@
 [package]
 name = "metal-candle"
-version = "1.2.7"
+version = "1.3.0"
 edition = "2021"
 rust-version = "1.75"
 authors = ["Garth Braithwaite <garthdb@gmail.com>"]
@@ -53,9 +53,11 @@ tracing = "0.1"
 # Random number generation
 rand = "0.8"
 
-# Async runtime (for Phase 5)
+# Async runtime (for streaming and async execution)
 tokio = { version = "1.0", features = ["rt", "sync", "macros"], optional = true }
 async-trait = { version = "0.1", optional = true }
+futures = { version = "0.3", optional = true }
+async-stream = { version = "0.3", optional = true }
 
 # Lock-free data structures (for Phase 5)
 dashmap = { version = "5.5", optional = true }
@@ -88,6 +90,7 @@ custom-metal = ["dep:metal", "dep:objc", "dep:candle-metal-kernels", "candle-cor
 embeddings = []
 graph = []  # Lazy evaluation framework (v2.0+)
 async-exec = ["graph", "dep:tokio", "dep:async-trait", "dep:dashmap"]  # Async execution (Phase 5)
+streaming = ["dep:tokio", "dep:futures", "dep:async-stream"]  # Async streaming inference
 
 [lints.rust]
 unsafe_code = "deny"  # Deny by default, but allow MPS module to opt-in with #![allow]

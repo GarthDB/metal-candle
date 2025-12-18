@@ -1,0 +1,401 @@
+    Finished `bench` profile [optimized] target(s) in 0.18s
+     Running benches/inference.rs (target/release/deps/inference-ea09a2143ab4987f)
+Gnuplot not found, using plotters backend
+Benchmarking kv_cache_update/single_layer_update
+Benchmarking kv_cache_update/single_layer_update: Warming up for 3.0000 s
+Benchmarking kv_cache_update/single_layer_update: Collecting 100 samples in estimated 5.0000 s (424M iterations)
+Benchmarking kv_cache_update/single_layer_update: Analyzing
+kv_cache_update/single_layer_update
+                        time:   [11.834 ns 11.881 ns 11.924 ns]
+                        change: [+0.4553% +0.7253% +1.0140%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 10 outliers among 100 measurements (10.00%)
+  1 (1.00%) low mild
+  9 (9.00%) high mild
+Benchmarking kv_cache_update/all_layers_update
+Benchmarking kv_cache_update/all_layers_update: Warming up for 3.0000 s
+Benchmarking kv_cache_update/all_layers_update: Collecting 100 samples in estimated 5.0006 s (15M iterations)
+Benchmarking kv_cache_update/all_layers_update: Analyzing
+kv_cache_update/all_layers_update
+                        time:   [326.10 ns 327.14 ns 328.78 ns]
+                        change: [+1.2331% +1.5326% +1.8427%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) low mild
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking kv_cache_retrieval/retrieve_from_cache
+Benchmarking kv_cache_retrieval/retrieve_from_cache: Warming up for 3.0000 s
+Benchmarking kv_cache_retrieval/retrieve_from_cache: Collecting 100 samples in estimated 5.0000 s (447M iterations)
+Benchmarking kv_cache_retrieval/retrieve_from_cache: Analyzing
+kv_cache_retrieval/retrieve_from_cache
+                        time:   [11.135 ns 11.149 ns 11.165 ns]
+                        change: [-8.8218% -8.2841% -7.7309%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+
+Benchmarking sampling_strategies/greedy
+Benchmarking sampling_strategies/greedy: Warming up for 3.0000 s
+Benchmarking sampling_strategies/greedy: Collecting 100 samples in estimated 5.6035 s (45k iterations)
+Benchmarking sampling_strategies/greedy: Analyzing
+sampling_strategies/greedy
+                        time:   [121.93 µs 122.62 µs 123.17 µs]
+                        thrpt:  [259.81 Melem/s 260.98 Melem/s 262.44 Melem/s]
+                 change:
+                        time:   [-2.2322% -1.4076% -0.5372%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.5401% +1.4277% +2.2831%]
+                        Change within noise threshold.
+Found 18 outliers among 100 measurements (18.00%)
+  15 (15.00%) low severe
+  2 (2.00%) low mild
+  1 (1.00%) high mild
+Benchmarking sampling_strategies/top_k/k_10
+Benchmarking sampling_strategies/top_k/k_10: Warming up for 3.0000 s
+Benchmarking sampling_strategies/top_k/k_10: Collecting 100 samples in estimated 7.2736 s (15k iterations)
+Benchmarking sampling_strategies/top_k/k_10: Analyzing
+sampling_strategies/top_k/k_10
+                        time:   [478.32 µs 479.39 µs 480.38 µs]
+                        thrpt:  [66.613 Melem/s 66.752 Melem/s 66.901 Melem/s]
+                 change:
+                        time:   [-0.8434% -0.5141% -0.1786%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.1789% +0.5168% +0.8506%]
+                        Change within noise threshold.
+Found 5 outliers among 100 measurements (5.00%)
+  1 (1.00%) low severe
+  4 (4.00%) low mild
+Benchmarking sampling_strategies/top_k/k_40
+Benchmarking sampling_strategies/top_k/k_40: Warming up for 3.0000 s
+Benchmarking sampling_strategies/top_k/k_40: Collecting 100 samples in estimated 7.3961 s (15k iterations)
+Benchmarking sampling_strategies/top_k/k_40: Analyzing
+sampling_strategies/top_k/k_40
+                        time:   [478.09 µs 479.21 µs 480.30 µs]
+                        thrpt:  [66.625 Melem/s 66.776 Melem/s 66.933 Melem/s]
+                 change:
+                        time:   [-0.0628% +0.2766% +0.6344%] (p = 0.13 > 0.05)
+                        thrpt:  [-0.6304% -0.2758% +0.0628%]
+                        No change in performance detected.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low severe
+  3 (3.00%) low mild
+  2 (2.00%) high mild
+Benchmarking sampling_strategies/top_k/k_50
+Benchmarking sampling_strategies/top_k/k_50: Warming up for 3.0000 s
+Benchmarking sampling_strategies/top_k/k_50: Collecting 100 samples in estimated 7.4850 s (15k iterations)
+Benchmarking sampling_strategies/top_k/k_50: Analyzing
+sampling_strategies/top_k/k_50
+                        time:   [480.11 µs 480.83 µs 481.55 µs]
+                        thrpt:  [66.453 Melem/s 66.551 Melem/s 66.651 Melem/s]
+                 change:
+                        time:   [-0.0802% +0.2699% +0.6320%] (p = 0.12 > 0.05)
+                        thrpt:  [-0.6280% -0.2692% +0.0802%]
+                        No change in performance detected.
+Found 4 outliers among 100 measurements (4.00%)
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+Benchmarking sampling_strategies/top_p/p_90
+Benchmarking sampling_strategies/top_p/p_90: Warming up for 3.0000 s
+Benchmarking sampling_strategies/top_p/p_90: Collecting 100 samples in estimated 6.2728 s (10k iterations)
+Benchmarking sampling_strategies/top_p/p_90: Analyzing
+sampling_strategies/top_p/p_90
+                        time:   [613.83 µs 614.95 µs 616.14 µs]
+                        thrpt:  [51.936 Melem/s 52.036 Melem/s 52.131 Melem/s]
+                 change:
+                        time:   [-1.3512% -1.0228% -0.6744%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.6790% +1.0333% +1.3697%]
+                        Change within noise threshold.
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+Benchmarking sampling_strategies/top_p/p_95
+Benchmarking sampling_strategies/top_p/p_95: Warming up for 3.0000 s
+Benchmarking sampling_strategies/top_p/p_95: Collecting 100 samples in estimated 6.3366 s (10k iterations)
+Benchmarking sampling_strategies/top_p/p_95: Analyzing
+sampling_strategies/top_p/p_95
+                        time:   [617.56 µs 619.68 µs 621.73 µs]
+                        thrpt:  [51.469 Melem/s 51.639 Melem/s 51.816 Melem/s]
+                 change:
+                        time:   [-1.8489% -1.4346% -1.0146%] (p = 0.00 < 0.05)
+                        thrpt:  [+1.0250% +1.4555% +1.8837%]
+                        Performance has improved.
+Benchmarking sampling_strategies/temperature/t_7
+Benchmarking sampling_strategies/temperature/t_7: Warming up for 3.0000 s
+Benchmarking sampling_strategies/temperature/t_7: Collecting 100 samples in estimated 5.6614 s (25k iterations)
+Benchmarking sampling_strategies/temperature/t_7: Analyzing
+sampling_strategies/temperature/t_7
+                        time:   [218.44 µs 219.29 µs 220.01 µs]
+                        thrpt:  [145.45 Melem/s 145.93 Melem/s 146.49 Melem/s]
+                 change:
+                        time:   [+0.1728% +0.8263% +1.5243%] (p = 0.01 < 0.05)
+                        thrpt:  [-1.5014% -0.8195% -0.1725%]
+                        Change within noise threshold.
+Found 6 outliers among 100 measurements (6.00%)
+  6 (6.00%) low mild
+Benchmarking sampling_strategies/temperature/t_8
+Benchmarking sampling_strategies/temperature/t_8: Warming up for 3.0000 s
+Benchmarking sampling_strategies/temperature/t_8: Collecting 100 samples in estimated 5.6699 s (25k iterations)
+Benchmarking sampling_strategies/temperature/t_8: Analyzing
+sampling_strategies/temperature/t_8
+                        time:   [219.72 µs 220.69 µs 221.49 µs]
+                        thrpt:  [144.47 Melem/s 145.00 Melem/s 145.64 Melem/s]
+                 change:
+                        time:   [-1.5293% -0.8802% -0.2098%] (p = 0.01 < 0.05)
+                        thrpt:  [+0.2103% +0.8880% +1.5530%]
+                        Change within noise threshold.
+Found 17 outliers among 100 measurements (17.00%)
+  10 (10.00%) low severe
+  5 (5.00%) low mild
+  2 (2.00%) high mild
+Benchmarking sampling_strategies/temperature/t_10
+Benchmarking sampling_strategies/temperature/t_10: Warming up for 3.0000 s
+Benchmarking sampling_strategies/temperature/t_10: Collecting 100 samples in estimated 5.6512 s (25k iterations)
+Benchmarking sampling_strategies/temperature/t_10: Analyzing
+sampling_strategies/temperature/t_10
+                        time:   [221.59 µs 223.30 µs 224.78 µs]
+                        thrpt:  [142.36 Melem/s 143.31 Melem/s 144.41 Melem/s]
+                 change:
+                        time:   [+0.2556% +0.7773% +1.3103%] (p = 0.00 < 0.05)
+                        thrpt:  [-1.2934% -0.7713% -0.2549%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  8 (8.00%) low severe
+  1 (1.00%) low mild
+  2 (2.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking kv_cache_scaling/full_sequence_seq_512
+Benchmarking kv_cache_scaling/full_sequence_seq_512: Warming up for 3.0000 s
+Benchmarking kv_cache_scaling/full_sequence_seq_512: Collecting 10 samples in estimated 5.3313 s (110 iterations)
+Benchmarking kv_cache_scaling/full_sequence_seq_512: Analyzing
+kv_cache_scaling/full_sequence_seq_512
+                        time:   [47.639 ms 47.804 ms 48.064 ms]
+                        change: [-1.5312% -0.9919% -0.4024%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Benchmarking kv_cache_scaling/full_sequence_seq_1024
+Benchmarking kv_cache_scaling/full_sequence_seq_1024: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 8.4s or enable flat sampling.
+Benchmarking kv_cache_scaling/full_sequence_seq_1024: Collecting 10 samples in estimated 8.3928 s (55 iterations)
+Benchmarking kv_cache_scaling/full_sequence_seq_1024: Analyzing
+kv_cache_scaling/full_sequence_seq_1024
+                        time:   [152.58 ms 152.79 ms 153.13 ms]
+                        change: [-0.7972% -0.5506% -0.3149%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Benchmarking kv_cache_scaling/full_sequence_seq_2048
+Benchmarking kv_cache_scaling/full_sequence_seq_2048: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 5.3s.
+Benchmarking kv_cache_scaling/full_sequence_seq_2048: Collecting 10 samples in estimated 5.3194 s (10 iterations)
+Benchmarking kv_cache_scaling/full_sequence_seq_2048: Analyzing
+kv_cache_scaling/full_sequence_seq_2048
+                        time:   [531.88 ms 537.51 ms 543.64 ms]
+                        change: [-3.9518% -2.7418% -1.5434%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking sampling_vocab_scaling/greedy/vocab_1000
+Benchmarking sampling_vocab_scaling/greedy/vocab_1000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/greedy/vocab_1000: Collecting 100 samples in estimated 5.0470 s (45k iterations)
+Benchmarking sampling_vocab_scaling/greedy/vocab_1000: Analyzing
+sampling_vocab_scaling/greedy/vocab_1000
+                        time:   [104.88 µs 106.06 µs 107.27 µs]
+                        thrpt:  [9.3219 Melem/s 9.4290 Melem/s 9.5350 Melem/s]
+                 change:
+                        time:   [+2.9440% +4.2783% +5.6864%] (p = 0.00 < 0.05)
+                        thrpt:  [-5.3804% -4.1028% -2.8598%]
+                        Performance has regressed.
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) low mild
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_1000
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_1000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_1000: Collecting 100 samples in estimated 5.1957 s (45k iterations)
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_1000: Analyzing
+sampling_vocab_scaling/top_k_50/vocab_1000
+                        time:   [110.70 µs 111.07 µs 111.37 µs]
+                        thrpt:  [8.9789 Melem/s 9.0037 Melem/s 9.0335 Melem/s]
+                 change:
+                        time:   [-3.5862% -2.5456% -1.4958%] (p = 0.00 < 0.05)
+                        thrpt:  [+1.5185% +2.6121% +3.7196%]
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  10 (10.00%) low severe
+  4 (4.00%) low mild
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_1000
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_1000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_1000: Collecting 100 samples in estimated 5.2971 s (45k iterations)
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_1000: Analyzing
+sampling_vocab_scaling/top_p_0.9/vocab_1000
+                        time:   [114.90 µs 115.50 µs 116.00 µs]
+                        thrpt:  [8.6210 Melem/s 8.6579 Melem/s 8.7030 Melem/s]
+                 change:
+                        time:   [-1.4627% -0.6071% +0.2451%] (p = 0.17 > 0.05)
+                        thrpt:  [-0.2445% +0.6108% +1.4845%]
+                        No change in performance detected.
+Found 14 outliers among 100 measurements (14.00%)
+  9 (9.00%) low severe
+  3 (3.00%) low mild
+  2 (2.00%) high mild
+Benchmarking sampling_vocab_scaling/greedy/vocab_10000
+Benchmarking sampling_vocab_scaling/greedy/vocab_10000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/greedy/vocab_10000: Collecting 100 samples in estimated 5.1623 s (45k iterations)
+Benchmarking sampling_vocab_scaling/greedy/vocab_10000: Analyzing
+sampling_vocab_scaling/greedy/vocab_10000
+                        time:   [108.16 µs 109.62 µs 111.12 µs]
+                        thrpt:  [89.994 Melem/s 91.220 Melem/s 92.455 Melem/s]
+                 change:
+                        time:   [-2.5662% -1.4799% -0.4092%] (p = 0.01 < 0.05)
+                        thrpt:  [+0.4108% +1.5021% +2.6338%]
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low mild
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_10000
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_10000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_10000: Collecting 100 samples in estimated 5.7563 s (25k iterations)
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_10000: Analyzing
+sampling_vocab_scaling/top_k_50/vocab_10000
+                        time:   [222.68 µs 224.12 µs 225.71 µs]
+                        thrpt:  [44.304 Melem/s 44.618 Melem/s 44.908 Melem/s]
+                 change:
+                        time:   [-5.0639% -4.4564% -3.8454%] (p = 0.00 < 0.05)
+                        thrpt:  [+3.9992% +4.6642% +5.3340%]
+                        Performance has improved.
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_10000
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_10000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_10000: Collecting 100 samples in estimated 5.5475 s (20k iterations)
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_10000: Analyzing
+sampling_vocab_scaling/top_p_0.9/vocab_10000
+                        time:   [276.33 µs 277.39 µs 278.39 µs]
+                        thrpt:  [35.921 Melem/s 36.050 Melem/s 36.188 Melem/s]
+                 change:
+                        time:   [+0.1800% +0.5866% +0.9929%] (p = 0.01 < 0.05)
+                        thrpt:  [-0.9831% -0.5832% -0.1796%]
+                        Change within noise threshold.
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low severe
+  10 (10.00%) low mild
+  1 (1.00%) high severe
+Benchmarking sampling_vocab_scaling/greedy/vocab_32000
+Benchmarking sampling_vocab_scaling/greedy/vocab_32000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/greedy/vocab_32000: Collecting 100 samples in estimated 5.0492 s (45k iterations)
+Benchmarking sampling_vocab_scaling/greedy/vocab_32000: Analyzing
+sampling_vocab_scaling/greedy/vocab_32000
+                        time:   [114.73 µs 116.70 µs 118.37 µs]
+                        thrpt:  [270.34 Melem/s 274.21 Melem/s 278.92 Melem/s]
+                 change:
+                        time:   [-9.1408% -7.8135% -6.5423%] (p = 0.00 < 0.05)
+                        thrpt:  [+7.0003% +8.4757% +10.060%]
+                        Performance has improved.
+Found 20 outliers among 100 measurements (20.00%)
+  20 (20.00%) high mild
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_32000
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_32000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_32000: Collecting 100 samples in estimated 5.0064 s (10k iterations)
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_32000: Analyzing
+sampling_vocab_scaling/top_k_50/vocab_32000
+                        time:   [489.54 µs 491.59 µs 493.54 µs]
+                        thrpt:  [64.837 Melem/s 65.095 Melem/s 65.368 Melem/s]
+                 change:
+                        time:   [-1.7170% -1.3783% -1.0417%] (p = 0.00 < 0.05)
+                        thrpt:  [+1.0527% +1.3976% +1.7470%]
+                        Performance has improved.
+Found 9 outliers among 100 measurements (9.00%)
+  1 (1.00%) low severe
+  6 (6.00%) low mild
+  2 (2.00%) high mild
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_32000
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_32000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_32000: Collecting 100 samples in estimated 6.4192 s (10k iterations)
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_32000: Analyzing
+sampling_vocab_scaling/top_p_0.9/vocab_32000
+                        time:   [635.74 µs 637.41 µs 638.79 µs]
+                        thrpt:  [50.095 Melem/s 50.203 Melem/s 50.335 Melem/s]
+                 change:
+                        time:   [-0.7622% -0.4939% -0.2427%] (p = 0.00 < 0.05)
+                        thrpt:  [+0.2433% +0.4964% +0.7681%]
+                        Change within noise threshold.
+Found 8 outliers among 100 measurements (8.00%)
+  2 (2.00%) low severe
+  5 (5.00%) low mild
+  1 (1.00%) high severe
+Benchmarking sampling_vocab_scaling/greedy/vocab_100000
+Benchmarking sampling_vocab_scaling/greedy/vocab_100000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/greedy/vocab_100000: Collecting 100 samples in estimated 5.5492 s (35k iterations)
+Benchmarking sampling_vocab_scaling/greedy/vocab_100000: Analyzing
+sampling_vocab_scaling/greedy/vocab_100000
+                        time:   [148.10 µs 150.01 µs 152.01 µs]
+                        thrpt:  [657.84 Melem/s 666.63 Melem/s 675.21 Melem/s]
+                 change:
+                        time:   [-1.8903% -0.8886% -0.0524%] (p = 0.06 > 0.05)
+                        thrpt:  [+0.0524% +0.8966% +1.9267%]
+                        No change in performance detected.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low mild
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_100000
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_100000: Warming up for 3.0000 s
+
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 8.2s, enable flat sampling, or reduce sample count to 50.
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_100000: Collecting 100 samples in estimated 8.1805 s (5050 iterations)
+Benchmarking sampling_vocab_scaling/top_k_50/vocab_100000: Analyzing
+sampling_vocab_scaling/top_k_50/vocab_100000
+                        time:   [1.5435 ms 1.5636 ms 1.5867 ms]
+                        thrpt:  [63.023 Melem/s 63.955 Melem/s 64.787 Melem/s]
+                 change:
+                        time:   [+1.7755% +2.7740% +3.9270%] (p = 0.00 < 0.05)
+                        thrpt:  [-3.7786% -2.6992% -1.7445%]
+                        Performance has regressed.
+Found 11 outliers among 100 measurements (11.00%)
+  4 (4.00%) high mild
+  7 (7.00%) high severe
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_100000
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_100000: Warming up for 3.0000 s
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_100000: Collecting 100 samples in estimated 5.1684 s (2300 iterations)
+Benchmarking sampling_vocab_scaling/top_p_0.9/vocab_100000: Analyzing
+sampling_vocab_scaling/top_p_0.9/vocab_100000
+                        time:   [2.2099 ms 2.2150 ms 2.2196 ms]
+                        thrpt:  [45.053 Melem/s 45.146 Melem/s 45.251 Melem/s]
+                 change:
+                        time:   [+0.2971% +0.5685% +0.8365%] (p = 0.00 < 0.05)
+                        thrpt:  [-0.8296% -0.5653% -0.2963%]
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) low severe
+
+Benchmarking kv_cache_memory/allocate_qwen_0.5B
+Benchmarking kv_cache_memory/allocate_qwen_0.5B: Warming up for 3.0000 s
+Benchmarking kv_cache_memory/allocate_qwen_0.5B: Collecting 10 samples in estimated 5.0000 s (240M iterations)
+Benchmarking kv_cache_memory/allocate_qwen_0.5B: Analyzing
+kv_cache_memory/allocate_qwen_0.5B
+                        time:   [20.856 ns 20.862 ns 20.868 ns]
+                        change: [+0.1016% +0.1509% +0.2092%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+Benchmarking kv_cache_memory/allocate_qwen_1.5B
+Benchmarking kv_cache_memory/allocate_qwen_1.5B: Warming up for 3.0000 s
+Benchmarking kv_cache_memory/allocate_qwen_1.5B: Collecting 10 samples in estimated 5.0000 s (240M iterations)
+Benchmarking kv_cache_memory/allocate_qwen_1.5B: Analyzing
+kv_cache_memory/allocate_qwen_1.5B
+                        time:   [20.843 ns 20.851 ns 20.860 ns]
+                        change: [-0.0238% +0.0812% +0.1760%] (p = 0.14 > 0.05)
+                        No change in performance detected.
+Benchmarking kv_cache_memory/allocate_qwen_3B
+Benchmarking kv_cache_memory/allocate_qwen_3B: Warming up for 3.0000 s
+Benchmarking kv_cache_memory/allocate_qwen_3B: Collecting 10 samples in estimated 5.0000 s (240M iterations)
+Benchmarking kv_cache_memory/allocate_qwen_3B: Analyzing
+kv_cache_memory/allocate_qwen_3B
+                        time:   [20.857 ns 20.952 ns 21.020 ns]
+                        change: [+0.1096% +0.3194% +0.5624%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking generation_simulation/token_generation_cycle
+Benchmarking generation_simulation/token_generation_cycle: Warming up for 3.0000 s
+Benchmarking generation_simulation/token_generation_cycle: Collecting 10 samples in estimated 5.0296 s (8140 iterations)
+Benchmarking generation_simulation/token_generation_cycle: Analyzing
+generation_simulation/token_generation_cycle
+                        time:   [608.17 µs 618.54 µs 623.50 µs]
+                        change: [-4.0148% -3.1406% -2.2383%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
