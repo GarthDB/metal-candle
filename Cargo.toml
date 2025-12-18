@@ -151,3 +151,7 @@ harness = false
 name = "lazy_vs_eager"
 harness = false
 
+[[bench]]
+name = "streaming"
+harness = false
+

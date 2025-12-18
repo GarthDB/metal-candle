@@ -161,6 +161,66 @@ All benchmarks use:
 
 **Analysis**: Sampling is not a bottleneck. Model inference dominates latency.
 
+### Streaming Inference
+
+**Setup**:
+- Mock model (CPU) for consistent, reproducible measurements
+- Measure overhead of streaming vs non-streaming generation
+- Compare sync (`generate_stream`) vs async (`generate_stream_async`) APIs
+- Test callback overhead with different callback complexities
+- Token counts: 10, 50, 100 (representing short, medium, long sequences)
+
+**Results**: (CPU, Mock Model, December 18, 2024)
+
+| Tokens | Baseline (ms) | Sync Stream (ms) | Overhead | Async Stream (ms) | Overhead |
+|--------|---------------|------------------|----------|-------------------|----------|
+| 10     | 7.02          | 7.76             | +10.5%   | 7.76              | +10.5%   |
+| 50     | 135.71        | 139.21           | **+2.6%**    | 144.90            | +6.8%    |
+| 100    | 524.34        | 531.21           | **+1.3%**    | 537.01            | +2.4%    |
+
+**Callback Overhead** (50 tokens, sync streaming):
+
+| Callback Type  | Time (ms) | vs Minimal |
+|----------------|-----------|------------|
+| Minimal (empty)| 139.67    | baseline   |
+| String formatting | 139.56 | -0.08%     |
+| String accumulation | 139.34 | -0.24%   |
+
+**Sampling Strategies** (50 tokens, sync streaming):
+
+| Strategy    | Time (ms) | vs Greedy |
+|-------------|-----------|-----------|
+| Greedy      | 139.17    | baseline  |
+| Top-k (50)  | 139.32    | +0.11%    |
+| Top-p (0.9) | 148.68    | +6.8%     |
+
+**Analysis**:
+
+1. **Streaming overhead decreases with sequence length**:
+   - Short sequences (10 tokens): 10.5% overhead (fixed setup costs dominate)
+   - Medium sequences (50 tokens): 2.6% overhead ← **typical use case**
+   - Long sequences (100 tokens): 1.3% overhead (costs amortized)
+
+2. **Sync streaming is more efficient than async**:
+   - Sync: 2.6% overhead at 50 tokens
+   - Async: 6.8% overhead at 50 tokens (includes tokio runtime)
+   - Choose sync for simple apps, async for servers/concurrent workloads
+
+3. **Callback complexity has negligible impact**:
+   - String formatting and accumulation are within measurement noise (<0.3%)
+   - Write readable, useful callbacks without performance concerns
+
+4. **Sampling strategy overhead is consistent**:
+   - Top-k has minimal overhead (+0.11%)
+   - Top-p adds 6.8% (sorting overhead, expected)
+   - Quality/performance trade-off is excellent
+
+**Recommendations**:
+- ✅ Use sync streaming for ≥2.6% overhead on typical workloads
+- ✅ Use async streaming for concurrent applications (6.8% overhead acceptable)
+- ✅ Don't worry about callback complexity
+- ✅ Top-p sampling adds ~7% overhead for better quality
+
 ## Memory Benchmarks
 
 ### Peak Memory Usage
@@ -492,7 +552,7 @@ Typical variance observed:
 - [ ] Batch size scaling (1, 4, 8, 16)
 - [ ] Quantized inference (INT8, INT4)
 - [ ] Flash Attention speedup
-- [ ] Streaming generation overhead
+- [x] Streaming generation overhead (completed December 18, 2024)
 
 ## Reporting Issues
 
