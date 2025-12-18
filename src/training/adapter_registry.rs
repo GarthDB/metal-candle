@@ -7,6 +7,7 @@ use super::adapter::LoRAAdapter;
 use crate::error::{Result, TrainingError};
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::Arc;
 
 /// Registry for managing multiple `LoRA` adapters.
 ///
@@ -63,7 +64,7 @@ use std::path::Path;
 #[derive(Debug)]
 pub struct AdapterRegistry {
     /// Loaded adapters indexed by name
-    adapters: HashMap<String, LoRAAdapter>,
+    adapters: HashMap<String, Arc<LoRAAdapter>>,
 
     /// Currently active adapter name
     active: Option<String>,
@@ -143,7 +144,7 @@ impl AdapterRegistry {
         super::checkpoint::load_checkpoint(&mut adapter, path)?;
 
         // Add to registry
-        self.adapters.insert(name, adapter);
+        self.adapters.insert(name, Arc::new(adapter));
         Ok(())
     }
 
@@ -185,7 +186,7 @@ impl AdapterRegistry {
             .into());
         }
 
-        self.adapters.insert(name, adapter);
+        self.adapters.insert(name, Arc::new(adapter));
         Ok(())
     }
 
@@ -322,7 +323,7 @@ impl AdapterRegistry {
     /// assert!(registry.get_active().is_none());
     /// ```
     #[must_use]
-    pub fn get_active(&self) -> Option<&LoRAAdapter> {
+    pub fn get_active(&self) -> Option<&Arc<LoRAAdapter>> {
         self.active
             .as_ref()
             .and_then(|name| self.adapters.get(name))
@@ -343,7 +344,7 @@ impl AdapterRegistry {
     /// assert!(registry.get_adapter("nonexistent").is_none());
     /// ```
     #[must_use]
-    pub fn get_adapter(&self, name: &str) -> Option<&LoRAAdapter> {
+    pub fn get_adapter(&self, name: &str) -> Option<&Arc<LoRAAdapter>> {
         self.adapters.get(name)
     }
 

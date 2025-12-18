@@ -7,8 +7,10 @@ use super::config::ModelConfig;
 use super::transformer::{Attention, MLP};
 use crate::backend::TensorExt;
 use crate::error::Result;
+use crate::training::{ApplyAdapter, LoRAAdapter, TargetModule};
 use candle_core::Tensor;
 use candle_nn::{embedding, Embedding, Module, VarBuilder};
+use std::sync::Arc;
 
 /// A single transformer layer in the Qwen model.
 ///
@@ -20,6 +22,8 @@ pub struct QwenDecoderLayer {
     mlp: MLP,
     input_layernorm: RMSNorm,
     post_attention_layernorm: RMSNorm,
+    /// Layer index in the model (for `LoRA` adapter lookup)
+    layer_idx: usize,
 }
 
 impl QwenDecoderLayer {
@@ -28,12 +32,13 @@ impl QwenDecoderLayer {
     /// # Arguments
     ///
     /// * `config` - Model configuration
+    /// * `layer_idx` - Index of this layer in the model
     /// * `vb` - Variable builder for loading weights
     ///
     /// # Errors
     ///
     /// Returns an error if layer initialization fails.
-    pub fn new(config: &ModelConfig, vb: &VarBuilder) -> Result<Self> {
+    pub fn new(config: &ModelConfig, layer_idx: usize, vb: &VarBuilder) -> Result<Self> {
         let self_attn = Attention::new(
             config.hidden_size,
             config.num_attention_heads,
@@ -61,6 +66,7 @@ impl QwenDecoderLayer {
             mlp,
             input_layernorm,
             post_attention_layernorm,
+            layer_idx,
         })
     }
 
@@ -70,6 +76,7 @@ impl QwenDecoderLayer {
     ///
     /// * `hidden_states` - Input tensor of shape `(batch, seq_len, hidden_size)`
     /// * `attention_mask` - Optional attention mask
+    /// * `lora_adapter` - Optional `LoRA` adapter to apply
     ///
     /// # Returns
     ///
@@ -78,22 +85,59 @@ impl QwenDecoderLayer {
     /// # Errors
     ///
     /// Returns an error if tensor operations fail.
+    ///
+    /// # Implementation Note
+    ///
+    /// `LoRA` is currently applied at the layer output level. For full `LoRA` support
+    /// at each projection (Q/K/V/O for attention, Gate/Up/Down for MLP), we need
+    /// to modify the Attention and MLP forward passes. This is tracked for
+    /// optimization in a future update.
     pub fn forward(
         &self,
         hidden_states: &Tensor,
         attention_mask: Option<&Tensor>,
+        lora_adapter: Option<&LoRAAdapter>,
     ) -> Result<Tensor> {
         // Self-attention with residual connection
         let residual = hidden_states;
-        let hidden_states = self.input_layernorm.forward(hidden_states)?;
-        let hidden_states = self.self_attn.forward(&hidden_states, attention_mask)?;
-        let hidden_states = (hidden_states + residual)?;
+        let attn_input = self.input_layernorm.forward(hidden_states)?;
+        let mut attn_output = self.self_attn.forward(&attn_input, attention_mask)?;
+
+        // Apply LoRA to attention output projection if adapter is present
+        // LoRA takes the INPUT to o_proj (which is the attention output before o_proj)
+        // and produces a delta to add to the o_proj output
+        // Note: For full LoRA support, we'd need to apply it within the attention mechanism
+        // to Q/K/V projections. This is a simplified version that only applies to the final output.
+        if let Some(adapter) = lora_adapter {
+            // For now, we apply LoRA using the attention output as input
+            // This is a simplification - proper implementation would apply inside Attention
+            if let Some(o_delta) =
+                adapter.forward(self.layer_idx, &TargetModule::OProj, &attn_input)?
+            {
+                attn_output = (&attn_output + &o_delta)?;
+            }
+        }
+
+        let hidden_states = (attn_output + residual)?;
 
         // MLP with residual connection
         let residual = &hidden_states;
-        let hidden_states = self.post_attention_layernorm.forward(&hidden_states)?;
-        let hidden_states = self.mlp.forward(&hidden_states)?;
-        let hidden_states = (hidden_states + residual)?;
+        let mlp_input = self.post_attention_layernorm.forward(&hidden_states)?;
+        let mut mlp_output = self.mlp.forward(&mlp_input)?;
+
+        // Apply LoRA to MLP down projection if adapter is present
+        // LoRA takes the INPUT to down_proj and produces a delta
+        if let Some(adapter) = lora_adapter {
+            // For now, we apply LoRA using the MLP input
+            // Proper implementation would apply inside MLP to each projection
+            if let Some(down_delta) =
+                adapter.forward(self.layer_idx, &TargetModule::DownProj, &mlp_input)?
+            {
+                mlp_output = (&mlp_output + &down_delta)?;
+            }
+        }
+
+        let hidden_states = (mlp_output + residual)?;
 
         Ok(hidden_states)
     }
@@ -125,6 +169,8 @@ pub struct Qwen {
     layers: Vec<QwenDecoderLayer>,
     norm: RMSNorm,
     pub(crate) lm_head: candle_nn::Linear,
+    /// Currently applied `LoRA` adapter (if any)
+    lora_adapter: Option<Arc<LoRAAdapter>>,
 }
 
 impl Qwen {
@@ -149,7 +195,7 @@ impl Qwen {
         let mut layers = Vec::with_capacity(config.num_hidden_layers);
         let vb_layers = vb.pp("model.layers");
         for i in 0..config.num_hidden_layers {
-            let layer = QwenDecoderLayer::new(config, &vb_layers.pp(i))?;
+            let layer = QwenDecoderLayer::new(config, i, &vb_layers.pp(i))?;
             layers.push(layer);
         }
 
@@ -167,6 +213,7 @@ impl Qwen {
             layers,
             norm,
             lm_head,
+            lora_adapter: None,
         })
     }
 
@@ -191,8 +238,9 @@ impl Qwen {
         let mut hidden_states = self.embed_tokens.forward(input_ids)?;
 
         // Pass through all decoder layers
+        let lora_adapter = self.lora_adapter.as_deref();
         for layer in &self.layers {
-            hidden_states = layer.forward(&hidden_states, attention_mask)?;
+            hidden_states = layer.forward(&hidden_states, attention_mask, lora_adapter)?;
         }
 
         // Final normalization
@@ -277,6 +325,36 @@ impl RMSNorm {
     }
 }
 
+impl ApplyAdapter for Qwen {
+    fn apply_adapter(&mut self, adapter: Arc<LoRAAdapter>) -> Result<()> {
+        // Basic validation: check if adapter has layers for this model's layer count
+        if adapter.num_layers() != self.num_layers() {
+            return Err(crate::error::TrainingError::InvalidConfig {
+                reason: format!(
+                    "Adapter has {} layers, but model has {} layers",
+                    adapter.num_layers(),
+                    self.num_layers()
+                ),
+            }
+            .into());
+        }
+
+        // Store the adapter
+        self.lora_adapter = Some(adapter);
+        Ok(())
+    }
+
+    fn remove_adapter(&mut self) -> Result<()> {
+        // Clear the adapter
+        self.lora_adapter = None;
+        Ok(())
+    }
+
+    fn has_adapter(&self) -> bool {
+        self.lora_adapter.is_some()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -304,7 +382,7 @@ mod tests {
         let device = Device::Cpu;
         let vb = VarBuilder::zeros(DType::F32, &device);
 
-        let layer = QwenDecoderLayer::new(&config, &vb);
+        let layer = QwenDecoderLayer::new(&config, 0, &vb);
         assert!(layer.is_ok(), "Failed to create decoder layer: {layer:?}");
     }
 
@@ -351,10 +429,10 @@ mod tests {
         let device = Device::Cpu;
         let vb = VarBuilder::zeros(DType::F32, &device);
 
-        let layer = QwenDecoderLayer::new(&config, &vb).unwrap();
+        let layer = QwenDecoderLayer::new(&config, 0, &vb).unwrap();
         let input = Tensor::zeros((1, 8, config.hidden_size), DType::F32, &device).unwrap();
 
-        let output = layer.forward(&input, None);
+        let output = layer.forward(&input, None, None);
         assert!(output.is_ok());
         assert_eq!(output.unwrap().dims(), &[1, 8, config.hidden_size]);
     }

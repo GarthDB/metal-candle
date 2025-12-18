@@ -27,6 +27,7 @@ use candle_core::{Device, Tensor};
 pub mod config;
 pub mod loader;
 pub mod qwen;
+mod qwen_adapter_tests;
 pub mod transformer;
 
 // Re-export commonly used types

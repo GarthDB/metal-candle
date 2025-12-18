@@ -243,16 +243,20 @@ cargo build && cargo test
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines. Quality standards: zero clippy warnings (pedantic), ≥80% coverage, 100% API docs.
 
-## Future Work
+## Roadmap
 
-See the [v1.3+ Feature Roadmap](https://github.com/users/GarthDB/projects/3) project board for planned features:
-- [GGUF format support](https://github.com/GarthDB/metal-candle/issues/38) - Load quantized models
-- [LLaMA/Mistral architectures](https://github.com/GarthDB/metal-candle/issues/39) - Broader model compatibility
-- [4-bit/8-bit quantization](https://github.com/GarthDB/metal-candle/issues/40) - Reduced memory usage
-- [Flash Attention](https://github.com/GarthDB/metal-candle/issues/41) - 2-4x faster inference
-- [Multi-GPU support](https://github.com/GarthDB/metal-candle/issues/42) - Scale to 70B+ models
+See **[ROADMAP.md](ROADMAP.md)** for detailed release plans and **[NEXT_STEPS.md](NEXT_STEPS.md)** for immediate priorities.
 
-Vote with 👍 on issues you'd like to see prioritized!
+### Upcoming Releases
+
+- **v1.3.1** (Jan 2025): ApplyAdapter implementation, streaming benchmarks
+- **v1.4.0** (Feb 2025): [GGUF format support](https://github.com/GarthDB/metal-candle/issues/38)
+- **v1.5.0** (Mar 2025): [LLaMA/Mistral architectures](https://github.com/GarthDB/metal-candle/issues/39)
+- **v1.6.0** (Apr 2025): [4-bit/8-bit quantization](https://github.com/GarthDB/metal-candle/issues/40)
+- **v1.7.0** (May 2025): [Flash Attention](https://github.com/GarthDB/metal-candle/issues/41)
+- **v2.0.0** (Q3 2025): [Multi-GPU support](https://github.com/GarthDB/metal-candle/issues/42)
+
+Track progress on the [v1.3+ Feature Roadmap](https://github.com/users/GarthDB/projects/3) project board. Vote with 👍 on issues you'd like to see prioritized!
 
 ## Contributing
 
