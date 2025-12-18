@@ -22,7 +22,7 @@ pub struct QwenDecoderLayer {
     mlp: MLP,
     input_layernorm: RMSNorm,
     post_attention_layernorm: RMSNorm,
-    /// Layer index in the model (for LoRA adapter lookup)
+    /// Layer index in the model (for `LoRA` adapter lookup)
     layer_idx: usize,
 }
 
@@ -76,7 +76,7 @@ impl QwenDecoderLayer {
     ///
     /// * `hidden_states` - Input tensor of shape `(batch, seq_len, hidden_size)`
     /// * `attention_mask` - Optional attention mask
-    /// * `lora_adapter` - Optional LoRA adapter to apply
+    /// * `lora_adapter` - Optional `LoRA` adapter to apply
     ///
     /// # Returns
     ///
@@ -88,7 +88,7 @@ impl QwenDecoderLayer {
     ///
     /// # Implementation Note
     ///
-    /// LoRA is currently applied at the layer output level. For full LoRA support
+    /// `LoRA` is currently applied at the layer output level. For full `LoRA` support
     /// at each projection (Q/K/V/O for attention, Gate/Up/Down for MLP), we need
     /// to modify the Attention and MLP forward passes. This is tracked for
     /// optimization in a future update.
@@ -169,7 +169,7 @@ pub struct Qwen {
     layers: Vec<QwenDecoderLayer>,
     norm: RMSNorm,
     pub(crate) lm_head: candle_nn::Linear,
-    /// Currently applied LoRA adapter (if any)
+    /// Currently applied `LoRA` adapter (if any)
     lora_adapter: Option<Arc<LoRAAdapter>>,
 }
 

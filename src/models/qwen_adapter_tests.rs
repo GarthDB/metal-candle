@@ -1,4 +1,4 @@
-//! Tests for ApplyAdapter trait implementation on Qwen model.
+//! Tests for `ApplyAdapter` trait implementation on Qwen model.
 
 #[cfg(test)]
 mod tests {
