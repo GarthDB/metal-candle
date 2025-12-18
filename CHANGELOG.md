@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (Nothing yet)
 
-## [1.3.0] - 2025-01-XX
+## [1.3.0] - 2024-12-18
 
 ### Highlights
 
@@ -41,9 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multiple adapters in memory simultaneously
   - Zero base model duplication
   
-- **`ApplyAdapter` trait**: Interface for hot-swapping (trait only, full implementation in v1.3.1)
-  - Defines `apply_adapter()`, `remove_adapter()`, `has_adapter()` methods
-  - Documentation for future implementation
+- **`ApplyAdapter` trait**: Full implementation for hot-swapping (#52)
+  - Implemented `apply_adapter()`, `remove_adapter()`, `has_adapter()` methods on Qwen model
+  - Hot-swap adapters without model reload
+  - Integration tests and comprehensive documentation
   
 - **Checkpoint integration**: Load adapters from safetensors
   - `load_adapter_from_checkpoint()` method
@@ -151,9 +152,8 @@ Adapter performance metrics are stable and reproducible across multiple runs.
 
 ### Notes
 
-- Full `ApplyAdapter` implementation for Qwen model planned for v1.3.1
-- Current adapter workflow requires manual model reload (interim solution)
 - Async streaming requires `streaming` feature: `cargo build --features streaming`
+- ApplyAdapter trait fully implemented for Qwen model in this release
 
 ## [1.2.7] - 2025-12-12
 
