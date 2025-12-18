@@ -102,7 +102,7 @@ impl QwenDecoderLayer {
         let residual = hidden_states;
         let attn_input = self.input_layernorm.forward(hidden_states)?;
         let mut attn_output = self.self_attn.forward(&attn_input, attention_mask)?;
-        
+
         // Apply LoRA to attention output projection if adapter is present
         // LoRA takes the INPUT to o_proj (which is the attention output before o_proj)
         // and produces a delta to add to the o_proj output
@@ -111,28 +111,32 @@ impl QwenDecoderLayer {
         if let Some(adapter) = lora_adapter {
             // For now, we apply LoRA using the attention output as input
             // This is a simplification - proper implementation would apply inside Attention
-            if let Some(o_delta) = adapter.forward(self.layer_idx, &TargetModule::OProj, &attn_input)? {
+            if let Some(o_delta) =
+                adapter.forward(self.layer_idx, &TargetModule::OProj, &attn_input)?
+            {
                 attn_output = (&attn_output + &o_delta)?;
             }
         }
-        
+
         let hidden_states = (attn_output + residual)?;
 
         // MLP with residual connection
         let residual = &hidden_states;
         let mlp_input = self.post_attention_layernorm.forward(&hidden_states)?;
         let mut mlp_output = self.mlp.forward(&mlp_input)?;
-        
+
         // Apply LoRA to MLP down projection if adapter is present
         // LoRA takes the INPUT to down_proj and produces a delta
         if let Some(adapter) = lora_adapter {
             // For now, we apply LoRA using the MLP input
             // Proper implementation would apply inside MLP to each projection
-            if let Some(down_delta) = adapter.forward(self.layer_idx, &TargetModule::DownProj, &mlp_input)? {
+            if let Some(down_delta) =
+                adapter.forward(self.layer_idx, &TargetModule::DownProj, &mlp_input)?
+            {
                 mlp_output = (&mlp_output + &down_delta)?;
             }
         }
-        
+
         let hidden_states = (mlp_output + residual)?;
 
         Ok(hidden_states)
@@ -323,6 +327,18 @@ impl RMSNorm {
 
 impl ApplyAdapter for Qwen {
     fn apply_adapter(&mut self, adapter: Arc<LoRAAdapter>) -> Result<()> {
+        // Basic validation: check if adapter has layers for this model's layer count
+        if adapter.num_layers() != self.num_layers() {
+            return Err(crate::error::TrainingError::InvalidConfig {
+                reason: format!(
+                    "Adapter has {} layers, but model has {} layers",
+                    adapter.num_layers(),
+                    self.num_layers()
+                ),
+            }
+            .into());
+        }
+
         // Store the adapter
         self.lora_adapter = Some(adapter);
         Ok(())

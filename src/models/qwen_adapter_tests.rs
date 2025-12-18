@@ -252,4 +252,3 @@ mod tests {
         assert!(!model.has_adapter());
     }
 }
-
